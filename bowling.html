@@ -84,14 +84,14 @@
   </div>
 
   <script>
-    /* v1 – manual bowler data from Google Sheet */
+    /* Google Sheet CSV – Bowling sheet */
     const SHEET_URL =
-      "https://docs.google.com/spreadsheets/d/e/REPLACE_WITH_SHEET_ID/pub?output=csv";
+      "https://docs.google.com/spreadsheets/d/1N7MiUprnQIJcA2R_WEXjVAHgQ_sv1fCmJDUxhXPbJCA/gviz/tq?tqx=out:csv&gid=2062628030";
 
     fetch(SHEET_URL)
-      .then(res => res.text())
+      .then(response => response.text())
       .then(csv => {
-        const rows = csv.split("\n");
+        const rows = csv.trim().split("\n");
         const data = rows[1].split(",");
 
         const bowler = data[0];
@@ -99,14 +99,15 @@
         const runs = parseInt(data[2]);
         const wickets = parseInt(data[3]);
 
-        const econ = overs > 0 ? (runs / overs).toFixed(2) : "0.00";
+        const economy =
+          overs > 0 ? (runs / overs).toFixed(2) : "0.00";
 
         document.getElementById("bowler").innerText = bowler;
         document.getElementById("overs").innerText = overs;
         document.getElementById("runs").innerText = runs;
         document.getElementById("wickets").innerText = wickets;
         document.getElementById("econ").innerText =
-          "Economy: " + econ;
+          "Economy: " + economy;
       });
   </script>
 
