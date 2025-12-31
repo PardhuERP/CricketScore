@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Live Cricket Score</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#f2f4f8;
+}
+.header{
+  background:#0a7cff;
+  color:#fff;
+  padding:14px;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+}
+.container{ padding:16px; }
+
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:14px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+
+.score{
+  font-size:32px;
+  font-weight:bold;
+  text-align:center;
+}
+.sub{
+  text-align:center;
+  color:#555;
+  margin-top:5px;
+}
+.row{
+  display:flex;
+  justify-content:space-between;
+  margin-top:10px;
+  font-size:15px;
+}
+.label{ color:#666; }
+.value{ font-weight:bold; }
+</style>
+</head>
+
+<body>
+
+<div class="header">📊 Live Cricket Score</div>
+
+<div class="container">
+
+  <div class="card">
+    <div id="matchTitle" class="sub">Loading match...</div>
+    <div class="score" id="score">0 / 0
