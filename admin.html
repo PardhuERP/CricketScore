@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:#f2f4f7;
+  text-align:center;
+}
+.header{
+  background:#0a3d62;
+  color:#fff;
+  padding:15px;
+  font-size:18px;
+  font-weight:bold;
+}
+.box{
+  background:#fff;
+  margin:20px;
+  padding:20px;
+  border-radius:12px;
+}
+input{
+  width:90%;
+  padding:12px;
+  margin:8px 0;
+  font-size:16px;
+}
+button{
+  width:90%;
+  padding:12px;
+  margin:10px 0;
+  font-size:16px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+.login{
+  background:#27ae60;
+  color:#fff;
+}
+.lock{
+  background:#c0392b;
+  color:#fff;
+}
+.msg{
+  margin-top:10px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">🔐 Admin Control</div>
+
+<div class="box">
+  <h3>Admin Login</h3>
+  <input id="user" placeholder="Username">
+  <input id="pass" type="password" placeholder="Password">
+  <button class="login" onclick="login()">Login & Unlock</button>
+  <div class="msg" id="loginMsg"></div>
+</div>
+
+<div class="box">
+  <h3>Scoring Control</h3>
+  <button class="lock" onclick="lock()">Lock Scoring</button>
+  <div class="msg" id="lockMsg"></div>
+</div>
+
+<script>
+const API =
+"https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec"; // <-- REPLACE with your real URL
+
+function login(){
+  const u = document.getElementById("user").value;
+  const p = document.getElementById("pass").value;
+
+  fetch(API + `?type=adminlogin&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`)
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById("loginMsg").innerText = d.status;
+    })
+    .catch(() => {
+      document.getElementById("loginMsg").innerText = "Error connecting API";
+    });
+}
+
+function lock(){
+  fetch(API + "?type=adminlogout")
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById("lockMsg").innerText = d.status;
+    })
+    .catch(() => {
+      document.getElementById("lockMsg").innerText = "Error connecting API";
+    });
+}
+</script>
+
+</body>
+</html>
