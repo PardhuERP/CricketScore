@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Live Scoring</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  font-family:Arial;
+  background:#f2f4f7;
+  margin:0;
+  text-align:center;
+}
+.header{
+  background:#0a3d62;
+  color:#fff;
+  padding:15px;
+  font-size:18px;
+}
+.score{
+  background:#fff;
+  margin:15px;
+  padding:15px;
+  border-radius:12px;
+  font-size:22px;
+}
+.buttons button{
+  width:28%;
+  margin:6px;
+  padding:15px;
+  font-size:16px;
+  border:none;
+  border-radius:8px;
+  background:#25d366;
+  color:#fff;
+}
+.extra{
+  background:#e67e22 !important;
+}
+.wicket{
+  background:#c0392b !important;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">🏏 Live Scoring</div>
+
+<div class="score" id="score">
+Loading...
+</div>
+
+<div class="buttons">
+  <button onclick="send('run',1)">+1</button>
+  <button onclick="send('run',2)">+2</button>
+  <button onclick="send('run',3)">+3</button>
+  <button onclick="send('run',4)">+4</button>
+  <button onclick="send('run',6)">+6</button>
+  <button class="extra" onclick="send('wide')">Wide</button>
+  <button class="extra" onclick="send('noball')">No Ball</button>
+  <button class="wicket" onclick="send('wicket')">Wicket</button>
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+
+function loadScore(){
+  fetch(API + "?type=score")
+  .then(r=>r.json())
+  .then(d=>{
+    document.getElementById("score").innerHTML =
+      `${d.Runs}/${d.Wickets} <br>
+       Overs: ${d.Overs}.${d.Balls}`;
+  });
+}
+
+function send(action,value=0){
+  fetch(API + `?action=${action}&value=${value}`)
+  .then(()=>loadScore());
+}
+
+loadScore();
+setInterval(loadScore,3000);
+</script>
+
+</body>
+</html>
