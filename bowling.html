@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bowling Scorecard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f2f4f7;
+    }
+
+    .header {
+      background: #0a3d62;
+      color: #ffffff;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .card {
+      background: #ffffff;
+      margin: 15px;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    .bowler {
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 15px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .econ {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      color: #c0392b;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">🏏 Bowling Scorecard</div>
+
+  <div class="card">
+    <div class="bowler" id="bowler">Loading...</div>
+
+    <div class="row">
+      <span>Overs</span>
+      <span id="overs">0</span>
+    </div>
+
+    <div class="row">
+      <span>Runs</span>
+      <span id="runs">0</span>
+    </div>
+
+    <div class="row">
+      <span>Wickets</span>
+      <span id="wickets">0</span>
+    </div>
+
+    <div class="econ" id="econ">Economy: 0.00</div>
+  </div>
+
+  <script>
+    /* v1 – manual bowler data from Google Sheet */
+    const SHEET_URL =
+      "https://docs.google.com/spreadsheets/d/e/REPLACE_WITH_SHEET_ID/pub?output=csv";
+
+    fetch(SHEET_URL)
+      .then(res => res.text())
+      .then(csv => {
+        const rows = csv.split("\n");
+        const data = rows[1].split(",");
+
+        const bowler = data[0];
+        const overs = parseFloat(data[1]);
+        const runs = parseInt(data[2]);
+        const wickets = parseInt(data[3]);
+
+        const econ = overs > 0 ? (runs / overs).toFixed(2) : "0.00";
+
+        document.getElementById("bowler").innerText = bowler;
+        document.getElementById("overs").innerText = overs;
+        document.getElementById("runs").innerText = runs;
+        document.getElementById("wickets").innerText = wickets;
+        document.getElementById("econ").innerText =
+          "Economy: " + econ;
+      });
+  </script>
+
+</body>
+</html>
