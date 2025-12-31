@@ -66,19 +66,22 @@ body{margin:0;font-family:Arial;background:#f2f4f7}
   <div id="voiceText" class="small"></div>
 </div>
 
-<!-- SCORECARD (placeholder – next step) -->
+<!-- SCORECARD (NEXT STEP) -->
 <div class="section">
   <div class="title">🧾 Scorecard</div>
-  <div id="scorecard">Scorecard loading...</div>
+  <div id="scorecard">Scorecard coming next...</div>
 </div>
 
 <script>
+/* =====================
+   API URL
+===================== */
 const API =
 "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
 
 /* =====================
-   MATCH INFO (CricketMatchData)
-   Columns:
+   MATCH INFO
+   CricketMatchData:
    MatchID, TeamA, TeamB, Venue, MatchType, Overs, MatchDate, Status
 ===================== */
 function loadMatchInfo(){
@@ -99,35 +102,45 @@ function loadMatchInfo(){
         Status: <b>${m.Status}</b>
       `;
     })
-    .catch(()=>{ document.getElementById("matchInfo").innerText="Error loading match info";});
+    .catch(()=>{
+      document.getElementById("matchInfo").innerText="Error loading match info";
+    });
 }
 
 /* =====================
-   TEAMS (Teams sheet)
-   Columns assumed: Team, Player
+   TEAMS (FINAL – CORRECT)
+   TeamName | PlayerName | Role | IsPlayingXI | IsCaptain
 ===================== */
 function loadTeams(){
   fetch(API + "?type=teams")
     .then(r => r.json())
     .then(data => {
       if(!data || data.length === 0){
-        document.getElementById("teams").innerText = "No team data";
+        document.getElementById("teams").innerText = "No Playing XI data";
         return;
       }
+
       const map = {};
-      data.forEach(p=>{
-        if(!map[p.Team]) map[p.Team]=[];
-        map[p.Team].push(p.Player);
+      data.forEach(p => {
+        if(!map[p.TeamName]) map[p.TeamName] = [];
+        map[p.TeamName].push(p);
       });
-      let out="";
-      for(const t in map){
-        out += `<b>${t}</b><ul>`;
-        map[t].forEach(pl=> out+=`<li>${pl}</li>`);
-        out += `</ul>`;
-      }
-      document.getElementById("teams").innerHTML = out;
+
+      let html = "";
+      Object.keys(map).forEach(team => {
+        html += `<b>${team}</b><ul>`;
+        map[team].forEach(p => {
+          const cap = (p.IsCaptain === "YES") ? " (C)" : "";
+          html += `<li>${p.PlayerName} – ${p.Role}${cap}</li>`;
+        });
+        html += `</ul>`;
+      });
+
+      document.getElementById("teams").innerHTML = html;
     })
-    .catch(()=>{ document.getElementById("teams").innerText="Error loading teams";});
+    .catch(()=>{
+      document.getElementById("teams").innerText="Error loading teams";
+    });
 }
 
 /* =====================
@@ -135,16 +148,16 @@ function loadTeams(){
 ===================== */
 function loadScore(){
   fetch(API + "?type=score")
-  .then(r=>r.json())
-  .then(d=>{
-    document.getElementById("score").innerHTML =
-      d.Runs + "/" + d.Wickets + "<br>Overs: " + d.Overs + "." + d.Balls;
-  });
+    .then(r=>r.json())
+    .then(d=>{
+      document.getElementById("score").innerHTML =
+        d.Runs + "/" + d.Wickets + "<br>Overs: " + d.Overs + "." + d.Balls;
+    });
 }
 
 function send(action,value=0){
   fetch(API + "?action=" + action + "&value=" + value)
-  .then(()=>loadScore());
+    .then(()=>loadScore());
 }
 
 /* =====================
@@ -159,6 +172,7 @@ function startVoice(){
   r.onresult = e=>{
     const t = e.results[0][0].transcript.toLowerCase();
     document.getElementById("voiceText").innerText = "🎧 " + t;
+
     if(t.includes("one")||t.includes("single")) send("run",1);
     else if(t.includes("two")||t.includes("double")) send("run",2);
     else if(t.includes("three")) send("run",3);
@@ -171,7 +185,9 @@ function startVoice(){
   r.start();
 }
 
-/* AUTO LOAD */
+/* =====================
+   AUTO LOAD
+===================== */
 loadMatchInfo();
 loadTeams();
 loadScore();
