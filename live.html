@@ -61,7 +61,17 @@ Loading...
   <button class="extra" onclick="send('wide')">Wide</button>
   <button class="extra" onclick="send('noball')">No Ball</button>
   <button class="wicket" onclick="send('wicket')">Wicket</button>
+  <button style="background:#555;color:#fff" onclick="sendUndo()">
+  Undo
+  </button>
 </div>
+
+  <script>
+function sendUndo() {
+  fetch(API + "?action=undo")
+    .then(() => loadScore());
+}
+  </script>
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
