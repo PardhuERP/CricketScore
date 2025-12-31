@@ -145,6 +145,12 @@ function loadTeams(){
     });
 }
 
+.catch(err=>{
+  document.getElementById("matchInfo").innerText =
+    "Error loading match info";
+  console.error("MATCH INFO ERROR:", err);
+});
+
 /* =====================
    LIVE SCORE
 ===================== */
