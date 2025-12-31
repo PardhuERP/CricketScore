@@ -51,6 +51,7 @@ button{
 .msg{
   margin-top:10px;
   font-weight:bold;
+  word-break:break-word;
 }
 </style>
 </head>
@@ -74,31 +75,35 @@ button{
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+const API =
+"https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
 
 function login(){
-  const u = document.getElementById("user").value.trim();
-  const p = document.getElementById("pass").value.trim();
+  var u = document.getElementById("user").value.trim();
+  var p = document.getElementById("pass").value.trim();
 
-  fetch(API + "?type=adminlogin&user=" + encodeURIComponent(u) + "&pass=" + encodeURIComponent(p))
-    .then(res => res.text())
-    .then(txt => {
-      document.getElementById("loginMsg").innerText = txt;
-    })
-    .catch(err => {
-      document.getElementById("loginMsg").innerText = "API Error";
-    });
+  fetch(
+    API + "?type=adminlogin&user=" + encodeURIComponent(u) + "&pass=" + encodeURIComponent(p),
+    { method:"GET", cache:"no-store" }
+  )
+  .then(function(res){ return res.text(); })
+  .then(function(txt){
+    document.getElementById("loginMsg").innerText = txt;
+  })
+  .catch(function(){
+    document.getElementById("loginMsg").innerText = "API Error";
+  });
 }
 
 function lock(){
-  fetch(API + "?type=adminlogout")
-    .then(res => res.text())
-    .then(txt => {
-      document.getElementById("lockMsg").innerText = txt;
-    })
-    .catch(err => {
-      document.getElementById("lockMsg").innerText = "API Error";
-    });
+  fetch(API + "?type=adminlogout", { method:"GET", cache:"no-store" })
+  .then(function(res){ return res.text(); })
+  .then(function(txt){
+    document.getElementById("lockMsg").innerText = txt;
+  })
+  .catch(function(){
+    document.getElementById("lockMsg").innerText = "API Error";
+  });
 }
 </script>
 
