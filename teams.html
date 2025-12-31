@@ -1,78 +1,134 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Teams & Players</title>
+<title>Teams Management</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 body{
-  font-family:Arial;
-  background:#f2f4f7;
   margin:0;
+  font-family: Arial, sans-serif;
+  background:#f2f4f8;
 }
 .header{
-  background:#0a3d62;
+  background:#0a7cff;
   color:#fff;
-  padding:15px;
+  padding:14px;
   text-align:center;
   font-size:18px;
-}
-.team{
-  background:#fff;
-  margin:15px;
-  padding:15px;
-  border-radius:10px;
-}
-.team h3{
-  margin:0 0 10px;
-}
-.player{
-  font-size:14px;
-  padding:4px 0;
-}
-.captain{
-  color:#c0392b;
   font-weight:bold;
 }
+.container{
+  padding:16px;
+}
+.section{
+  background:#fff;
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:16px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+.section h3{
+  margin-top:0;
+}
+input, button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:15px;
+}
+button{
+  background:#0a7cff;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+}
+.team{
+  padding:10px;
+  border-bottom:1px solid #eee;
+}
+.team:last-child{ border-bottom:none; }
 </style>
 </head>
 
 <body>
 
-<div class="header">🏏 Teams & Playing XI</div>
+<div class="header">👥 Teams Management</div>
 
-<div id="teams">Loading teams...</div>
+<div class="container">
+
+  <!-- CREATE TEAM -->
+  <div class="section">
+    <h3>➕ Create Team</h3>
+    <input type="text" id="teamName" placeholder="Enter Team Name">
+    <button onclick="createTeam()">Create Team</button>
+  </div>
+
+  <!-- TEAMS LIST -->
+  <div class="section">
+    <h3>🏏 Teams</h3>
+    <div id="teamsList">Loading teams...</div>
+  </div>
+
+</div>
 
 <script>
-fetch("https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec")
-.then(res => res.json())
-.then(data => {
-  let teams = {};
-  
-  data.forEach(p => {
-    if (p.IsPlayingXI === "YES") {
-      if (!teams[p.TeamName]) teams[p.TeamName] = [];
-      teams[p.TeamName].push(p);
-    }
-  });
+/* 🔒 FIXED CONFIG – NEVER CHANGE */
+const GOOGLE_SHEET_ID = "1594dHXPzK71fte_WgI996KlzdhOFprpEZ78wottTZMA";
+const API_URL = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
 
-  let html = "";
-  for (let t in teams) {
-    html += `<div class="team"><h3>${t}</h3>`;
-    teams[t].forEach(pl => {
-      html += `
-        <div class="player ${pl.IsCaptain === "YES" ? "captain" : ""}">
-          ${pl.PlayerName} (${pl.Role})
-          ${pl.IsCaptain === "YES" ? " - Captain" : ""}
-        </div>
-      `;
+/* Load teams on page load */
+window.onload = loadTeams;
+
+/* Fetch teams */
+function loadTeams(){
+  fetch(API_URL + "?action=getTeams")
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById("teamsList");
+      list.innerHTML = "";
+      if(data.length === 0){
+        list.innerHTML = "No teams created yet";
+        return;
+      }
+      data.forEach(team => {
+        const div = document.createElement("div");
+        div.className = "team";
+        div.innerText = "🏏 " + team;
+        list.appendChild(div);
+      });
+    })
+    .catch(err => {
+      document.getElementById("teamsList").innerHTML = "Error loading teams";
     });
-    html += `</div>`;
+}
+
+/* Create team */
+function createTeam(){
+  const name = document.getElementById("teamName").value.trim();
+  if(name === ""){
+    alert("Enter team name");
+    return;
   }
 
-  document.getElementById("teams").innerHTML = html;
-});
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "createTeam",
+      teamName: name
+    })
+  })
+  .then(res => res.text())
+  .then(msg => {
+    alert("Team Created");
+    document.getElementById("teamName").value = "";
+    loadTeams();
+  })
+  .catch(err => alert("Error creating team"));
+}
 </script>
 
 </body>
