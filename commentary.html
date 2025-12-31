@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Commentary</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f2f4f7;
+    }
+
+    .header {
+      background: #0a3d62;
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .box {
+      background: #fff;
+      margin: 15px;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    .line {
+      font-size: 15px;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .time {
+      font-size: 12px;
+      color: #777;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">🎙️ Live Commentary</div>
+
+  <div class="box" id="commentary">
+    Loading commentary...
+  </div>
+
+  <script>
+    const API =
+      "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+
+    let history = [];
+
+    function loadCommentary() {
+      fetch(API + "?type=commentary")
+        .then(res => res.json())
+        .then(data => {
+          if (history.length === 0 || history[0].commentary !== data.commentary) {
+            history.unshift(data);
+            if (history.length > 10) history.pop();
+          }
+
+          let html = "";
+          history.forEach(item => {
+            html += `
+              <div class="line">
+                ${item.commentary}
+                <div class="time">${item.time}</div>
+              </div>
+            `;
+          });
+
+          document.getElementById("commentary").innerHTML = html;
+        });
+    }
+
+    loadCommentary();
+    setInterval(loadCommentary, 3000);
+  </script>
+
+</body>
+</html>
