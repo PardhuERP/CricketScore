@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Cricket Match</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial;background:#f4f6f8;padding:15px}
+.match{
+  background:#fff;
+  padding:15px;
+  border-radius:10px;
+  margin-bottom:10px;
+}
+.live{color:green;font-weight:bold}
+</style>
+</head>
+<body>
+
+<h2>🏏 Match Details</h2>
+<div id="matches">Loading...</div>
+
+<script>
+fetch("PASTE_YOUR_SCRIPT_URL_HERE")
+.then(res => res.json())
+.then(data => {
+  let html = "";
+  data.forEach(m => {
+    html += `
+      <div class="match">
+        <h3>${m.TeamA} vs ${m.TeamB}</h3>
+        <p>📍 ${m.Venue}</p>
+        <p>🕒 ${m.MatchType} | ${m.Overs} Overs</p>
+        <p>📅 ${m.MatchDate}</p>
+        <p>Status: <span class="live">${m.Status}</span></p>
+      </div>
+    `;
+  });
+  document.getElementById("matches").innerHTML = html;
+});
+</script>
+
+</body>
+</html>
