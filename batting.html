@@ -2,100 +2,48 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Batting Scorecard</title>
+  <title>Batting</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f2f4f7;
-    }
-
-    .header {
-      background: #0a3d62;
-      color: #ffffff;
-      padding: 15px;
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .card {
-      background: #ffffff;
-      margin: 15px;
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-      text-align: center;
-    }
-
-    .player {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    .stats {
-      font-size: 15px;
-      margin: 6px 0;
-      color: #333;
-    }
-
-    .sr {
-      font-size: 16px;
-      margin-top: 10px;
-      font-weight: bold;
-      color: #1e8449;
-    }
+    body { margin:0;font-family:Arial;background:#f2f4f7; }
+    .header { background:#0a3d62;color:#fff;padding:15px;text-align:center;font-size:18px; }
+    .card { background:#fff;margin:15px;padding:15px;border-radius:12px; }
+    .row { display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee; }
+    .strike { color:#1e8449;font-weight:bold; }
   </style>
 </head>
 
 <body>
 
-  <div class="header">🏏 Batting Scorecard</div>
+<div class="header">🏏 Batting (Live)</div>
+<div class="card" id="bat">Loading...</div>
 
-  <div class="card">
-    <div class="player" id="player">Loading...</div>
-    <div class="stats" id="runs"></div>
-    <div class="stats" id="fours"></div>
-    <div class="stats" id="sixes"></div>
-    <div class="sr" id="sr"></div>
-  </div>
+<script>
+const API =
+  "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
 
-  <script>
-    const API =
-      "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+function loadBat() {
+  fetch(API + "?type=bat")
+    .then(r => r.json())
+    .then(data => {
+      let html = "";
+      data.forEach(p => {
+        let sr = p.Balls > 0 ? ((p.Runs / p.Balls) * 100).toFixed(1) : "0.0";
+        html += `
+          <div class="row ${p.OnStrike === "YES" ? "strike" : ""}">
+            <span>${p.Player}${p.OnStrike === "YES" ? " *" : ""}</span>
+            <span>${p.Runs} (${p.Balls}) SR ${sr}</span>
+          </div>
+        `;
+      });
+      document.getElementById("bat").innerHTML = html;
+    });
+}
 
-    function loadBatting() {
-      fetch(API + "?type=bat")
-        .then(response => response.json())
-        .then(data => {
-          const strikeRate =
-            data.Balls > 0
-              ? ((data.Runs / data.Balls) * 100).toFixed(1)
-              : "0.0";
-
-          document.getElementById("player").innerText =
-            data.Player;
-
-          document.getElementById("runs").innerText =
-            "Runs: " + data.Runs + " | Balls: " + data.Balls;
-
-          document.getElementById("fours").innerText =
-            "Fours: " + data.Fours;
-
-          document.getElementById("sixes").innerText =
-            "Sixes: " + data.Sixes;
-
-          document.getElementById("sr").innerText =
-            "Strike Rate: " + strikeRate;
-        });
-    }
-
-    loadBatting();
-    setInterval(loadBatting, 3000);
-  </script>
+loadBat();
+setInterval(loadBat, 3000);
+</script>
 
 </body>
 </html>
