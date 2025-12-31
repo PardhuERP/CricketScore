@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Batting & Bowling Stats</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#f2f4f8;
+}
+.header{
+  background:#0a7cff;
+  color:#fff;
+  padding:14px;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+}
+.container{ padding:16px; }
+
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:16px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:14px;
+}
+th, td{
+  padding:8px;
+  border-bottom:1px solid #eee;
+  text-align:center;
+}
+th{
+  background:#f7f7f7;
+  font-weight:bold;
+}
+.title{
+  font-weight:bold;
+  margin-bottom:8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">📊 Batting & Bowling Stats</div>
+
+<div class="container">
+
+  <!-- BATTING -->
+  <div class="card">
+    <div class="title">🏏 Batting</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>R</th>
+          <th>B</th>
+          <th>4s</th>
+          <th>6s</th>
+          <th>SR</th>
+        </tr>
+      </thead>
+      <tbody id="battingTable">
+        <tr><td colspan="6">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BOWLING -->
+  <div class="card">
+    <div class="title">🎯 Bowling</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Bowler</th>
+          <th>O</th>
+          <th>R</th>
+          <th>W</th>
+          <th>Econ</th>
+        </tr>
+      </thead>
+      <tbody id="bowlingTable">
+        <tr><td colspan="5">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+/* 🔒 FIXED CONFIG – NEVER CHANGE */
+const GOOGLE_SHEET_ID = "1594dHXPzK71fte_WgI996KlzdhOFprpEZ78wottTZMA";
+const API_URL = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+
+function loadStats(){
+  fetch(API_URL + "?action=getStats")
+    .then(res => res.json())
+    .then(d => {
+
+      /* Batting */
+      const bat = document.getElementById("battingTable");
+      bat.innerHTML = "";
+      if(d.batting.length === 0){
+        bat.innerHTML = "<tr><td colspan='6'>No data</td></tr>";
+      }else{
+        d.batting.forEach(p=>{
+          const sr = p.balls > 0 ? ((p.runs/p.balls)*100).toFixed(1) : 0;
+          bat.innerHTML += `
+            <tr>
+              <td>${p.name}</td>
+              <td>${p.runs}</td>
+              <td>${p.balls}</td>
+              <td>${p.fours}</td>
+              <td>${p.sixes}</td>
+              <td>${sr}</td>
+            </tr>`;
+        });
+      }
+
+      /* Bowling */
+      const bowl = document.getElementById("bowlingTable");
+      bowl.innerHTML = "";
+      if(d.bowling.length === 0){
+        bowl.innerHTML = "<tr><td colspan='5'>No data</td></tr>";
+      }else{
+        d.bowling.forEach(b=>{
+          const econ = b.overs > 0 ? (b.runs/b.overs).toFixed(1) : 0;
+          bowl.innerHTML += `
+            <tr>
+              <td>${b.name}</td>
+              <td>${b.overs}</td>
+              <td>${b.runs}</td>
+              <td>${b.wickets}</td>
+              <td>${econ}</td>
+            </tr>`;
+        });
+      }
+
+    });
+}
+
+loadStats();
+setInterval(loadStats, 5000);
+</script>
+
+</body>
+</html>
