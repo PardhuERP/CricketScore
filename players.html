@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Players Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#f2f4f8;
+}
+.header{
+  background:#0a7cff;
+  color:#fff;
+  padding:14px;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+}
+.container{
+  padding:16px;
+}
+.section{
+  background:#fff;
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:16px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+input, select, button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:15px;
+}
+button{
+  background:#0a7cff;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+}
+.player{
+  padding:8px;
+  border-bottom:1px solid #eee;
+}
+.player:last-child{border-bottom:none;}
+</style>
+</head>
+
+<body>
+
+<div class="header">🏏 Players Management</div>
+
+<div class="container">
+
+  <!-- ADD PLAYER -->
+  <div class="section">
+    <h3>➕ Add Player</h3>
+
+    <select id="teamSelect"></select>
+
+    <input type="text" id="playerName" placeholder="Player Name">
+
+    <select id="role">
+      <option value="Batsman">Batsman</option>
+      <option value="Bowler">Bowler</option>
+      <option value="All-Rounder">All-Rounder</option>
+      <option value="Wicket Keeper">Wicket Keeper</option>
+    </select>
+
+    <button onclick="addPlayer()">Add Player</button>
+  </div>
+
+  <!-- PLAYERS LIST -->
+  <div class="section">
+    <h3>📋 Players List</h3>
+    <div id="playersList">Select team to view players</div>
+  </div>
+
+</div>
+
+<script>
+/* 🔒 FIXED CONFIG – NEVER CHANGE */
+const GOOGLE_SHEET_ID = "1594dHXPzK71fte_WgI996KlzdhOFprpEZ78wottTZMA";
+const API_URL = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+
+window.onload = loadTeams;
+
+/* Load teams in dropdown */
+function loadTeams(){
+  fetch(API_URL + "?action=getTeams")
+    .then(res => res.json())
+    .then(data => {
+      const select = document.getElementById("teamSelect");
+      select.innerHTML = "";
+      data.forEach(team => {
+        const opt = document.createElement("option");
+        opt.value = team;
+        opt.innerText = team;
+        select.appendChild(opt);
+      });
+      loadPlayers();
+    });
+}
+
+/* Load players for selected team */
+document.getElementById("teamSelect").addEventListener("change", loadPlayers);
+
+function loadPlayers(){
+  const team = document.getElementById("teamSelect").value;
+  fetch(API_URL + "?action=getPlayers&team=" + encodeURIComponent(team))
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById("playersList");
+      list.innerHTML = "";
+      if(data.length === 0){
+        list.innerHTML = "No players added";
+        return;
+      }
+      data.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "player";
+        div.innerText = "🏏 " + p.name + " (" + p.role + ")";
+        list.appendChild(div);
+      });
+    });
+}
+
+/* Add player */
+function addPlayer(){
+  const team = document.getElementById("teamSelect").value;
+  const name = document.getElementById("playerName").value.trim();
+  const role = document.getElementById("role").value;
+
+  if(name === ""){
+    alert("Enter player name");
+    return;
+  }
+
+  fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"addPlayer",
+      team:team,
+      name:name,
+      role:role
+    })
+  })
+  .then(res=>res.text())
+  .then(msg=>{
+    alert("Player added");
+    document.getElementById("playerName").value="";
+    loadPlayers();
+  });
+}
+</script>
+
+</body>
+</html>
