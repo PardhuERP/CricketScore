@@ -36,17 +36,9 @@ body{
   cursor:pointer;
   transition:0.2s;
 }
-.card:hover{
-  transform:scale(1.03);
-}
-.icon{
-  font-size:36px;
-  margin-bottom:10px;
-}
-.title{
-  font-size:16px;
-  font-weight:bold;
-}
+.card:hover{ transform:scale(1.03); }
+.icon{ font-size:36px; margin-bottom:10px; }
+.title{ font-size:16px; font-weight:bold; }
 .footer{
   margin-top:25px;
   text-align:center;
@@ -58,44 +50,42 @@ body{
 
 <body>
 
-<div class="header">
-🏏 Mini Cricket Dashboard
-</div>
+<div class="header">🏏 Mini Cricket Dashboard</div>
 
 <div class="container">
   <div class="grid">
 
-    <div class="card" onclick="alert('Teams')">
+    <div class="card" onclick="openPage('teams')">
       <div class="icon">👥</div>
       <div class="title">Teams</div>
     </div>
 
-    <div class="card" onclick="alert('Create Team')">
+    <div class="card" onclick="openPage('createTeam')">
       <div class="icon">➕</div>
       <div class="title">Create Team</div>
     </div>
 
-    <div class="card" onclick="alert('Live Score')">
+    <div class="card" onclick="openPage('liveScore')">
       <div class="icon">📊</div>
       <div class="title">Live Score</div>
     </div>
 
-    <div class="card" onclick="alert('Score Entry Board')">
+    <div class="card" onclick="openPage('scoreEntry')">
       <div class="icon">✍️</div>
       <div class="title">Score Entry</div>
     </div>
 
-    <div class="card" onclick="alert('Mic Input')">
+    <div class="card" onclick="openPage('mic')">
       <div class="icon">🎤</div>
       <div class="title">Mic</div>
     </div>
 
-    <div class="card" onclick="alert('Batting Board')">
+    <div class="card" onclick="openPage('batting')">
       <div class="icon">🏏</div>
       <div class="title">Batting</div>
     </div>
 
-    <div class="card" onclick="alert('Bowling Board')">
+    <div class="card" onclick="openPage('bowling')">
       <div class="icon">🎯</div>
       <div class="title">Bowling</div>
     </div>
@@ -103,9 +93,20 @@ body{
   </div>
 
   <div class="footer">
-    Powered by Google Sheet Backend
+    Google Sheet Connected • API Ready
   </div>
 </div>
+
+<script>
+/* 🔒 FIXED CONFIG – NEVER CHANGE */
+const GOOGLE_SHEET_ID = "1594dHXPzK71fte_WgI996KlzdhOFprpEZ78wottTZMA";
+const API_URL = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+
+/* Navigation placeholder */
+function openPage(page){
+  alert("Open: " + page + "\nAPI Connected");
+}
+</script>
 
 </body>
 </html>
