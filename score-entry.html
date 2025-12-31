@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Score Entry Board</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#f2f4f8;
+}
+.header{
+  background:#0a7cff;
+  color:#fff;
+  padding:14px;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+}
+.container{ padding:16px; }
+
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:14px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+  text-align:center;
+}
+
+.score{
+  font-size:28px;
+  font-weight:bold;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:10px;
+  margin-top:12px;
+}
+
+button{
+  padding:14px;
+  font-size:18px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  background:#0a7cff;
+  color:#fff;
+}
+
+.small{ background:#555; }
+.wicket{ background:#e53935; }
+.extra{ background:#ff9800; }
+.undo{ background:#777; }
+</style>
+</head>
+
+<body>
+
+<div class="header">✍️ Score Entry Board</div>
+
+<div class="container">
+
+  <div class="card">
+    <div class="score" id="score">0 / 0</div>
+    <div id="overs">Overs: 0.0</div>
+  </div>
+
+  <div class="card">
+    <div class="grid">
+      <button onclick="addRun(0)">0</button>
+      <button onclick="addRun(1)">1</button>
+      <button onclick="addRun(2)">2</button>
+
+      <button onclick="addRun(3)">3</button>
+      <button onclick="addRun(4)">4</button>
+      <button onclick="addRun(6)">6</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="grid">
+      <button class="extra" onclick="extraRun()">Wide</button>
+      <button class="extra" onclick="extraRun()">No Ball</button>
+      <button class="wicket" onclick="addWicket()">Wicket</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <button class="undo" onclick="undo()">Undo Last Ball</button>
+  </div>
+
+</div>
+
+<script>
+/* 🔒 FIXED CONFIG – NEVER CHANGE */
+const GOOGLE_SHEET_ID = "1594dHXPzK71fte_WgI996KlzdhOFprpEZ78wottTZMA";
+const API_URL = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+
+let runs = 0;
+let wickets = 0;
+let balls = 0;
+let history = [];
+
+/* Load current score from sheet */
+function loadScore(){
+  fetch(API_URL + "?action=getLiveScore")
+    .then(res => res.json())
+    .then(d => {
+      runs = Number(d.runs);
+      wickets = Number(d.wickets);
+      balls = Math.floor(Number(d.overs)) * 6 + Math.round((Number(d.overs) % 1) * 10);
+      updateUI();
+    });
+}
+
+function updateUI(){
+  const overs = Math.floor(balls / 6) + "." + (balls % 6);
+  document.getElementById("score").innerText = runs + " / " + wickets;
+  document.getElementById("overs").innerText = "Overs: " + overs;
+}
+
+/* Push update to sheet */
+function pushUpdate(){
+  fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"updateScore",
+      runs:runs,
+      wickets:wickets,
+      balls:balls
+    })
+  });
+}
+
+/* Actions */
+function addRun(r){
+  history.push({runs,wickets,balls});
+  runs += r;
+  balls += 1;
+  updateUI();
+  pushUpdate();
+}
+
+function extraRun(){
+  history.push({runs,wickets,balls});
+  runs += 1;
+  updateUI();
+  pushUpdate();
+}
+
+function addWicket(){
+  history.push({runs,wickets,balls});
+  wickets += 1;
+  balls += 1;
+  updateUI();
+  pushUpdate();
+}
+
+function undo(){
+  if(history.length === 0) return;
+  const last = history.pop();
+  runs = last.runs;
+  wickets = last.wickets;
+  balls = last.balls;
+  updateUI();
+  pushUpdate();
+}
+
+loadScore();
+</script>
+
+</body>
+</html>
