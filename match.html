@@ -1,42 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Cricket Match</title>
+<title>Cricket Match – Live Scores</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-body{font-family:Arial;background:#f4f6f8;padding:15px}
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:#f2f4f7;
+}
+
+/* HEADER */
+.header{
+  background:#0a3d62;
+  color:#fff;
+  padding:15px;
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
+}
+
+/* MATCH CARD */
 .match{
   background:#fff;
+  margin:15px;
   padding:15px;
-  border-radius:10px;
-  margin-bottom:10px;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
 }
-.live{color:green;font-weight:bold}
+
+.match h3{
+  margin:0 0 8px;
+  font-size:18px;
+}
+
+.match p{
+  margin:4px 0;
+  font-size:14px;
+  color:#444;
+}
+
+/* STATUS COLORS */
+.live{
+  color:#1e8449;
+  font-weight:bold;
+}
+
+.upcoming{
+  color:#d68910;
+  font-weight:bold;
+}
+
+.completed{
+  color:#7f8c8d;
+  font-weight:bold;
+}
+
+/* FOOTER */
+.footer{
+  text-align:center;
+  font-size:12px;
+  color:#777;
+  padding:10px 0 20px;
+}
 </style>
 </head>
+
 <body>
 
-<h2>🏏 Match Details</h2>
-<div id="matches">Loading...</div>
+<div class="header">🏏 Cricket Match Center</div>
+
+<div id="matches" style="padding-bottom:10px;">
+  Loading match details...
+</div>
+
+<div class="footer">
+  Powered by Google Sheet • GitHub • App
+</div>
 
 <script>
 fetch("https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec")
-.then(res => res.json())
+.then(response => response.json())
 .then(data => {
-  let html = "";
+  let output = "";
+
   data.forEach(m => {
-    html += `
+    let statusClass = m.Status.toLowerCase();
+
+    output += `
       <div class="match">
         <h3>${m.TeamA} vs ${m.TeamB}</h3>
-        <p>📍 ${m.Venue}</p>
-        <p>🕒 ${m.MatchType} | ${m.Overs} Overs</p>
-        <p>📅 ${m.MatchDate}</p>
-        <p>Status: <span class="live">${m.Status}</span></p>
+        <p>📍 Venue: ${m.Venue}</p>
+        <p>🕒 Match: ${m.MatchType} • ${m.Overs} Overs</p>
+        <p>📅 Date: ${m.MatchDate}</p>
+        <p>Status:
+          <span class="${statusClass}">
+            ${m.Status}
+          </span>
+        </p>
       </div>
     `;
   });
-  document.getElementById("matches").innerHTML = html;
+
+  document.getElementById("matches").innerHTML = output;
+})
+.catch(() => {
+  document.getElementById("matches").innerHTML =
+    "❌ Unable to load match data";
 });
 </script>
 
