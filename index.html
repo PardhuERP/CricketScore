@@ -66,23 +66,18 @@ body{margin:0;font-family:Arial;background:#f2f4f7}
   <div id="voiceText" class="small"></div>
 </div>
 
-<!-- SCORECARD (NEXT STEP) -->
+<!-- SCORECARD -->
 <div class="section">
   <div class="title">🧾 Scorecard</div>
   <div id="scorecard">Scorecard coming next...</div>
 </div>
 
 <script>
-/* =====================
-   API URL
-===================== */
 const API =
 "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
 
 /* =====================
-   MATCH INFO
-   CricketMatchData:
-   MatchID, TeamA, TeamB, Venue, MatchType, Overs, MatchDate, Status
+   MATCH INFO (FINAL FIX)
 ===================== */
 function loadMatchInfo(){
   fetch(API)
@@ -92,13 +87,21 @@ function loadMatchInfo(){
         document.getElementById("matchInfo").innerText = "No match data";
         return;
       }
+
       const m = data[0];
+
+      // 🔧 DATE FIX (ONLY CHANGE)
+      let matchDate = m.MatchDate;
+      if (matchDate && matchDate.includes("T")) {
+        matchDate = matchDate.split("T")[0];
+      }
+
       document.getElementById("matchInfo").innerHTML = `
         <b>${m.TeamA} vs ${m.TeamB}</b><br>
         Match ID: ${m.MatchID}<br>
         Venue: ${m.Venue}<br>
         Type: ${m.MatchType} | Overs: ${m.Overs}<br>
-        Date: ${m.MatchDate}<br>
+        Date: ${matchDate}<br>
         Status: <b>${m.Status}</b>
       `;
     })
@@ -108,8 +111,7 @@ function loadMatchInfo(){
 }
 
 /* =====================
-   TEAMS (FINAL – CORRECT)
-   TeamName | PlayerName | Role | IsPlayingXI | IsCaptain
+   TEAMS (FINAL)
 ===================== */
 function loadTeams(){
   fetch(API + "?type=teams")
