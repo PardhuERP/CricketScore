@@ -58,4 +58,65 @@ body{
 
   <div class="card">
     <div id="matchTitle" class="sub">Loading match...</div>
-    <div class="score" id="score">0 / 0
+    <div class="score" id="score">0 / 0</div>
+    <div class="sub" id="overs">Overs: 0.0</div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <span class="label">Batting</span>
+      <span class="value" id="batting">-</span>
+    </div>
+    <div class="row">
+      <span class="label">Bowling</span>
+      <span class="value" id="bowling">-</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <span class="label">Striker</span>
+      <span class="value" id="striker">-</span>
+    </div>
+    <div class="row">
+      <span class="label">Non-Striker</span>
+      <span class="value" id="nonstriker">-</span>
+    </div>
+    <div class="row">
+      <span class="label">Bowler</span>
+      <span class="value" id="bowler">-</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* 🔒 FIXED CONFIG – NEVER CHANGE */
+const GOOGLE_SHEET_ID = "1594dHXPzK71fte_WgI996KlzdhOFprpEZ78wottTZMA";
+const API_URL = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+
+/* Fetch live score */
+function loadScore(){
+  fetch(API_URL + "?action=getLiveScore")
+    .then(res => res.json())
+    .then(d => {
+      document.getElementById("matchTitle").innerText = d.match;
+      document.getElementById("score").innerText = d.runs + " / " + d.wickets;
+      document.getElementById("overs").innerText = "Overs: " + d.overs;
+
+      document.getElementById("batting").innerText = d.batting;
+      document.getElementById("bowling").innerText = d.bowling;
+
+      document.getElementById("striker").innerText = d.striker;
+      document.getElementById("nonstriker").innerText = d.nonstriker;
+      document.getElementById("bowler").innerText = d.bowler;
+    })
+    .catch(err => console.log("Error loading score"));
+}
+
+loadScore();
+setInterval(loadScore, 5000); // auto refresh
+</script>
+
+</body>
+</html>
