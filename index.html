@@ -17,6 +17,8 @@ body{margin:0;font-family:Arial;background:#f2f4f7}
 }
 .extra{background:#e67e22}
 .wicket{background:#c0392b}
+.voice{background:#2980b9;width:100%;color:#fff}
+.small{font-size:13px;color:#555}
 </style>
 </head>
 
@@ -24,82 +26,172 @@ body{margin:0;font-family:Arial;background:#f2f4f7}
 
 <div class="header">🏏 Live Cricket Match</div>
 
+<!-- MATCH INFO -->
+<div class="section">
+  <div class="title">📋 Match Info</div>
+  <div id="matchInfo">Loading match details...</div>
+</div>
+
+<!-- TEAMS -->
 <div class="section">
   <div class="title">👥 Teams</div>
   <div id="teams">Loading teams...</div>
 </div>
 
+<!-- LIVE SCORE -->
 <div class="section">
   <div class="title">📊 Live Score</div>
   <div class="score" id="score">Loading...</div>
 </div>
 
+<!-- SCORING CONTROLS -->
 <div class="section">
-  <div class="title">🎯 Scoring</div>
+  <div class="title">🎯 Scoring Controls</div>
   <div class="buttons">
     <button onclick="send('run',1)">+1</button>
     <button onclick="send('run',2)">+2</button>
+    <button onclick="send('run',3)">+3</button>
     <button onclick="send('run',4)">+4</button>
     <button onclick="send('run',6)">+6</button>
     <button class="extra" onclick="send('wide')">Wide</button>
+    <button class="extra" onclick="send('noball')">No Ball</button>
     <button class="wicket" onclick="send('wicket')">Wicket</button>
   </div>
 </div>
 
+<!-- VOICE -->
+<div class="section">
+  <div class="title">🎙️ Voice Scoring</div>
+  <button class="voice" onclick="startVoice()">Start Voice</button>
+  <div id="voiceText" class="small"></div>
+</div>
+
+<!-- SCORECARD (NEXT STEP) -->
+<div class="section">
+  <div class="title">🧾 Scorecard</div>
+  <div id="scorecard">Scorecard coming next...</div>
+</div>
+
 <script>
-var API = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+/* =====================
+   API URL
+===================== */
+const API =
+"https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
 
-/* LOAD TEAMS – SAME AS WORKING PAGE */
-function loadTeams(){
+/* =====================
+   MATCH INFO
+   CricketMatchData:
+   MatchID, TeamA, TeamB, Venue, MatchType, Overs, MatchDate, Status
+===================== */
+function loadMatchInfo(){
   fetch(API)
-    .then(function(res){ return res.json(); })
-    .then(function(data){
-      var teams={}, html="";
-      for(var i=0;i<data.length;i++){
-        var p=data[i];
-        if(p.IsPlayingXI!=="YES") continue;
-        if(!teams[p.TeamName]) teams[p.TeamName]=[];
-        teams[p.TeamName].push(p);
+    .then(r => r.json())
+    .then(data => {
+      if(!data || data.length === 0){
+        document.getElementById("matchInfo").innerText = "No match data";
+        return;
       }
-      for(var t in teams){
-        html+="<b>"+t+"</b><ul>";
-        for(var j=0;j<teams[t].length;j++){
-          var pl=teams[t][j];
-          html+="<li>"+pl.PlayerName+" ("+pl.Role+")"+
-                (pl.IsCaptain==="YES"?" (C)":"")+"</li>";
-        }
-        html+="</ul>";
-      }
-      document.getElementById("teams").innerHTML = html || "No teams";
+      const m = data[0];
+      document.getElementById("matchInfo").innerHTML = `
+        <b>${m.TeamA} vs ${m.TeamB}</b><br>
+        Match ID: ${m.MatchID}<br>
+        Venue: ${m.Venue}<br>
+        Type: ${m.MatchType} | Overs: ${m.Overs}<br>
+        Date: ${m.MatchDate}<br>
+        Status: <b>${m.Status}</b>
+      `;
     })
-    .catch(function(){
-      document.getElementById("teams").innerHTML = "Teams load failed";
+    .catch(()=>{
+      document.getElementById("matchInfo").innerText="Error loading match info";
     });
 }
 
-/* LOAD SCORE */
+/* =====================
+   TEAMS (FINAL – CORRECT)
+   TeamName | PlayerName | Role | IsPlayingXI | IsCaptain
+===================== */
+function loadTeams(){
+  fetch(API + "?type=teams")
+    .then(r => r.json())
+    .then(data => {
+      if(!data || data.length === 0){
+        document.getElementById("teams").innerText = "No Playing XI data";
+        return;
+      }
+
+      const map = {};
+      data.forEach(p => {
+        if(!map[p.TeamName]) map[p.TeamName] = [];
+        map[p.TeamName].push(p);
+      });
+
+      let html = "";
+      Object.keys(map).forEach(team => {
+        html += `<b>${team}</b><ul>`;
+        map[team].forEach(p => {
+          const cap = (p.IsCaptain === "YES") ? " (C)" : "";
+          html += `<li>${p.PlayerName} – ${p.Role}${cap}</li>`;
+        });
+        html += `</ul>`;
+      });
+
+      document.getElementById("teams").innerHTML = html;
+    })
+    .catch(()=>{
+      document.getElementById("teams").innerText="Error loading teams";
+    });
+}
+
+/* =====================
+   LIVE SCORE
+===================== */
 function loadScore(){
-  fetch(API+"?type=score")
-    .then(function(res){ return res.json(); })
-    .then(function(d){
+  fetch(API + "?type=score")
+    .then(r=>r.json())
+    .then(d=>{
       document.getElementById("score").innerHTML =
-        d.Runs+"/"+d.Wickets+"<br>Overs: "+d.Overs+"."+d.Balls;
-    })
-    .catch(function(){
-      document.getElementById("score").innerHTML = "Score load failed";
+        d.Runs + "/" + d.Wickets + "<br>Overs: " + d.Overs + "." + d.Balls;
     });
 }
 
-function send(a,v){
-  fetch(API+"?action="+a+"&value="+(v||0))
-    .then(loadScore);
+function send(action,value=0){
+  fetch(API + "?action=" + action + "&value=" + value)
+    .then(()=>loadScore());
 }
 
-window.onload = function(){
-  loadTeams();
-  loadScore();
-  setInterval(loadScore,3000);
-};
+/* =====================
+   VOICE
+===================== */
+function startVoice(){
+  if(!('webkitSpeechRecognition' in window)){
+    alert("Voice not supported"); return;
+  }
+  const r = new webkitSpeechRecognition();
+  r.lang = "en-IN";
+  r.onresult = e=>{
+    const t = e.results[0][0].transcript.toLowerCase();
+    document.getElementById("voiceText").innerText = "🎧 " + t;
+
+    if(t.includes("one")||t.includes("single")) send("run",1);
+    else if(t.includes("two")||t.includes("double")) send("run",2);
+    else if(t.includes("three")) send("run",3);
+    else if(t.includes("four")) send("run",4);
+    else if(t.includes("six")) send("run",6);
+    else if(t.includes("wide")) send("wide");
+    else if(t.includes("no ball")) send("noball");
+    else if(t.includes("wicket")||t.includes("out")) send("wicket");
+  };
+  r.start();
+}
+
+/* =====================
+   AUTO LOAD
+===================== */
+loadMatchInfo();
+loadTeams();
+loadScore();
+setInterval(loadScore,3000);
 </script>
 
 </body>
