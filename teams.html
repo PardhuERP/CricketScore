@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Teams & Players</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  font-family:Arial;
+  background:#f2f4f7;
+  margin:0;
+}
+.header{
+  background:#0a3d62;
+  color:#fff;
+  padding:15px;
+  text-align:center;
+  font-size:18px;
+}
+.team{
+  background:#fff;
+  margin:15px;
+  padding:15px;
+  border-radius:10px;
+}
+.team h3{
+  margin:0 0 10px;
+}
+.player{
+  font-size:14px;
+  padding:4px 0;
+}
+.captain{
+  color:#c0392b;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">🏏 Teams & Playing XI</div>
+
+<div id="teams">Loading teams...</div>
+
+<script>
+fetch("PASTE_NEW_TEAMS_API_URL_HERE")
+.then(res => res.json())
+.then(data => {
+  let teams = {};
+  
+  data.forEach(p => {
+    if (p.IsPlayingXI === "YES") {
+      if (!teams[p.TeamName]) teams[p.TeamName] = [];
+      teams[p.TeamName].push(p);
+    }
+  });
+
+  let html = "";
+  for (let t in teams) {
+    html += `<div class="team"><h3>${t}</h3>`;
+    teams[t].forEach(pl => {
+      html += `
+        <div class="player ${pl.IsCaptain === "YES" ? "captain" : ""}">
+          ${pl.PlayerName} (${pl.Role})
+          ${pl.IsCaptain === "YES" ? " - Captain" : ""}
+        </div>
+      `;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById("teams").innerHTML = html;
+});
+</script>
+
+</body>
+</html>
