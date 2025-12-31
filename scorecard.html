@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Scorecard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial;background:#f2f4f7;margin:0}
+.header{background:#0a3d62;color:#fff;padding:15px;text-align:center;font-size:18px}
+.card{background:#fff;margin:15px;padding:15px;border-radius:12px}
+.big{font-size:28px;font-weight:bold;text-align:center}
+.sub{color:#555;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="header">🏏 Match Scorecard</div>
+
+<div class="card">
+  <div class="big" id="score">Loading...</div>
+  <div class="sub" id="overs"></div>
+</div>
+
+<script>
+const API="https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+
+function load(){
+  fetch(API+"?type=scorecard")
+  .then(r=>r.json())
+  .then(d=>{
+    document.getElementById("score").innerHTML =
+      d.TotalRuns+" / "+d.Wickets;
+    document.getElementById("overs").innerHTML =
+      "Overs: "+d.Overs;
+  });
+}
+load();
+setInterval(load,3000);
+</script>
+
+</body>
+</html>
