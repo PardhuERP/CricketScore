@@ -55,10 +55,6 @@ body{
   color:#777;
 }
 </style>
-
-<!-- 🔧 GLOBAL CONFIG (FOREVER) -->
-<script src="config.js"></script>
-
 </head>
 
 <body>
@@ -69,6 +65,9 @@ const role = localStorage.getItem("role");
 if(!role){
   location = "login.html";
 }
+
+/* 🔒 FINAL & FOREVER API URL */
+const API_URL = "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 </script>
 
 <div class="header">🏏 Mini Cricket Dashboard</div>
@@ -77,7 +76,6 @@ if(!role){
 
   <!-- 🔔 TOP AD (SAFE PLACE) -->
   <div class="ad-box">
-    <!-- PLACE YOUR AD CODE HERE -->
     Advertisement
   </div>
 
