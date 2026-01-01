@@ -50,10 +50,12 @@ button{
   padding:10px;
   border-bottom:1px solid #eee;
 }
-.team:last-child{ border-bottom:none; }
-.note{
-  font-size:13px;
-  margin-top:8px;
+.team:last-child{
+  border-bottom:none;
+}
+#msg{
+  margin-top:10px;
+  font-size:14px;
 }
 </style>
 </head>
@@ -69,13 +71,13 @@ button{
     <h3>➕ Create Team</h3>
     <input type="text" id="teamName" placeholder="Enter Team Name">
     <button onclick="createTeam()">Create Team</button>
-    <div id="msg" class="note"></div>
+    <div id="msg"></div>
   </div>
 
   <!-- TEAMS LIST -->
   <div class="section">
     <h3>🏏 Teams</h3>
-    <div id="teamsList">Loading teams…</div>
+    <div id="teamsList">Loading teams...</div>
   </div>
 
 </div>
@@ -91,7 +93,7 @@ window.onload = loadTeams;
 /* Fetch teams */
 function loadTeams(){
   const list = document.getElementById("teamsList");
-  list.innerText = "Loading teams…";
+  list.innerText = "Loading teams...";
 
   fetch(API_URL + "?action=getTeams")
     .then(res => res.json())
@@ -121,6 +123,7 @@ function createTeam(){
   const msg = document.getElementById("msg");
 
   msg.innerText = "";
+  msg.style.color = "#333";
 
   if(name === ""){
     msg.innerText = "⚠️ Enter team name";
@@ -128,13 +131,17 @@ function createTeam(){
     return;
   }
 
-  fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "createTeam",
-      teamName: name
+  fetch(API_URL,{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      action:"createTeam",
+      teamName:name
     })
   })
+  .then(res => res.text())
   .then(()=>{
     msg.innerText = "✅ Team created";
     msg.style.color = "green";
