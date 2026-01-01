@@ -52,7 +52,6 @@ button{
   color:#fff;
 }
 
-.small{ background:#555; }
 .wicket{ background:#e53935; }
 .extra{ background:#ff9800; }
 .undo{ background:#777; }
@@ -75,7 +74,6 @@ button{
       <button onclick="addRun(0)">0</button>
       <button onclick="addRun(1)">1</button>
       <button onclick="addRun(2)">2</button>
-
       <button onclick="addRun(3)">3</button>
       <button onclick="addRun(4)">4</button>
       <button onclick="addRun(6)">6</button>
@@ -97,9 +95,9 @@ button{
 </div>
 
 <script>
-/* 🔒 FIXED CONFIG – NEVER CHANGE */
-const GOOGLE_SHEET_ID = "1594dHXPzK71fte_WgI996KlzdhOFprpEZ78wottTZMA";
-const API_URL = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+/* 🔒 FINAL & FOREVER API URL */
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
 let runs = 0;
 let wickets = 0;
@@ -111,10 +109,16 @@ function loadScore(){
   fetch(API_URL + "?action=getLiveScore")
     .then(res => res.json())
     .then(d => {
-      runs = Number(d.runs);
-      wickets = Number(d.wickets);
-      balls = Math.floor(Number(d.overs)) * 6 + Math.round((Number(d.overs) % 1) * 10);
+      runs = Number(d.runs) || 0;
+      wickets = Number(d.wickets) || 0;
+
+      const o = Number(d.overs) || 0;
+      balls = Math.floor(o) * 6 + Math.round((o % 1) * 10);
+
       updateUI();
+    })
+    .catch(()=> {
+      alert("❌ Error loading score");
     });
 }
 
@@ -134,6 +138,8 @@ function pushUpdate(){
       wickets:wickets,
       balls:balls
     })
+  }).catch(()=> {
+    alert("❌ Server error");
   });
 }
 
