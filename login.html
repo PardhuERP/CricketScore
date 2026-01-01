@@ -30,6 +30,11 @@ button{
   background:#0a7cff;
   color:#fff;
   border:none;
+  cursor:pointer;
+}
+#msg{
+  margin-top:10px;
+  font-size:14px;
 }
 </style>
 </head>
@@ -45,12 +50,21 @@ button{
 </div>
 
 <script>
-/* 🔒 FIXED CONFIG – NEVER CHANGE */
-const API_URL="https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+/* 🔒 FINAL & FOREVER API URL */
+const API_URL = "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
 function login(){
-  const u=document.getElementById("user").value;
-  const p=document.getElementById("pass").value;
+  const u = document.getElementById("user").value.trim();
+  const p = document.getElementById("pass").value.trim();
+  const msg = document.getElementById("msg");
+
+  msg.innerText = "";
+
+  if(u === "" || p === ""){
+    msg.innerText = "⚠️ Enter username and password";
+    msg.style.color = "orange";
+    return;
+  }
 
   fetch(API_URL,{
     method:"POST",
@@ -60,21 +74,24 @@ function login(){
       pass:p
     })
   })
-  .then(r=>r.json())
-  .then(d=>{
-  console.log("LOGIN RESPONSE:", d);
-  alert(JSON.stringify(d));
+  .then(r => r.json())
+  .then(d => {
+    if(d.status === "ok"){
+      localStorage.setItem("role", d.role);
 
-  if(d.status==="ok"){
-      localStorage.setItem("role",d.role);
-
-      if(d.role==="SUPER_ADMIN") location="dashboard.html";
-      if(d.role==="ADMIN") location="dashboard.html";
-      if(d.role==="SCORER") location="score-entry.html";
-      if(d.role==="VIEWER") location="live-score.html";
+      if(d.role === "SUPER_ADMIN") location = "dashboard.html";
+      else if(d.role === "ADMIN") location = "dashboard.html";
+      else if(d.role === "SCORER") location = "score-entry.html";
+      else if(d.role === "VIEWER") location = "live-score.html";
+      else msg.innerText = "❌ Unknown role";
     }else{
-      document.getElementById("msg").innerText="❌ Invalid login";
+      msg.innerText = "❌ Invalid login";
+      msg.style.color = "red";
     }
+  })
+  .catch(() => {
+    msg.innerText = "❌ Server error";
+    msg.style.color = "red";
   });
 }
 </script>
