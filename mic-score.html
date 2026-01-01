@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Voice Score Entry</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#f2f4f8;
+}
+.header{
+  background:#0a7cff;
+  color:#fff;
+  padding:14px;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+}
+.container{ padding:16px; text-align:center; }
+
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:20px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+
+button{
+  padding:14px 24px;
+  font-size:18px;
+  border:none;
+  border-radius:30px;
+  cursor:pointer;
+  background:#e53935;
+  color:#fff;
+}
+
+.status{
+  margin-top:15px;
+  font-size:14px;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">🎤 Voice Score Entry</div>
+
+<div class="container">
+  <div class="card">
+    <button onclick="startListening()">🎙️ Start Speaking</button>
+    <div class="status" id="status">Waiting...</div>
+  </div>
+</div>
+
+<script>
+/* 🔒 FIXED CONFIG – NEVER CHANGE */
+const GOOGLE_SHEET_ID = "1594dHXPzK71fte_WgI996KlzdhOFprpEZ78wottTZMA";
+const API_URL = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
+
+recognition.lang = "en-IN";
+recognition.continuous = false;
+recognition.interimResults = false;
+
+function startListening(){
+  document.getElementById("status").innerText = "🎧 Listening...";
+  recognition.start();
+}
+
+recognition.onresult = function(event){
+  const text = event.results[0][0].transcript.toLowerCase();
+  document.getElementById("status").innerText = "Heard: " + text;
+  processCommand(text);
+};
+
+recognition.onerror = function(){
+  document.getElementById("status").innerText = "Mic error";
+};
+
+function processCommand(cmd){
+
+  if(cmd.includes("undo")){
+    sendAction("undo");
+    return;
+  }
+
+  if(cmd.includes("wicket")){
+    sendAction("wicket");
+    return;
+  }
+
+  if(cmd.includes("wide")){
+    sendAction("wide");
+    return;
+  }
+
+  if(cmd.includes("no")){
+    sendAction("noball");
+    return;
+  }
+
+  if(cmd.includes("six")){
+    sendAction("run",6);
+    return;
+  }
+
+  if(cmd.includes("four")){
+    sendAction("run",4);
+    return;
+  }
+
+  if(cmd.includes("three")){
+    sendAction("run",3);
+    return;
+  }
+
+  if(cmd.includes("two")){
+    sendAction("run",2);
+    return;
+  }
+
+  if(cmd.includes("one")){
+    sendAction("run",1);
+    return;
+  }
+
+  if(cmd.includes("zero")){
+    sendAction("run",0);
+    return;
+  }
+
+  document.getElementById("status").innerText = "❌ Command not recognized";
+}
+
+function sendAction(type, value=0){
+  fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"voiceScore",
+      type:type,
+      value:value
+    })
+  })
+  .then(()=> {
+    document.getElementById("status").innerText = "✅ Score Updated";
+  });
+}
+</script>
+
+</body>
+</html>
