@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Cricket App Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#f2f4f8;
+}
+.box{
+  max-width:320px;
+  margin:100px auto;
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+input,button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+button{
+  background:#0a7cff;
+  color:#fff;
+  border:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h3>🏏 Login</h3>
+  <input id="user" placeholder="Username">
+  <input id="pass" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <div id="msg"></div>
+</div>
+
+<script>
+/* 🔒 FIXED CONFIG – NEVER CHANGE */
+const API_URL="https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+
+function login(){
+  const u=document.getElementById("user").value;
+  const p=document.getElementById("pass").value;
+
+  fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"login",
+      user:u,
+      pass:p
+    })
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if(d.status==="ok"){
+      localStorage.setItem("role",d.role);
+
+      if(d.role==="SUPER_ADMIN") location="dashboard.html";
+      if(d.role==="ADMIN") location="dashboard.html";
+      if(d.role==="SCORER") location="score-entry.html";
+      if(d.role==="VIEWER") location="live-score.html";
+    }else{
+      document.getElementById("msg").innerText="❌ Invalid login";
+    }
+  });
+}
+</script>
+
+</body>
+</html>
