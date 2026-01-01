@@ -62,7 +62,10 @@ function login(){
   })
   .then(r=>r.json())
   .then(d=>{
-    if(d.status==="ok"){
+  console.log("LOGIN RESPONSE:", d);
+  alert(JSON.stringify(d));
+
+  if(d.status==="ok"){
       localStorage.setItem("role",d.role);
 
       if(d.role==="SUPER_ADMIN") location="dashboard.html";
