@@ -55,6 +55,10 @@ body{
   color:#777;
 }
 </style>
+
+<!-- 🔧 GLOBAL CONFIG (FOREVER) -->
+<script src="config.js"></script>
+
 </head>
 
 <body>
@@ -122,10 +126,6 @@ if(!role){
 </div>
 
 <script>
-/* 🔒 FIXED CONFIG – NEVER CHANGE */
-const GOOGLE_SHEET_ID = "1594dHXPzK71fte_WgI996KlzdhOFprpEZ78wottTZMA";
-const API_URL = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
-
 /* PAGE NAVIGATION */
 function openPage(page){
   location = page;
@@ -133,7 +133,8 @@ function openPage(page){
 
 /* ROLE BASED UI CONTROL */
 if(role === "VIEWER"){
-  document.querySelectorAll(".admin-only").forEach(el => el.style.display = "none");
+  document.querySelectorAll(".admin-only")
+    .forEach(el => el.style.display = "none");
 }
 </script>
 
