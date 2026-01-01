@@ -45,9 +45,17 @@ body{
   cursor:pointer;
   transition:0.2s;
 }
-.card:hover{ transform:scale(1.03); }
-.icon{ font-size:36px; margin-bottom:10px; }
-.title{ font-size:16px; font-weight:bold; }
+.card:hover{
+  transform:scale(1.03);
+}
+.icon{
+  font-size:36px;
+  margin-bottom:10px;
+}
+.title{
+  font-size:16px;
+  font-weight:bold;
+}
 .footer{
   margin-top:25px;
   text-align:center;
@@ -55,20 +63,16 @@ body{
   color:#777;
 }
 </style>
+
+<!-- 🔒 FINAL & FOREVER API URL -->
+<script>
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+</script>
+
 </head>
 
 <body>
-
-<script>
-/* 🔐 LOGIN & ROLE CHECK */
-const role = localStorage.getItem("role");
-if(!role){
-  location = "login.html";
-}
-
-/* 🔒 FINAL & FOREVER API URL */
-const API_URL = "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
-</script>
 
 <div class="header">🏏 Mini Cricket Dashboard</div>
 
@@ -86,22 +90,17 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQ
       <div class="title">Teams</div>
     </div>
 
-    <div class="card admin-only" onclick="openPage('teams.html')">
-      <div class="icon">➕</div>
-      <div class="title">Create Team</div>
-    </div>
-
     <div class="card" onclick="openPage('live-score.html')">
       <div class="icon">📊</div>
       <div class="title">Live Score</div>
     </div>
 
-    <div class="card admin-only" onclick="openPage('score-entry.html')">
+    <div class="card" onclick="openPage('score-entry.html')">
       <div class="icon">✍️</div>
       <div class="title">Score Entry</div>
     </div>
 
-    <div class="card admin-only" onclick="openPage('mic-score.html')">
+    <div class="card" onclick="openPage('mic-score.html')">
       <div class="icon">🎤</div>
       <div class="title">Mic</div>
     </div>
@@ -124,15 +123,8 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQ
 </div>
 
 <script>
-/* PAGE NAVIGATION */
 function openPage(page){
-  location = page;
-}
-
-/* ROLE BASED UI CONTROL */
-if(role === "VIEWER"){
-  document.querySelectorAll(".admin-only")
-    .forEach(el => el.style.display = "none");
+  location.href = page;
 }
 </script>
 
