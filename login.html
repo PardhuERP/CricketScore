@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Cricket App Login</title>
@@ -8,7 +8,7 @@
 <style>
 body{
   margin:0;
-  font-family:Arial;
+  font-family:Arial, sans-serif;
   background:#f2f4f8;
 }
 .box{
@@ -19,12 +19,16 @@ body{
   border-radius:12px;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
+h3{
+  text-align:center;
+}
 input,button{
   width:100%;
   padding:12px;
   margin-top:10px;
   border-radius:8px;
   border:1px solid #ccc;
+  font-size:15px;
 }
 button{
   background:#0a7cff;
@@ -33,8 +37,9 @@ button{
   cursor:pointer;
 }
 #msg{
-  margin-top:10px;
+  margin-top:12px;
   font-size:14px;
+  text-align:center;
 }
 </style>
 </head>
@@ -51,7 +56,8 @@ button{
 
 <script>
 /* 🔒 FINAL & FOREVER API URL */
-const API_URL = "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
 function login(){
   const u = document.getElementById("user").value.trim();
@@ -59,6 +65,7 @@ function login(){
   const msg = document.getElementById("msg");
 
   msg.innerText = "";
+  msg.style.color = "#333";
 
   if(u === "" || p === ""){
     msg.innerText = "⚠️ Enter username and password";
@@ -68,13 +75,16 @@ function login(){
 
   fetch(API_URL,{
     method:"POST",
-    body:JSON.stringify({
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
       action:"login",
       user:u,
       pass:p
     })
   })
-  .then(r => r.json())
+  .then(res => res.json())
   .then(d => {
     if(d.status === "ok"){
       localStorage.setItem("role", d.role);
@@ -83,14 +93,17 @@ function login(){
       else if(d.role === "ADMIN") location = "dashboard.html";
       else if(d.role === "SCORER") location = "score-entry.html";
       else if(d.role === "VIEWER") location = "live-score.html";
-      else msg.innerText = "❌ Unknown role";
+      else{
+        msg.innerText = "❌ Invalid role";
+        msg.style.color = "red";
+      }
     }else{
-      msg.innerText = "❌ Invalid login";
+      msg.innerText = "❌ Invalid username or password";
       msg.style.color = "red";
     }
   })
-  .catch(() => {
-    msg.innerText = "❌ Server error";
+  .catch(()=>{
+    msg.innerText = "❌ Server error. Try again.";
     msg.style.color = "red";
   });
 }
