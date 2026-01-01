@@ -51,6 +51,10 @@ button{
   border-bottom:1px solid #eee;
 }
 .team:last-child{ border-bottom:none; }
+.note{
+  font-size:13px;
+  margin-top:8px;
+}
 </style>
 </head>
 
@@ -65,35 +69,40 @@ button{
     <h3>➕ Create Team</h3>
     <input type="text" id="teamName" placeholder="Enter Team Name">
     <button onclick="createTeam()">Create Team</button>
+    <div id="msg" class="note"></div>
   </div>
 
   <!-- TEAMS LIST -->
   <div class="section">
     <h3>🏏 Teams</h3>
-    <div id="teamsList">Loading teams...</div>
+    <div id="teamsList">Loading teams…</div>
   </div>
 
 </div>
 
 <script>
-/* 🔒 FIXED CONFIG – NEVER CHANGE */
-const GOOGLE_SHEET_ID = "1594dHXPzK71fte_WgI996KlzdhOFprpEZ78wottTZMA";
-const API_URL = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+/* 🔒 FINAL & FOREVER API URL */
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
 /* Load teams on page load */
 window.onload = loadTeams;
 
 /* Fetch teams */
 function loadTeams(){
+  const list = document.getElementById("teamsList");
+  list.innerText = "Loading teams…";
+
   fetch(API_URL + "?action=getTeams")
     .then(res => res.json())
     .then(data => {
-      const list = document.getElementById("teamsList");
       list.innerHTML = "";
-      if(data.length === 0){
-        list.innerHTML = "No teams created yet";
+
+      if(!data || data.length === 0){
+        list.innerText = "No teams created yet";
         return;
       }
+
       data.forEach(team => {
         const div = document.createElement("div");
         div.className = "team";
@@ -101,16 +110,21 @@ function loadTeams(){
         list.appendChild(div);
       });
     })
-    .catch(err => {
-      document.getElementById("teamsList").innerHTML = "Error loading teams";
+    .catch(()=>{
+      list.innerText = "❌ Error loading teams";
     });
 }
 
 /* Create team */
 function createTeam(){
   const name = document.getElementById("teamName").value.trim();
+  const msg = document.getElementById("msg");
+
+  msg.innerText = "";
+
   if(name === ""){
-    alert("Enter team name");
+    msg.innerText = "⚠️ Enter team name";
+    msg.style.color = "orange";
     return;
   }
 
@@ -121,13 +135,16 @@ function createTeam(){
       teamName: name
     })
   })
-  .then(res => res.text())
-  .then(msg => {
-    alert("Team Created");
+  .then(()=>{
+    msg.innerText = "✅ Team created";
+    msg.style.color = "green";
     document.getElementById("teamName").value = "";
     loadTeams();
   })
-  .catch(err => alert("Error creating team"));
+  .catch(()=>{
+    msg.innerText = "❌ Server error";
+    msg.style.color = "red";
+  });
 }
 </script>
 
