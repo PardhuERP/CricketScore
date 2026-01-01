@@ -48,6 +48,11 @@ button{
   border-bottom:1px solid #eee;
 }
 .player:last-child{border-bottom:none;}
+.note{
+  font-size:13px;
+  color:#666;
+  margin-top:8px;
+}
 </style>
 </head>
 
@@ -73,20 +78,21 @@ button{
     </select>
 
     <button onclick="addPlayer()">Add Player</button>
+    <div class="note" id="msg"></div>
   </div>
 
   <!-- PLAYERS LIST -->
   <div class="section">
     <h3>📋 Players List</h3>
-    <div id="playersList">Select team to view players</div>
+    <div id="playersList">Loading teams…</div>
   </div>
 
 </div>
 
 <script>
-/* 🔒 FIXED CONFIG – NEVER CHANGE */
-const GOOGLE_SHEET_ID = "1594dHXPzK71fte_WgI996KlzdhOFprpEZ78wottTZMA";
-const API_URL = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+/* 🔒 FINAL & FOREVER API URL */
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
 window.onload = loadTeams;
 
@@ -97,36 +103,56 @@ function loadTeams(){
     .then(data => {
       const select = document.getElementById("teamSelect");
       select.innerHTML = "";
+
+      if(!data || data.length === 0){
+        document.getElementById("playersList").innerText =
+          "❌ No teams available. Create team first.";
+        return;
+      }
+
       data.forEach(team => {
         const opt = document.createElement("option");
         opt.value = team;
         opt.innerText = team;
         select.appendChild(opt);
       });
+
       loadPlayers();
+    })
+    .catch(()=>{
+      document.getElementById("playersList").innerText =
+        "❌ Error loading teams";
     });
 }
 
-/* Load players for selected team */
+/* Reload players when team changes */
 document.getElementById("teamSelect").addEventListener("change", loadPlayers);
 
 function loadPlayers(){
   const team = document.getElementById("teamSelect").value;
+  const list = document.getElementById("playersList");
+
+  list.innerText = "Loading players…";
+
   fetch(API_URL + "?action=getPlayers&team=" + encodeURIComponent(team))
     .then(res => res.json())
     .then(data => {
-      const list = document.getElementById("playersList");
       list.innerHTML = "";
-      if(data.length === 0){
-        list.innerHTML = "No players added";
+
+      if(!data || data.length === 0){
+        list.innerText = "No players added";
         return;
       }
+
       data.forEach(p => {
         const div = document.createElement("div");
         div.className = "player";
         div.innerText = "🏏 " + p.name + " (" + p.role + ")";
         list.appendChild(div);
       });
+    })
+    .catch(()=>{
+      list.innerText = "❌ Error loading players";
     });
 }
 
@@ -135,9 +161,13 @@ function addPlayer(){
   const team = document.getElementById("teamSelect").value;
   const name = document.getElementById("playerName").value.trim();
   const role = document.getElementById("role").value;
+  const msg = document.getElementById("msg");
+
+  msg.innerText = "";
 
   if(name === ""){
-    alert("Enter player name");
+    msg.innerText = "⚠️ Enter player name";
+    msg.style.color = "orange";
     return;
   }
 
@@ -150,11 +180,15 @@ function addPlayer(){
       role:role
     })
   })
-  .then(res=>res.text())
-  .then(msg=>{
-    alert("Player added");
-    document.getElementById("playerName").value="";
+  .then(()=>{
+    msg.innerText = "✅ Player added";
+    msg.style.color = "green";
+    document.getElementById("playerName").value = "";
     loadPlayers();
+  })
+  .catch(()=>{
+    msg.innerText = "❌ Server error";
+    msg.style.color = "red";
   });
 }
 </script>
