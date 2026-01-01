@@ -55,7 +55,7 @@ button{
 </div>
 
 <script>
-/* 🔒 FINAL & FOREVER API URL */
+/* 🔒 FINAL & ONLY API URL */
 const API_URL =
   "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
@@ -74,14 +74,14 @@ function login(){
   }
 
   fetch(API_URL,{
-    method:"POST",
+    method: "POST",
     headers:{
-      "Content-Type":"application/json"
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      action:"login",
-      user:u,
-      pass:p
+      action: "login",
+      user: u,
+      pass: p
     })
   })
   .then(res => res.json())
@@ -89,10 +89,15 @@ function login(){
     if(d.status === "ok"){
       localStorage.setItem("role", d.role);
 
-      if(d.role === "SUPER_ADMIN") location = "dashboard.html";
-      else if(d.role === "ADMIN") location = "dashboard.html";
-      else if(d.role === "SCORER") location = "score-entry.html";
-      else if(d.role === "VIEWER") location = "live-score.html";
+      if(d.role === "SUPER_ADMIN" || d.role === "ADMIN"){
+        location = "dashboard.html";
+      }
+      else if(d.role === "SCORER"){
+        location = "score-entry.html";
+      }
+      else if(d.role === "VIEWER"){
+        location = "live-score.html";
+      }
       else{
         msg.innerText = "❌ Invalid role";
         msg.style.color = "red";
