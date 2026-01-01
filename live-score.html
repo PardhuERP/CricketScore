@@ -91,31 +91,30 @@ body{
 </div>
 
 <script>
-/* 🔒 FIXED CONFIG – NEVER CHANGE */
-const GOOGLE_SHEET_ID = "1594dHXPzK71fte_WgI996KlzdhOFprpEZ78wottTZMA";
-const API_URL = "https://script.google.com/macros/s/AKfycbxXRTaEoXrtUO7J2J_9_v3MkinQ_rqjuDf5Sug22KUgH1HRNpK3RljeFtL8-YxXv_k2lg/exec";
+/* 🔒 FINAL & FOREVER API URL */
+const API_URL = "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
 /* Fetch live score */
 function loadScore(){
   fetch(API_URL + "?action=getLiveScore")
     .then(res => res.json())
     .then(d => {
-      document.getElementById("matchTitle").innerText = d.match;
+      document.getElementById("matchTitle").innerText = d.match || "-";
       document.getElementById("score").innerText = d.runs + " / " + d.wickets;
       document.getElementById("overs").innerText = "Overs: " + d.overs;
 
-      document.getElementById("batting").innerText = d.batting;
-      document.getElementById("bowling").innerText = d.bowling;
+      document.getElementById("batting").innerText = d.batting || "-";
+      document.getElementById("bowling").innerText = d.bowling || "-";
 
-      document.getElementById("striker").innerText = d.striker;
-      document.getElementById("nonstriker").innerText = d.nonstriker;
-      document.getElementById("bowler").innerText = d.bowler;
+      document.getElementById("striker").innerText = d.striker || "-";
+      document.getElementById("nonstriker").innerText = d.nonstriker || "-";
+      document.getElementById("bowler").innerText = d.bowler || "-";
     })
-    .catch(err => console.log("Error loading score"));
+    .catch(err => console.log("Error loading score", err));
 }
 
 loadScore();
-setInterval(loadScore, 5000); // auto refresh
+setInterval(loadScore, 5000); // auto refresh every 5 sec
 </script>
 
 </body>
