@@ -8,19 +8,45 @@
 <style>
 body{
   margin:0;
-  font-family:Arial;
+  font-family:Arial, sans-serif;
   background:#f2f4f8;
 }
-.header{
+
+/* ===== HEADER ===== */
+.app-header{
   background:#0a7cff;
   color:#fff;
-  padding:14px;
+  padding:12px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+.back-btn{
+  background:#fff;
+  color:#0a7cff;
+  border:none;
+  padding:6px 12px;
+  border-radius:8px;
+  font-size:14px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.title{
+  flex:1;
   text-align:center;
   font-size:18px;
   font-weight:bold;
 }
-.container{ padding:16px; }
 
+/* ===== LAYOUT ===== */
+.container{
+  padding:14px;
+}
+
+/* ===== LIVE SCORE CARD ===== */
 .card{
   background:#fff;
   border-radius:14px;
@@ -31,42 +57,69 @@ body{
 }
 
 .score{
-  font-size:28px;
+  font-size:32px;
   font-weight:bold;
 }
+.overs{
+  font-size:14px;
+  color:#555;
+  margin-top:4px;
+}
+.meta{
+  margin-top:10px;
+  font-size:14px;
+  color:#333;
+}
 
+/* ===== BUTTON GRID ===== */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:10px;
-  margin-top:10px;
 }
 
 button{
-  padding:14px;
+  padding:16px;
   font-size:18px;
   border:none;
-  border-radius:10px;
+  border-radius:12px;
   cursor:pointer;
   background:#0a7cff;
   color:#fff;
 }
+button:active{ transform:scale(0.96); }
+
 .wicket{ background:#e53935; }
 .extra{ background:#ff9800; }
+.undo{ background:#607d8b; }
 </style>
 </head>
 
 <body>
 
-<div class="header">✍️ Score Entry</div>
+<!-- HEADER -->
+<div class="app-header">
+  <button class="back-btn" onclick="goDashboard()">⬅ Dashboard</button>
+  <div class="title">✍️ Score Entry</div>
+</div>
 
 <div class="container">
 
+  <!-- LIVE SCORE (TOP HALF) -->
   <div class="card">
     <div class="score" id="score">0 / 0</div>
-    <div id="overs">Overs: 0.0</div>
+    <div class="overs" id="overs">Overs: 0.0</div>
+
+    <div class="meta">
+      <div>🏏 Batting: <b id="batting">-</b></div>
+      <div>🎯 Bowling: <b id="bowling">-</b></div>
+      <div>👤 Striker: <b id="striker">-</b></div>
+      <div>👤 Non-Striker: <b id="nonstriker">-</b></div>
+      <div>🎳 Bowler: <b id="bowler">-</b></div>
+    </div>
   </div>
 
+  <!-- RUN BUTTONS -->
   <div class="card">
     <div class="grid">
       <button onclick="send('run',0)">0</button>
@@ -78,31 +131,59 @@ button{
     </div>
   </div>
 
+  <!-- EXTRA / WICKET / UNDO -->
   <div class="card">
     <div class="grid">
       <button class="extra" onclick="send('wide')">Wide</button>
       <button class="extra" onclick="send('noball')">No Ball</button>
       <button class="wicket" onclick="send('wicket')">Wicket</button>
+      <button class="undo" onclick="undo()">Undo</button>
     </div>
   </div>
 
 </div>
 
 <script>
+/* ===== API URL ===== */
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* SEND SCORE (JSONP) */
+/* ===== NAV ===== */
+function goDashboard(){
+  location.href = "index.html";
+}
+
+/* ===== LOAD LIVE SCORE ===== */
+function loadScore(){
+  const cb = "cb_load_" + Date.now();
+  window[cb] = function(res){
+    document.getElementById("score").innerText =
+      res.runs + " / " + res.wickets;
+    document.getElementById("overs").innerText =
+      "Overs: " + res.overs;
+
+    document.getElementById("batting").innerText = res.batting || "-";
+    document.getElementById("bowling").innerText = res.bowling || "-";
+    document.getElementById("striker").innerText = res.striker || "-";
+    document.getElementById("nonstriker").innerText = res.nonstriker || "-";
+    document.getElementById("bowler").innerText = res.bowler || "-";
+
+    delete window[cb];
+  };
+
+  const s = document.createElement("script");
+  s.src = API_URL + "?action=getLiveScore&callback=" + cb;
+  document.body.appendChild(s);
+}
+
+/* ===== SEND SCORE ===== */
 function send(type,value=0){
   const cb = "cb_" + Date.now();
-
   window[cb] = function(res){
-    if(res.status==="ok"){
-      document.getElementById("score").innerText =
-        res.runs + " / " + res.wickets;
-      document.getElementById("overs").innerText =
-        "Overs: " + res.overs;
+    if(res.status === "innings_end"){
+      alert("Innings Ended!");
     }
+    loadScore();
     delete window[cb];
   };
 
@@ -116,6 +197,22 @@ function send(type,value=0){
 
   document.body.appendChild(s);
 }
+
+/* ===== UNDO ===== */
+function undo(){
+  const cb = "cb_undo_" + Date.now();
+  window[cb] = function(){
+    loadScore();
+    delete window[cb];
+  };
+
+  const s = document.createElement("script");
+  s.src = API_URL + "?action=undoScore&callback=" + cb;
+  document.body.appendChild(s);
+}
+
+/* INIT */
+loadScore();
 </script>
 
 </body>
