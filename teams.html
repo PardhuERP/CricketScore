@@ -68,11 +68,12 @@ button{
 </div>
 
 <script>
-/* ===== CONFIG ===== */
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* ===== LOAD TEAMS (JSONP) ===== */
+let jsonpScript = null;
+
+/* ===== LOAD TEAMS ===== */
 function loadTeams(){
   const list = document.getElementById("teamsList");
   list.innerText = "Loading teams...";
@@ -90,15 +91,13 @@ function loadTeams(){
         list.appendChild(d);
       });
     }
-    delete window[cb];
+    cleanup(cb);
   };
 
-  const s = document.createElement("script");
-  s.src = API_URL + "?action=getTeams&callback=" + cb;
-  document.body.appendChild(s);
+  callJSONP(`action=getTeams`, cb);
 }
 
-/* ===== CREATE TEAM (JSONP) ===== */
+/* ===== CREATE TEAM ===== */
 function createTeam(){
   const name = document.getElementById("teamName").value.trim();
   const msg = document.getElementById("msg");
@@ -117,23 +116,37 @@ function createTeam(){
       document.getElementById("teamName").value="";
       loadTeams();
     }else{
-      msg.innerText = "❌ Error";
+      msg.innerText = "❌ Error creating team";
       msg.style.color = "red";
     }
-    delete window[cb];
+    cleanup(cb);
   };
 
-  const s = document.createElement("script");
-  s.src = API_URL +
-    "?action=createTeam" +
-    "&teamName=" + encodeURIComponent(name) +
-    "&callback=" + cb;
-
-  document.body.appendChild(s);
+  callJSONP(
+    `action=createTeam&teamName=${encodeURIComponent(name)}`,
+    cb
+  );
 }
 
-/* ===== SAFE INIT AFTER DOM LOAD ===== */
-window.addEventListener("load", function(){
+/* ===== JSONP HELPER ===== */
+function callJSONP(query, cb){
+  if(jsonpScript) jsonpScript.remove();
+
+  jsonpScript = document.createElement("script");
+  jsonpScript.src = `${API_URL}?${query}&callback=${cb}`;
+  document.body.appendChild(jsonpScript);
+}
+
+function cleanup(cb){
+  delete window[cb];
+  if(jsonpScript){
+    jsonpScript.remove();
+    jsonpScript = null;
+  }
+}
+
+/* ===== INIT ===== */
+window.addEventListener("load", () => {
   document.getElementById("createBtn").onclick = createTeam;
   loadTeams();
 });
