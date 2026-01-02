@@ -1,110 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Teams Management</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body{
-  margin:0;
-  font-family: Arial, sans-serif;
-  background:#f2f4f8;
-}
-.header{
-  background:#0a7cff;
-  color:#fff;
-  padding:14px;
-  text-align:center;
-  font-size:18px;
-  font-weight:bold;
-}
-.container{
-  padding:16px;
-}
-.section{
-  background:#fff;
-  border-radius:14px;
-  padding:16px;
-  margin-bottom:16px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.08);
-}
-input, button{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:15px;
-}
-button{
-  background:#0a7cff;
-  color:#fff;
-  border:none;
-  cursor:pointer;
-}
-.team{
-  padding:10px;
-  border-bottom:1px solid #eee;
-}
-.team:last-child{
-  border-bottom:none;
-}
-#msg{
-  margin-top:10px;
-  font-size:14px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="header">👥 Teams Management</div>
-
-<div class="container">
-
-  <!-- CREATE TEAM -->
-  <div class="section">
-    <h3>➕ Create Team</h3>
-    <input type="text" id="teamName" placeholder="Enter Team Name">
-    <button onclick="createTeam()">Create Team</button>
-    <div id="msg"></div>
-  </div>
-
-  <!-- TEAMS LIST -->
-  <div class="section">
-    <h3>🏏 Teams</h3>
-    <div id="teamsList">Loading teams...</div>
-  </div>
-
-</div>
-
 <script>
-/* 🔒 FINAL API URL */
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* ========= JSONP LOAD TEAMS ========= */
+/* ===== JSONP: LOAD TEAMS ===== */
 function loadTeams(){
   const list = document.getElementById("teamsList");
   list.innerText = "Loading teams...";
 
   const cb = "cb_" + Date.now();
-
   window[cb] = function(data){
     list.innerHTML = "";
-
     if(!data || data.length === 0){
       list.innerText = "No teams created yet";
-    } else {
-      data.forEach(team=>{
+    }else{
+      data.forEach(t=>{
         const d = document.createElement("div");
         d.className = "team";
-        d.innerText = "🏏 " + team;
+        d.innerText = "🏏 " + t;
         list.appendChild(d);
       });
     }
-
     delete window[cb];
   };
 
@@ -113,45 +28,39 @@ function loadTeams(){
   document.body.appendChild(s);
 }
 
-/* ========= CREATE TEAM (POST) ========= */
+/* ===== JSONP: CREATE TEAM ===== */
 function createTeam(){
   const name = document.getElementById("teamName").value.trim();
   const msg = document.getElementById("msg");
 
-  msg.innerText = "";
-  msg.style.color = "#333";
-
-  if(name === ""){
+  if(!name){
     msg.innerText = "⚠️ Enter team name";
     msg.style.color = "orange";
     return;
   }
 
-  fetch(API_URL,{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json"
-    },
-    body:JSON.stringify({
-      action:"createTeam",
-      teamName:name
-    })
-  })
-  .then(res => res.text())
-  .then(()=>{
-    msg.innerText = "✅ Team created";
-    msg.style.color = "green";
-    document.getElementById("teamName").value="";
-    loadTeams();
-  })
-  .catch(()=>{
-    msg.innerText = "❌ Server error";
-    msg.style.color = "red";
-  });
+  const cb = "cb_create_" + Date.now();
+  window[cb] = function(res){
+    if(res.status === "ok"){
+      msg.innerText = "✅ Team created";
+      msg.style.color = "green";
+      document.getElementById("teamName").value="";
+      loadTeams();
+    }else{
+      msg.innerText = "❌ Error creating team";
+      msg.style.color = "red";
+    }
+    delete window[cb];
+  };
+
+  const s = document.createElement("script");
+  s.src = API_URL +
+    "?action=createTeam" +
+    "&teamName=" + encodeURIComponent(name) +
+    "&callback=" + cb;
+
+  document.body.appendChild(s);
 }
 
 window.onload = loadTeams;
 </script>
-
-</body>
-</html>
