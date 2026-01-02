@@ -81,8 +81,29 @@ body{
   <div class="title">Overs</div>
     </div>
 
+    <div class="card" onclick="clearMatch()">
+  <div class="icon">🧹</div>
+  <div class="title">Clear Match</div>
+    </div>
+
   </div>
 </div>
+
+  <script>
+function clearMatch(){
+  if(!confirm("Clear current match? This cannot be undone")) return;
+
+  const cb = "cb" + Date.now();
+  window[cb] = res => {
+    alert(res.message || "Match cleared");
+    delete window[cb];
+  };
+
+  const s = document.createElement("script");
+  s.src = API_URL + "?action=clearMatch&callback=" + cb;
+  document.body.appendChild(s);
+}
+  </script>
 
 <script>
 function go(p){ location.href=p; }
