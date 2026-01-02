@@ -18,136 +18,155 @@ body{
   text-align:center;
   font-size:18px;
   font-weight:bold;
+  display:flex;
+  align-items:center;
 }
-.container{ padding:14px; }
+.back{
+  margin-right:10px;
+  font-size:20px;
+  cursor:pointer;
+}
+.container{ padding:16px; }
 
 .card{
   background:#fff;
   border-radius:14px;
-  padding:14px;
+  padding:16px;
   margin-bottom:14px;
   box-shadow:0 4px 10px rgba(0,0,0,0.08);
 }
+
 .title{
-  font-weight:bold;
   font-size:16px;
-  margin-bottom:6px;
+  font-weight:bold;
+  margin-bottom:8px;
 }
+
 .score{
-  font-size:20px;
+  font-size:22px;
   font-weight:bold;
 }
+
 .sub{
   color:#555;
-  font-size:14px;
+  margin-top:4px;
+}
+
+.highlight{
+  background:#e3f2fd;
 }
 
 .result{
-  font-size:18px;
+  font-size:20px;
   font-weight:bold;
-  color:#2e7d32;
   text-align:center;
-}
-
-button{
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:10px;
-  background:#0a7cff;
-  color:#fff;
-  font-size:16px;
-  cursor:pointer;
+  color:#2e7d32;
 }
 </style>
-</head>
-
-<body>
-
-<div class="header">📊 Match Summary</div>
-
-<div class="container">
-
-  <div class="card">
-    <div class="title" id="match">Loading...</div>
-  </div>
-
-  <div class="card">
-    <div class="title">1st Innings</div>
-    <div class="score" id="inn1Score"></div>
-    <div class="sub" id="inn1Overs"></div>
-  </div>
-
-  <div class="card">
-    <div class="title">2nd Innings</div>
-    <div class="score" id="inn2Score"></div>
-    <div class="sub" id="inn2Overs"></div>
-    <div class="sub" id="target"></div>
-  </div>
-
-  <div class="card">
-    <div class="result" id="result"></div>
-  </div>
-
-  <div class="card">
-    <div class="title">🏏 Top Performers</div>
-    <div class="sub" id="topBat"></div>
-    <div class="sub" id="topBowl"></div>
-  </div>
-
-  <button onclick="goBack()">⬅ Back to Dashboard</button>
-
-</div>
 
 <script>
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-function loadSummary(){
-  const cb = "cb_" + Date.now();
-
-  window[cb] = function(res){
-    document.getElementById("match").innerText = res.match;
-
-    document.getElementById("inn1Score").innerText =
-      res.innings1.team + " - " +
-      res.innings1.runs + "/" + res.innings1.wickets;
-
-    document.getElementById("inn1Overs").innerText =
-      "Overs: " + res.innings1.overs;
-
-    document.getElementById("inn2Score").innerText =
-      res.innings2.team + " - " +
-      res.innings2.runs + "/" + res.innings2.wickets;
-
-    document.getElementById("inn2Overs").innerText =
-      "Overs: " + res.innings2.overs;
-
-    document.getElementById("target").innerText =
-      "Target: " + res.target;
-
-    document.getElementById("result").innerText = res.result || "";
-
-    document.getElementById("topBat").innerText =
-      "Top Batsman: " + (res.topBatsman || "-");
-
-    document.getElementById("topBowl").innerText =
-      "Top Bowler: " + (res.topBowler || "-");
-
-    delete window[cb];
+/* JSONP */
+function callAPI(params, cb){
+  const fn = "cb_" + Date.now();
+  window[fn] = function(res){
+    cb(res);
+    delete window[fn];
+    s.remove();
   };
-
+  const q = Object.keys(params).map(k=>k+"="+encodeURIComponent(params[k])).join("&");
   const s = document.createElement("script");
-  s.src = API_URL + "?action=getMatchSummary&callback=" + cb;
+  s.src = API_URL + "?" + q + "&callback=" + fn;
   document.body.appendChild(s);
 }
 
-function goBack(){
-  window.location.href = "dashboard.html";
+function loadSummary(){
+  callAPI({action:"getMatchSummary"}, render);
 }
 
-loadSummary();
+function render(d){
+  if(!d || !d.match){
+    document.getElementById("result").innerText = "Match not completed";
+    return;
+  }
+
+  document.getElementById("match").innerText = d.match;
+
+  document.getElementById("inn1").innerText =
+    `${d.innings1.team}: ${d.innings1.runs}/${d.innings1.wickets}`;
+  document.getElementById("inn1o").innerText =
+    `Overs: ${d.innings1.overs}`;
+
+  document.getElementById("inn2").innerText =
+    `${d.innings2.team}: ${d.innings2.runs}/${d.innings2.wickets}`;
+  document.getElementById("inn2o").innerText =
+    `Overs: ${d.innings2.overs}`;
+
+  document.getElementById("target").innerText =
+    `Target: ${d.target}`;
+
+  document.getElementById("result").innerText =
+    d.result || "Match in progress";
+
+  document.getElementById("topBat").innerText =
+    d.topBatsman || "-";
+
+  document.getElementById("topBowl").innerText =
+    d.topBowler || "-";
+}
+
+window.onload = loadSummary;
 </script>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="back" onclick="location.href='dashboard.html'">⬅</div>
+  🏆 Match Summary
+</div>
+
+<div class="container">
+
+  <div class="card highlight">
+    <div class="title">Match</div>
+    <div class="score" id="match">-</div>
+  </div>
+
+  <div class="card">
+    <div class="title">1st Innings</div>
+    <div class="score" id="inn1">-</div>
+    <div class="sub" id="inn1o"></div>
+  </div>
+
+  <div class="card">
+    <div class="title">2nd Innings</div>
+    <div class="score" id="inn2">-</div>
+    <div class="sub" id="inn2o"></div>
+  </div>
+
+  <div class="card">
+    <div class="title">Target</div>
+    <div class="score" id="target">-</div>
+  </div>
+
+  <div class="card highlight">
+    <div class="result" id="result">-</div>
+  </div>
+
+  <div class="card">
+    <div class="title">Top Batsman</div>
+    <div class="score" id="topBat">-</div>
+  </div>
+
+  <div class="card">
+    <div class="title">Top Bowler</div>
+    <div class="score" id="topBowl">-</div>
+  </div>
+
+</div>
 
 </body>
 </html>
