@@ -44,7 +44,10 @@ button{
   padding:10px;
   border-bottom:1px solid #eee;
 }
-#msg{ margin-top:10px; font-size:14px; }
+#msg{
+  margin-top:10px;
+  font-size:14px;
+}
 </style>
 </head>
 
@@ -56,8 +59,10 @@ button{
 
   <div class="section">
     <h3>➕ Create Team</h3>
-    <input id="teamName" placeholder="Enter Team Name">
-    <button onclick="createTeam()">Create Team</button>
+    <input id="teamName"
+           placeholder="Enter Team Name"
+           onkeydown="if(event.key==='Enter'){createTeam(); return false;}">
+    <button type="button" onclick="createTeam()">Create Team</button>
     <div id="msg"></div>
   </div>
 
@@ -69,11 +74,11 @@ button{
 </div>
 
 <script>
-/* ===== API URL ===== */
+/* ===== API URL (FOREVER) ===== */
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* ===== LOAD TEAMS ===== */
+/* ===== LOAD TEAMS (JSONP) ===== */
 function loadTeams(){
   const list = document.getElementById("teamsList");
   list.innerText = "Loading teams...";
@@ -99,7 +104,7 @@ function loadTeams(){
   document.body.appendChild(s);
 }
 
-/* ===== CREATE TEAM ===== */
+/* ===== CREATE TEAM (JSONP) ===== */
 function createTeam(){
   const name = document.getElementById("teamName").value.trim();
   const msg = document.getElementById("msg");
