@@ -1,8 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Teams Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#f2f4f8;
+}
+.header{
+  background:#0a7cff;
+  color:#fff;
+  padding:14px;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+}
+.container{ padding:16px; }
+.section{
+  background:#fff;
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:16px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+input,button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+button{
+  background:#0a7cff;
+  color:#fff;
+  border:none;
+}
+.team{
+  padding:10px;
+  border-bottom:1px solid #eee;
+}
+#msg{ margin-top:10px; font-size:14px; }
+</style>
+</head>
+
+<body>
+
+<div class="header">👥 Teams Management</div>
+
+<div class="container">
+
+  <div class="section">
+    <h3>➕ Create Team</h3>
+    <input id="teamName" placeholder="Enter Team Name">
+    <button id="createBtn">Create Team</button>
+    <div id="msg"></div>
+  </div>
+
+  <div class="section">
+    <h3>🏏 Teams</h3>
+    <div id="teamsList">Loading…</div>
+  </div>
+
+</div>
+
 <script>
+/* ===== CONFIG ===== */
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* ===== JSONP: LOAD TEAMS ===== */
+/* ===== LOAD TEAMS (JSONP) ===== */
 function loadTeams(){
   const list = document.getElementById("teamsList");
   list.innerText = "Loading teams...";
@@ -11,7 +81,7 @@ function loadTeams(){
   window[cb] = function(data){
     list.innerHTML = "";
     if(!data || data.length === 0){
-      list.innerText = "No teams created yet";
+      list.innerText = "No teams yet";
     }else{
       data.forEach(t=>{
         const d = document.createElement("div");
@@ -28,7 +98,7 @@ function loadTeams(){
   document.body.appendChild(s);
 }
 
-/* ===== JSONP: CREATE TEAM ===== */
+/* ===== CREATE TEAM (JSONP) ===== */
 function createTeam(){
   const name = document.getElementById("teamName").value.trim();
   const msg = document.getElementById("msg");
@@ -47,7 +117,7 @@ function createTeam(){
       document.getElementById("teamName").value="";
       loadTeams();
     }else{
-      msg.innerText = "❌ Error creating team";
+      msg.innerText = "❌ Error";
       msg.style.color = "red";
     }
     delete window[cb];
@@ -62,5 +132,12 @@ function createTeam(){
   document.body.appendChild(s);
 }
 
-window.onload = loadTeams;
+/* ===== SAFE INIT AFTER DOM LOAD ===== */
+window.addEventListener("load", function(){
+  document.getElementById("createBtn").onclick = createTeam;
+  loadTeams();
+});
 </script>
+
+</body>
+</html>
