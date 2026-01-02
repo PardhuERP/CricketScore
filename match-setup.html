@@ -28,64 +28,23 @@ const API_URL =
 </div>
 
 <div class="card">
-
-  <!-- 🆕 MATCH TITLE (AUTO OPTIONAL) -->
-  <input id="match" placeholder="Match Title (auto optional)">
-
-  <!-- 🆕 TEAM DROPDOWNS -->
-  <select id="batting">
-    <option value="">Select Batting Team</option>
-  </select>
-
-  <select id="bowling">
-    <option value="">Select Bowling Team</option>
-  </select>
-
+  <input id="match" placeholder="Match Title (Team A vs Team B)">
+  <input id="batting" placeholder="Batting Team">
+  <input id="bowling" placeholder="Bowling Team">
   <input id="overs" type="number" placeholder="Overs (eg 20)">
-
   <button onclick="startMatch()">Start Match</button>
 </div>
 
 <script>
-/* ================= LOAD TEAMS ================= */
-function loadTeams(){
-  const cb="cbTeams_"+Date.now();
-  window[cb]=res=>{
-    const bat=document.getElementById("batting");
-    const bowl=document.getElementById("bowling");
-
-    res.forEach(t=>{
-      bat.innerHTML+=`<option value="${t}">${t}</option>`;
-      bowl.innerHTML+=`<option value="${t}">${t}</option>`;
-    });
-    delete window[cb];
-  };
-
-  const s=document.createElement("script");
-  s.src=API_URL+"?action=getTeams&callback="+cb;
-  document.body.appendChild(s);
-}
-
-/* ================= START MATCH ================= */
 function startMatch(){
-  let match = document.getElementById("match").value;
+  const match = document.getElementById("match").value;
   const batting = document.getElementById("batting").value;
   const bowling = document.getElementById("bowling").value;
   const overs = document.getElementById("overs").value;
 
-  if(!batting || !bowling || !overs){
-    alert("Please select teams and overs");
+  if(!match || !batting || !bowling || !overs){
+    alert("Fill all fields");
     return;
-  }
-
-  if(batting === bowling){
-    alert("Batting and Bowling teams cannot be same");
-    return;
-  }
-
-  /* 🧠 AUTO MATCH TITLE */
-  if(!match){
-    match = batting + " vs " + bowling;
   }
 
   const cb="cb_"+Date.now();
@@ -110,9 +69,6 @@ function startMatch(){
 
   document.body.appendChild(s);
 }
-
-/* INIT */
-window.onload = loadTeams;
 </script>
 
 </body>
