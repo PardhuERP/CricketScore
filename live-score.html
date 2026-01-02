@@ -57,7 +57,7 @@ body{
 <div class="container">
 
   <div class="card">
-    <div id="matchTitle" class="sub">Loading match...</div>
+    <div id="matchTitle" class="sub">Loading match…</div>
     <div class="score" id="score">0 / 0</div>
     <div class="sub" id="overs">Overs: 0.0</div>
   </div>
@@ -91,30 +91,48 @@ body{
 </div>
 
 <script>
-/* 🔒 FINAL & FOREVER API URL */
-const API_URL = "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+console.log("Live Score JS loaded");
 
-/* Fetch live score */
-function loadScore(){
-  fetch(API_URL + "?action=getLiveScore")
-    .then(res => res.json())
-    .then(d => {
-      document.getElementById("matchTitle").innerText = d.match || "-";
-      document.getElementById("score").innerText = d.runs + " / " + d.wickets;
-      document.getElementById("overs").innerText = "Overs: " + d.overs;
+/* ===== API URL (FOREVER) ===== */
+const API_URL =
+"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-      document.getElementById("batting").innerText = d.batting || "-";
-      document.getElementById("bowling").innerText = d.bowling || "-";
+/* ===== LOAD LIVE SCORE (JSONP) ===== */
+function loadLiveScore(){
+  const cb = "cb_live_" + Date.now();
+  window[cb] = function(d){
+    console.log("Live score response:", d);
 
-      document.getElementById("striker").innerText = d.striker || "-";
-      document.getElementById("nonstriker").innerText = d.nonstriker || "-";
-      document.getElementById("bowler").innerText = d.bowler || "-";
-    })
-    .catch(err => console.log("Error loading score", err));
+    if(!d){
+      return;
+    }
+
+    document.getElementById("matchTitle").innerText = d.match || "-";
+    document.getElementById("score").innerText =
+      (d.runs ?? 0) + " / " + (d.wickets ?? 0);
+    document.getElementById("overs").innerText =
+      "Overs: " + (d.overs ?? "0.0");
+
+    document.getElementById("batting").innerText = d.batting || "-";
+    document.getElementById("bowling").innerText = d.bowling || "-";
+
+    document.getElementById("striker").innerText = d.striker || "-";
+    document.getElementById("nonstriker").innerText = d.nonstriker || "-";
+    document.getElementById("bowler").innerText = d.bowler || "-";
+
+    delete window[cb];
+  };
+
+  const s = document.createElement("script");
+  s.src = API_URL + "?action=getLiveScore&callback=" + cb;
+  document.body.appendChild(s);
 }
 
-loadScore();
-setInterval(loadScore, 5000); // auto refresh every 5 sec
+/* ===== INIT ===== */
+window.addEventListener("load", function(){
+  loadLiveScore();
+  setInterval(loadLiveScore, 5000); // auto refresh every 5 sec
+});
 </script>
 
 </body>
