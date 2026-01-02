@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Over Wise Score</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{margin:0;font-family:Arial;background:#f2f4f8}
+.header{
+  background:#0a7cff;color:#fff;
+  padding:14px;text-align:center;font-weight:bold;
+}
+.back{
+  position:absolute;left:10px;cursor:pointer
+}
+.over-box{
+  background:#fff;
+  margin:10px;
+  border-radius:12px;
+  padding:10px;
+  box-shadow:0 3px 8px rgba(0,0,0,0.1)
+}
+.over-title{
+  font-weight:bold;
+  color:#0a7cff;
+  margin-bottom:6px
+}
+.ball{
+  padding:6px 0;
+  border-bottom:1px solid #eee;
+  font-size:14px
+}
+.ball:last-child{border:none}
+</style>
+
+<script>
+const API_URL =
+"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+
+function loadOvers(){
+  const cb="cb"+Date.now();
+  window[cb]=res=>{
+    const c=document.getElementById("content");
+    c.innerHTML="";
+    res.forEach(o=>{
+      let html=`<div class="over-box">
+        <div class="over-title">Over ${o.over}</div>`;
+      o.balls.forEach(b=>{
+        html+=`<div class="ball">${b.ball} – ${b.text}</div>`;
+      });
+      html+=`</div>`;
+      c.innerHTML+=html;
+    });
+    delete window[cb];
+  };
+  const s=document.createElement("script");
+  s.src=API_URL+"?action=getOverWise&callback="+cb;
+  document.body.appendChild(s);
+}
+
+setInterval(loadOvers,3000);
+window.onload=loadOvers;
+</script>
+</head>
+
+<body>
+<div class="header">
+  <span class="back" onclick="location.href='dashboard.html'">⬅</span>
+  📋 Over Wise Score
+</div>
+
+<div id="content"></div>
+</body>
+</html>
