@@ -32,10 +32,19 @@ body{
   text-align:center;
   box-shadow:0 4px 10px rgba(0,0,0,0.08);
   cursor:pointer;
+  transition:0.2s;
 }
+.card:hover{ transform:scale(1.03); }
 .icon{ font-size:36px; margin-bottom:10px; }
 .title{ font-size:16px; font-weight:bold; }
 </style>
+
+<script>
+/* 🔒 YOUR LIVE GOOGLE SCRIPT API */
+const API_URL =
+"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+</script>
+
 </head>
 
 <body>
@@ -55,7 +64,6 @@ body{
       <div class="title">Players</div>
     </div>
 
-    <!-- 🆕 MATCH SETUP -->
     <div class="card" onclick="go('match-setup.html')">
       <div class="icon">🛠️</div>
       <div class="title">Match Setup</div>
@@ -76,28 +84,28 @@ body{
       <div class="title">Summary</div>
     </div>
 
-    <div class="card" onclick="openPage('overs.html')">
-  <div class="icon">📋</div>
-  <div class="title">Overs</div>
+    <div class="card" onclick="go('overs.html')">
+      <div class="icon">📋</div>
+      <div class="title">Overs</div>
     </div>
 
     <div class="card" onclick="clearMatch()">
-  <div class="icon">🧹</div>
-  <div class="title">Clear Match</div>
+      <div class="icon">🧹</div>
+      <div class="title">Clear Match</div>
     </div>
-    <div class="card" onclick="clearMatch()">
-  <div class="icon">🧹</div>
-  <div class="title">Clear Match</div>
-</div>
 
   </div>
 </div>
 
-  <script>
-function clearMatch(){
-  if(!confirm("Clear current match? This cannot be undone")) return;
+<script>
+function go(page){
+  location.href = page;
+}
 
-  const cb = "cb" + Date.now();
+function clearMatch(){
+  if(!confirm("Clear current match? This cannot be undone.")) return;
+
+  const cb = "cb_" + Date.now();
   window[cb] = res => {
     alert(res.message || "Match cleared");
     delete window[cb];
@@ -107,10 +115,6 @@ function clearMatch(){
   s.src = API_URL + "?action=clearMatch&callback=" + cb;
   document.body.appendChild(s);
 }
-  </script>
-
-<script>
-function go(p){ location.href=p; }
 </script>
 
 </body>
