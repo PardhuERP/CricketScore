@@ -6,77 +6,243 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{margin:0;font-family:Arial;background:#f2f4f8}
-.header{background:#0a7cff;color:#fff;padding:14px;text-align:center}
-.card{background:#fff;margin:12px;padding:16px;border-radius:12px;text-align:center}
-.score{font-size:28px;font-weight:bold}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
-button{padding:14px;font-size:18px;border:none;border-radius:10px;background:#0a7cff;color:#fff}
-.extra{background:#ff9800}
-.wicket{background:#e53935}
-.back{position:absolute;left:10px;cursor:pointer}
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#f2f4f8;
+}
+.header{
+  background:#0a7cff;
+  color:#fff;
+  padding:14px;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+  display:flex;
+  align-items:center;
+}
+.back{
+  margin-right:10px;
+  font-size:20px;
+  cursor:pointer;
+}
+.container{ padding:14px; }
+
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:14px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+  text-align:center;
+}
+
+.score{
+  font-size:28px;
+  font-weight:bold;
+}
+.sub{
+  color:#555;
+  margin-top:4px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:10px;
+}
+
+button{
+  padding:14px;
+  font-size:18px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  background:#0a7cff;
+  color:#fff;
+}
+.wicket{ background:#e53935; }
+.extra{ background:#ff9800; }
+
+.mic-btn{
+  margin-top:10px;
+  background:#e53935;
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  font-size:36px;
+}
+.status{ margin-top:8px; font-size:14px; color:#555; }
+.result{ font-size:16px; margin-top:6px; font-weight:bold; }
 </style>
 
 <script>
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
-</script>
 
+/* ---------- JSONP CALL ---------- */
+function callAPI(params, cb){
+  const fn = "cb_" + Date.now();
+  window[fn] = function(res){
+    cb && cb(res);
+    delete window[fn];
+    s.remove();
+  };
+  const q = Object.keys(params).map(k=>k+"="+encodeURIComponent(params[k])).join("&");
+  const s = document.createElement("script");
+  s.src = API_URL + "?" + q + "&callback=" + fn + "&_=" + Date.now();
+  document.body.appendChild(s);
+}
+
+/* ---------- UPDATE UI ---------- */
+function updateUI(res){
+  if(res && res.runs!==undefined){
+    document.getElementById("score").innerText =
+      res.runs + " / " + res.wickets;
+    document.getElementById("overs").innerText =
+      "Overs: " + res.overs;
+  }
+}
+
+/* ---------- BUTTON ENTRY ---------- */
+function send(type,value=0){
+  callAPI({
+    action:"updateScore",
+    type:type,
+    value:value
+  }, updateUI);
+}
+
+/* ---------- MIC LOGIC ---------- */
+let recognition, listening=false;
+
+function initMic(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ alert("Speech recognition not supported"); return; }
+
+  recognition = new SR();
+  recognition.lang = "en-IN";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onresult = e=>{
+    const text = e.results[0][0].transcript.toLowerCase();
+    document.getElementById("result").innerText = text;
+    processVoice(text);
+  };
+
+  recognition.onend = ()=>{
+    listening=false;
+    document.getElementById("status").innerText="Tap mic & speak";
+  };
+}
+
+function toggleMic(){
+  if(!recognition) initMic();
+  if(listening) return;
+  listening=true;
+  document.getElementById("status").innerText="Listening...";
+  recognition.start();
+}
+
+/* ---------- VOICE PARSER (FIXED) ---------- */
+function processVoice(text){
+  let type="", value=0;
+
+  if(text.includes("wide")){
+    type="wide";
+  }
+  else if(text.includes("no ball") || text.includes("noball")){
+    type="noball";
+  }
+  else if(text.includes("wicket") || text.includes("out")){
+    type="wicket";
+  }
+  else{
+    const map = [
+      {k:["zero"], v:0},
+      {k:["one","1"], v:1},
+      {k:["two","2"], v:2},
+      {k:["three","3"], v:3},
+      {k:["four","4"], v:4},
+      {k:["six","6"], v:6}
+    ];
+    for(const m of map){
+      if(m.k.some(w=>text.includes(w))){
+        type="run";
+        value=m.v;
+        break;
+      }
+    }
+  }
+
+  if(!type){
+    alert("Voice not recognised");
+    return;
+  }
+
+  callAPI({
+    action:"updateScore",
+    type:type,
+    value:value
+  }, res=>{
+    updateUI(res);
+    document.getElementById("status").innerText="Score updated ✔";
+  });
+}
+
+/* ---------- LOAD LIVE SCORE ---------- */
+window.onload = ()=>{
+  callAPI({action:"getLiveScore"}, updateUI);
+};
+</script>
 </head>
+
 <body>
 
 <div class="header">
-  <span class="back" onclick="location.href='dashboard.html'">⬅</span>
+  <div class="back" onclick="location.href='dashboard.html'">⬅</div>
   ✍️ Score Entry
 </div>
 
-<div class="card">
-  <div class="score" id="score">0 / 0</div>
-  <div id="overs">Overs: 0.0</div>
-</div>
+<div class="container">
 
-<div class="card">
-  <div class="grid">
-    <button onclick="send('run',1)">1</button>
-    <button onclick="send('run',2)">2</button>
-    <button onclick="send('run',3)">3</button>
-    <button onclick="send('run',4)">4</button>
-    <button onclick="send('run',6)">6</button>
-    <button class="wicket" onclick="send('wicket')">W</button>
-    <button class="extra" onclick="send('wide')">Wd</button>
-    <button class="extra" onclick="send('noball')">Nb</button>
+  <!-- LIVE SCORE -->
+  <div class="card">
+    <div class="score" id="score">0 / 0</div>
+    <div class="sub" id="overs">Overs: 0.0</div>
   </div>
+
+  <!-- RUN BUTTONS -->
+  <div class="card">
+    <div class="grid">
+      <button onclick="send('run',0)">0</button>
+      <button onclick="send('run',1)">1</button>
+      <button onclick="send('run',2)">2</button>
+      <button onclick="send('run',3)">3</button>
+      <button onclick="send('run',4)">4</button>
+      <button onclick="send('run',6)">6</button>
+    </div>
+  </div>
+
+  <!-- EXTRAS -->
+  <div class="card">
+    <div class="grid">
+      <button class="extra" onclick="send('wide')">Wide</button>
+      <button class="extra" onclick="send('noball')">No Ball</button>
+      <button class="wicket" onclick="send('wicket')">Wicket</button>
+    </div>
+  </div>
+
+  <!-- MIC -->
+  <div class="card">
+    <button class="mic-btn" onclick="toggleMic()">🎤</button>
+    <div class="status" id="status">Tap mic & speak</div>
+    <div class="result" id="result"></div>
+  </div>
+
 </div>
-
-<script>
-function send(type,value=0){
-  const cb = "cb_"+Date.now();
-  window[cb] = res => {
-
-    if(res.status==="error"){
-      alert(res.msg);
-      return;
-    }
-
-    if(res.status==="ok"){
-      document.getElementById("score").innerText =
-        res.runs+" / "+res.wickets;
-      document.getElementById("overs").innerText =
-        "Overs: "+res.overs;
-    }
-
-    delete window[cb];
-  };
-
-  const s=document.createElement("script");
-  s.src = API_URL +
-    "?action=updateScore" +
-    "&type="+type +
-    "&value="+value +
-    "&callback="+cb;
-  document.body.appendChild(s);
-}
-</script>
 
 </body>
 </html>
