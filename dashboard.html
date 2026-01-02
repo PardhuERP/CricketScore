@@ -19,18 +19,7 @@ body{
   font-size:20px;
   font-weight:bold;
 }
-.container{
-  padding:16px;
-}
-.ad-box{
-  background:#fff;
-  border-radius:12px;
-  padding:10px;
-  text-align:center;
-  margin-bottom:15px;
-  font-size:12px;
-  color:#777;
-}
+.container{ padding:16px; }
 .grid{
   display:grid;
   grid-template-columns: repeat(2, 1fr);
@@ -43,33 +32,10 @@ body{
   text-align:center;
   box-shadow:0 4px 10px rgba(0,0,0,0.08);
   cursor:pointer;
-  transition:0.2s;
 }
-.card:hover{
-  transform:scale(1.03);
-}
-.icon{
-  font-size:36px;
-  margin-bottom:10px;
-}
-.title{
-  font-size:16px;
-  font-weight:bold;
-}
-.footer{
-  margin-top:25px;
-  text-align:center;
-  font-size:12px;
-  color:#777;
-}
+.icon{ font-size:36px; margin-bottom:10px; }
+.title{ font-size:16px; font-weight:bold; }
 </style>
-
-<!-- 🔒 FINAL & FOREVER API URL -->
-<script>
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
-</script>
-
 </head>
 
 <body>
@@ -77,61 +43,44 @@ const API_URL =
 <div class="header">🏏 Mini Cricket Dashboard</div>
 
 <div class="container">
-
-  <!-- 🔔 TOP AD (SAFE PLACE) -->
-  <div class="ad-box">
-    Advertisement
-  </div>
-
   <div class="grid">
 
-    <div class="card" onclick="openPage('teams.html')">
+    <div class="card" onclick="go('teams.html')">
       <div class="icon">👥</div>
       <div class="title">Teams</div>
     </div>
 
-    <div class="card" onclick="openPage('live-score.html')">
-      <div class="icon">📊</div>
-      <div class="title">Live Score</div>
+    <div class="card" onclick="go('players.html')">
+      <div class="icon">🧑‍🤝‍🧑</div>
+      <div class="title">Players</div>
     </div>
 
-    <div class="card" onclick="openPage('score-entry.html')">
+    <!-- 🆕 MATCH SETUP -->
+    <div class="card" onclick="go('match-setup.html')">
+      <div class="icon">🛠️</div>
+      <div class="title">Match Setup</div>
+    </div>
+
+    <div class="card" onclick="go('score-entry.html')">
       <div class="icon">✍️</div>
       <div class="title">Score Entry</div>
     </div>
 
-    <div class="card" onclick="openPage('mic-score.html')">
-      <div class="icon">🎤</div>
-      <div class="title">Mic</div>
+    <div class="card" onclick="go('live-score.html')">
+      <div class="icon">📊</div>
+      <div class="title">Live Score</div>
     </div>
 
-    <div class="card" onclick="openPage('stats.html')">
-      <div class="icon">🏏</div>
-      <div class="title">Batting</div>
+    <div class="card" onclick="go('summary.html')">
+      <div class="icon">🏆</div>
+      <div class="title">Summary</div>
     </div>
 
-    <div class="card" onclick="openPage('stats.html')">
-      <div class="icon">🎯</div>
-      <div class="title">Bowling</div>
-    </div>
-
-    <!-- ✅ NEW: MATCH SUMMARY -->
-    <div class="card" onclick="openPage('summary.html')">
-      <div class="icon">📋</div>
-      <div class="title">Match Summary</div>
-    </div>
-
-  </div>
-
-  <div class="footer">
-    Google Sheet Connected • API Ready
   </div>
 </div>
 
 <script>
-function openPage(page){
-  location.href = page;
-}
+function go(p){ location.href=p; }
 </script>
 
 </body>
