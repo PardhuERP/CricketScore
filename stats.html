@@ -8,7 +8,7 @@
 <style>
 body{
   margin:0;
-  font-family: Arial, sans-serif;
+  font-family:Arial;
   background:#f2f4f8;
 }
 .header{
@@ -34,23 +34,17 @@ table{
   border-collapse:collapse;
   font-size:14px;
 }
-th, td{
+th,td{
   padding:8px;
   border-bottom:1px solid #eee;
   text-align:center;
 }
 th{
   background:#f7f7f7;
-  font-weight:bold;
 }
 .title{
   font-weight:bold;
   margin-bottom:8px;
-}
-.note{
-  font-size:13px;
-  color:#666;
-  margin-top:6px;
 }
 </style>
 </head>
@@ -61,7 +55,6 @@ th{
 
 <div class="container">
 
-  <!-- BATTING -->
   <div class="card">
     <div class="title">🏏 Batting</div>
     <table>
@@ -75,13 +68,12 @@ th{
           <th>SR</th>
         </tr>
       </thead>
-      <tbody id="battingTable">
-        <tr><td colspan="6">Loading…</td></tr>
+      <tbody id="batting">
+        <tr><td colspan="6">Loading...</td></tr>
       </tbody>
     </table>
   </div>
 
-  <!-- BOWLING -->
   <div class="card">
     <div class="title">🎯 Bowling</div>
     <table>
@@ -94,8 +86,8 @@ th{
           <th>Econ</th>
         </tr>
       </thead>
-      <tbody id="bowlingTable">
-        <tr><td colspan="5">Loading…</td></tr>
+      <tbody id="bowling">
+        <tr><td colspan="5">Loading...</td></tr>
       </tbody>
     </table>
   </div>
@@ -103,73 +95,64 @@ th{
 </div>
 
 <script>
-/* 🔒 FINAL & FOREVER API URL */
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
 function loadStats(){
-  fetch(API_URL + "?action=getStats")
-    .then(res => res.json())
-    .then(d => {
+  const cb = "cb_stats_" + Date.now();
 
-      /* 🏏 Batting */
-      const bat = document.getElementById("battingTable");
-      bat.innerHTML = "";
+  window[cb] = function(d){
+    // Batting
+    const bat = document.getElementById("batting");
+    bat.innerHTML = "";
 
-      if(!d.batting || d.batting.length === 0){
-        bat.innerHTML = "<tr><td colspan='6'>No batting data</td></tr>";
-      }else{
-        d.batting.forEach(p=>{
-          const balls = Number(p.balls) || 0;
-          const runs  = Number(p.runs) || 0;
-          const sr = balls > 0 ? ((runs / balls) * 100).toFixed(1) : "0.0";
+    if(d.batting.length === 0){
+      bat.innerHTML = "<tr><td colspan='6'>No data</td></tr>";
+    }else{
+      d.batting.forEach(p=>{
+        const sr = p.balls > 0 ? ((p.runs/p.balls)*100).toFixed(1) : "0.0";
+        bat.innerHTML += `
+          <tr>
+            <td>${p.name}</td>
+            <td>${p.runs}</td>
+            <td>${p.balls}</td>
+            <td>${p.fours}</td>
+            <td>${p.sixes}</td>
+            <td>${sr}</td>
+          </tr>`;
+      });
+    }
 
-          bat.innerHTML += `
-            <tr>
-              <td>${p.name}</td>
-              <td>${runs}</td>
-              <td>${balls}</td>
-              <td>${p.fours}</td>
-              <td>${p.sixes}</td>
-              <td>${sr}</td>
-            </tr>`;
-        });
-      }
+    // Bowling
+    const bowl = document.getElementById("bowling");
+    bowl.innerHTML = "";
 
-      /* 🎯 Bowling */
-      const bowl = document.getElementById("bowlingTable");
-      bowl.innerHTML = "";
+    if(d.bowling.length === 0){
+      bowl.innerHTML = "<tr><td colspan='5'>No data</td></tr>";
+    }else{
+      d.bowling.forEach(b=>{
+        const econ = b.overs > 0 ? (b.runs/b.overs).toFixed(1) : "0.0";
+        bowl.innerHTML += `
+          <tr>
+            <td>${b.name}</td>
+            <td>${b.overs}</td>
+            <td>${b.runs}</td>
+            <td>${b.wickets}</td>
+            <td>${econ}</td>
+          </tr>`;
+      });
+    }
 
-      if(!d.bowling || d.bowling.length === 0){
-        bowl.innerHTML = "<tr><td colspan='5'>No bowling data</td></tr>";
-      }else{
-        d.bowling.forEach(b=>{
-          const overs = Number(b.overs) || 0;
-          const runs  = Number(b.runs) || 0;
-          const econ = overs > 0 ? (runs / overs).toFixed(1) : "0.0";
+    delete window[cb];
+  };
 
-          bowl.innerHTML += `
-            <tr>
-              <td>${b.name}</td>
-              <td>${overs}</td>
-              <td>${runs}</td>
-              <td>${b.wickets}</td>
-              <td>${econ}</td>
-            </tr>`;
-        });
-      }
-
-    })
-    .catch(()=>{
-      document.getElementById("battingTable").innerHTML =
-        "<tr><td colspan='6'>❌ Error loading stats</td></tr>";
-      document.getElementById("bowlingTable").innerHTML =
-        "<tr><td colspan='5'>❌ Error loading stats</td></tr>";
-    });
+  const s = document.createElement("script");
+  s.src = API_URL + "?action=getStats&callback=" + cb;
+  document.body.appendChild(s);
 }
 
 loadStats();
-setInterval(loadStats, 5000); // auto refresh every 5 sec
+setInterval(loadStats, 5000);
 </script>
 
 </body>
