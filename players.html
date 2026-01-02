@@ -8,7 +8,7 @@
 <style>
 body{
   margin:0;
-  font-family: Arial, sans-serif;
+  font-family:Arial;
   background:#f2f4f8;
 }
 .header{
@@ -19,16 +19,16 @@ body{
   font-size:18px;
   font-weight:bold;
 }
-.container{
-  padding:16px;
-}
-.section{
+.container{ padding:16px; }
+
+.card{
   background:#fff;
   border-radius:14px;
   padding:16px;
-  margin-bottom:16px;
+  margin-bottom:14px;
   box-shadow:0 4px 10px rgba(0,0,0,0.08);
 }
+
 input, select, button{
   width:100%;
   padding:12px;
@@ -37,160 +37,191 @@ input, select, button{
   border:1px solid #ccc;
   font-size:15px;
 }
+
 button{
   background:#0a7cff;
   color:#fff;
   border:none;
   cursor:pointer;
 }
+
 .player{
-  padding:8px;
+  padding:8px 0;
   border-bottom:1px solid #eee;
+  font-size:14px;
 }
-.player:last-child{border-bottom:none;}
-.note{
-  font-size:13px;
-  color:#666;
-  margin-top:8px;
+.player:last-child{ border-bottom:none; }
+
+.badge{
+  background:#eee;
+  padding:2px 6px;
+  border-radius:6px;
+  font-size:11px;
+  margin-left:6px;
+}
+.captain{ background:#ffc107; }
+.keeper{ background:#4caf50; color:#fff; }
+
+.back{
+  margin-bottom:10px;
+  background:#555;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">🏏 Players Management</div>
+<div class="header">👥 Players Management</div>
 
 <div class="container">
 
+  <button class="back" onclick="location='dashboard.html'">⬅ Back to Dashboard</button>
+
   <!-- ADD PLAYER -->
-  <div class="section">
+  <div class="card">
     <h3>➕ Add Player</h3>
 
     <select id="teamSelect"></select>
 
-    <input type="text" id="playerName" placeholder="Player Name">
+    <input id="playerName" placeholder="Player Name">
 
     <select id="role">
-      <option value="Batsman">Batsman</option>
-      <option value="Bowler">Bowler</option>
-      <option value="All-Rounder">All-Rounder</option>
-      <option value="Wicket Keeper">Wicket Keeper</option>
+      <option value="">Select Role</option>
+      <option value="BAT">Batsman</option>
+      <option value="BOWL">Bowler</option>
+      <option value="AR">All Rounder</option>
+      <option value="WK">Wicket Keeper</option>
     </select>
 
+    <label>
+      <input type="checkbox" id="isCaptain"> Captain
+    </label><br>
+
+    <label>
+      <input type="checkbox" id="isKeeper"> Wicket Keeper
+    </label>
+
     <button onclick="addPlayer()">Add Player</button>
-    <div class="note" id="msg"></div>
+
+    <div id="msg"></div>
   </div>
 
   <!-- PLAYERS LIST -->
-  <div class="section">
-    <h3>📋 Players List</h3>
-    <div id="playersList">Loading teams…</div>
+  <div class="card">
+    <h3>📋 Players</h3>
+    <select id="filterTeam" onchange="loadPlayers()"></select>
+    <div id="playersList">Loading...</div>
   </div>
 
 </div>
 
 <script>
-/* 🔒 FINAL & FOREVER API URL */
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-window.onload = loadTeams;
-
-/* Load teams in dropdown */
+/* ========== LOAD TEAMS ========== */
 function loadTeams(){
-  fetch(API_URL + "?action=getTeams")
-    .then(res => res.json())
-    .then(data => {
-      const select = document.getElementById("teamSelect");
-      select.innerHTML = "";
+  const cb = "cbTeams_" + Date.now();
+  window[cb] = function(data){
+    const teamSel = document.getElementById("teamSelect");
+    const filterSel = document.getElementById("filterTeam");
+    teamSel.innerHTML = "";
+    filterSel.innerHTML = "";
 
-      if(!data || data.length === 0){
-        document.getElementById("playersList").innerText =
-          "❌ No teams available. Create team first.";
-        return;
-      }
-
-      data.forEach(team => {
-        const opt = document.createElement("option");
-        opt.value = team;
-        opt.innerText = team;
-        select.appendChild(opt);
-      });
-
-      loadPlayers();
-    })
-    .catch(()=>{
-      document.getElementById("playersList").innerText =
-        "❌ Error loading teams";
+    data.forEach(t=>{
+      teamSel.innerHTML += `<option value="${t}">${t}</option>`;
+      filterSel.innerHTML += `<option value="${t}">${t}</option>`;
     });
+
+    loadPlayers();
+    delete window[cb];
+  };
+
+  const s = document.createElement("script");
+  s.src = API_URL + "?action=getTeams&callback=" + cb;
+  document.body.appendChild(s);
 }
 
-/* Reload players when team changes */
-document.getElementById("teamSelect").addEventListener("change", loadPlayers);
-
-function loadPlayers(){
-  const team = document.getElementById("teamSelect").value;
-  const list = document.getElementById("playersList");
-
-  list.innerText = "Loading players…";
-
-  fetch(API_URL + "?action=getPlayers&team=" + encodeURIComponent(team))
-    .then(res => res.json())
-    .then(data => {
-      list.innerHTML = "";
-
-      if(!data || data.length === 0){
-        list.innerText = "No players added";
-        return;
-      }
-
-      data.forEach(p => {
-        const div = document.createElement("div");
-        div.className = "player";
-        div.innerText = "🏏 " + p.name + " (" + p.role + ")";
-        list.appendChild(div);
-      });
-    })
-    .catch(()=>{
-      list.innerText = "❌ Error loading players";
-    });
-}
-
-/* Add player */
+/* ========== ADD PLAYER ========== */
 function addPlayer(){
-  const team = document.getElementById("teamSelect").value;
-  const name = document.getElementById("playerName").value.trim();
+  const team = teamSelect.value;
+  const name = playerName.value.trim();
   const role = document.getElementById("role").value;
+  const captain = isCaptain.checked ? "YES" : "";
+  const keeper = isKeeper.checked ? "YES" : "";
+
   const msg = document.getElementById("msg");
 
-  msg.innerText = "";
-
-  if(name === ""){
-    msg.innerText = "⚠️ Enter player name";
+  if(!team || !name || !role){
+    msg.innerText = "⚠️ Fill all required fields";
     msg.style.color = "orange";
     return;
   }
 
-  fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"addPlayer",
-      team:team,
-      name:name,
-      role:role
-    })
-  })
-  .then(()=>{
-    msg.innerText = "✅ Player added";
-    msg.style.color = "green";
-    document.getElementById("playerName").value = "";
-    loadPlayers();
-  })
-  .catch(()=>{
-    msg.innerText = "❌ Server error";
-    msg.style.color = "red";
-  });
+  const cb = "cbAdd_" + Date.now();
+  window[cb] = function(res){
+    if(res.status === "ok"){
+      msg.innerText = "✅ Player added";
+      msg.style.color = "green";
+      playerName.value = "";
+      isCaptain.checked = false;
+      isKeeper.checked = false;
+      loadPlayers();
+    }else{
+      msg.innerText = "❌ Error";
+      msg.style.color = "red";
+    }
+    delete window[cb];
+  };
+
+  const s = document.createElement("script");
+  s.src =
+    API_URL +
+    "?action=addPlayer" +
+    "&team=" + encodeURIComponent(team) +
+    "&name=" + encodeURIComponent(name) +
+    "&role=" + role +
+    "&isCaptain=" + captain +
+    "&isKeeper=" + keeper +
+    "&callback=" + cb;
+
+  document.body.appendChild(s);
 }
+
+/* ========== LOAD PLAYERS ========== */
+function loadPlayers(){
+  const team = filterTeam.value;
+  const list = document.getElementById("playersList");
+  list.innerHTML = "Loading...";
+
+  const cb = "cbPlayers_" + Date.now();
+  window[cb] = function(data){
+    list.innerHTML = "";
+    if(!data || data.length === 0){
+      list.innerText = "No players";
+    }else{
+      data.forEach(p=>{
+        let html = p.name + " (" + p.role + ")";
+        if(p.isCaptain==="YES") html += `<span class="badge captain">C</span>`;
+        if(p.isKeeper==="YES") html += `<span class="badge keeper">WK</span>`;
+        list.innerHTML += `<div class="player">${html}</div>`;
+      });
+    }
+    delete window[cb];
+  };
+
+  const s = document.createElement("script");
+  s.src =
+    API_URL +
+    "?action=getPlayers" +
+    "&team=" + encodeURIComponent(team) +
+    "&callback=" + cb;
+
+  document.body.appendChild(s);
+}
+
+/* INIT */
+window.onload = loadTeams;
 </script>
 
 </body>
