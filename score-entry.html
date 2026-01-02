@@ -10,6 +10,8 @@ body{
   margin:0;
   font-family:Arial, sans-serif;
   background:#f2f4f8;
+  height:100vh;
+  overflow:hidden;
 }
 .header{
   background:#0a7cff;
@@ -26,7 +28,22 @@ body{
   font-size:20px;
   cursor:pointer;
 }
-.container{ padding:14px; }
+
+/* 🆕 SPLIT LAYOUT */
+.main{
+  height:calc(100vh - 52px);
+  display:flex;
+  flex-direction:column;
+}
+.top{
+  flex:1;
+  padding:14px;
+}
+.bottom{
+  flex:1;
+  padding:14px;
+  overflow-y:auto;
+}
 
 .card{
   background:#fff;
@@ -38,12 +55,13 @@ body{
 }
 
 .score{
-  font-size:28px;
+  font-size:32px;
   font-weight:bold;
 }
 .sub{
   color:#555;
   margin-top:4px;
+  font-size:16px;
 }
 
 .grid{
@@ -146,50 +164,33 @@ function toggleMic(){
   recognition.start();
 }
 
-/* ---------- VOICE PARSER (FIXED) ---------- */
+/* ---------- VOICE PARSER ---------- */
 function processVoice(text){
   let type="", value=0;
 
-  if(text.includes("wide")){
-    type="wide";
-  }
-  else if(text.includes("no ball") || text.includes("noball")){
-    type="noball";
-  }
-  else if(text.includes("wicket") || text.includes("out")){
-    type="wicket";
-  }
+  if(text.includes("wide")) type="wide";
+  else if(text.includes("no ball") || text.includes("noball")) type="noball";
+  else if(text.includes("wicket") || text.includes("out")) type="wicket";
   else{
-    const map = [
-      {k:["zero"], v:0},
-      {k:["one","1"], v:1},
-      {k:["two","2"], v:2},
-      {k:["three","3"], v:3},
-      {k:["four","4"], v:4},
-      {k:["six","6"], v:6}
+    const map=[
+      {k:["zero"],v:0},
+      {k:["one","1"],v:1},
+      {k:["two","2"],v:2},
+      {k:["three","3"],v:3},
+      {k:["four","4"],v:4},
+      {k:["six","6"],v:6}
     ];
     for(const m of map){
       if(m.k.some(w=>text.includes(w))){
-        type="run";
-        value=m.v;
-        break;
+        type="run"; value=m.v; break;
       }
     }
   }
 
-  if(!type){
-    alert("Voice not recognised");
-    return;
-  }
+  if(!type){ alert("Voice not recognised"); return; }
 
-  callAPI({
-    action:"updateScore",
-    type:type,
-    value:value
-  }, res=>{
-    updateUI(res);
-    document.getElementById("status").innerText="Score updated ✔";
-  });
+  send(type,value);
+  document.getElementById("status").innerText="Score updated ✔";
 }
 
 /* ---------- LOAD LIVE SCORE ---------- */
@@ -206,42 +207,45 @@ window.onload = ()=>{
   ✍️ Score Entry
 </div>
 
-<div class="container">
+<div class="main">
 
-  <!-- LIVE SCORE -->
-  <div class="card">
-    <div class="score" id="score">0 / 0</div>
-    <div class="sub" id="overs">Overs: 0.0</div>
-  </div>
-
-  <!-- RUN BUTTONS -->
-  <div class="card">
-    <div class="grid">
-      <button onclick="send('run',0)">0</button>
-      <button onclick="send('run',1)">1</button>
-      <button onclick="send('run',2)">2</button>
-      <button onclick="send('run',3)">3</button>
-      <button onclick="send('run',4)">4</button>
-      <button onclick="send('run',6)">6</button>
+  <!-- 🔝 TOP HALF : LIVE SCORE -->
+  <div class="top">
+    <div class="card">
+      <div class="score" id="score">0 / 0</div>
+      <div class="sub" id="overs">Overs: 0.0</div>
     </div>
   </div>
 
-  <!-- EXTRAS -->
-  <div class="card">
-    <div class="grid">
-      <button class="extra" onclick="send('wide')">Wide</button>
-      <button class="extra" onclick="send('noball')">No Ball</button>
-      <button class="wicket" onclick="send('wicket')">Wicket</button>
+  <!-- 🔽 BOTTOM HALF : ENTRY + MIC -->
+  <div class="bottom">
+
+    <div class="card">
+      <div class="grid">
+        <button onclick="send('run',0)">0</button>
+        <button onclick="send('run',1)">1</button>
+        <button onclick="send('run',2)">2</button>
+        <button onclick="send('run',3)">3</button>
+        <button onclick="send('run',4)">4</button>
+        <button onclick="send('run',6)">6</button>
+      </div>
     </div>
-  </div>
 
-  <!-- MIC -->
-  <div class="card">
-    <button class="mic-btn" onclick="toggleMic()">🎤</button>
-    <div class="status" id="status">Tap mic & speak</div>
-    <div class="result" id="result"></div>
-  </div>
+    <div class="card">
+      <div class="grid">
+        <button class="extra" onclick="send('wide')">Wide</button>
+        <button class="extra" onclick="send('noball')">No Ball</button>
+        <button class="wicket" onclick="send('wicket')">Wicket</button>
+      </div>
+    </div>
 
+    <div class="card">
+      <button class="mic-btn" onclick="toggleMic()">🎤</button>
+      <div class="status" id="status">Tap mic & speak</div>
+      <div class="result" id="result"></div>
+    </div>
+
+  </div>
 </div>
 
 </body>
