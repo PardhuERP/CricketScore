@@ -10,14 +10,11 @@ body{
   margin:0;
   font-family:Arial, sans-serif;
   background:#f2f4f8;
-  height:100vh;
-  overflow:hidden;
 }
 .header{
   background:#0a7cff;
   color:#fff;
   padding:14px;
-  text-align:center;
   font-size:18px;
   font-weight:bold;
   display:flex;
@@ -29,21 +26,7 @@ body{
   cursor:pointer;
 }
 
-/* 🆕 SPLIT LAYOUT */
-.main{
-  height:calc(100vh - 52px);
-  display:flex;
-  flex-direction:column;
-}
-.top{
-  flex:1;
-  padding:14px;
-}
-.bottom{
-  flex:1;
-  padding:14px;
-  overflow-y:auto;
-}
+.container{ padding:14px; }
 
 .card{
   background:#fff;
@@ -51,17 +34,25 @@ body{
   padding:14px;
   margin-bottom:14px;
   box-shadow:0 4px 10px rgba(0,0,0,0.08);
-  text-align:center;
 }
+
+.center{text-align:center}
 
 .score{
   font-size:32px;
   font-weight:bold;
 }
-.sub{
-  color:#555;
-  margin-top:4px;
-  font-size:16px;
+.sub{ color:#555; margin-top:4px }
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  margin-top:8px;
+  font-size:14px;
+}
+
+.player{
+  font-weight:bold;
 }
 
 .grid{
@@ -99,103 +90,92 @@ button{
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* ---------- JSONP CALL ---------- */
+/* JSONP */
 function callAPI(params, cb){
-  const fn = "cb_" + Date.now();
-  window[fn] = function(res){
+  const fn="cb_"+Date.now();
+  window[fn]=res=>{
     cb && cb(res);
     delete window[fn];
     s.remove();
   };
-  const q = Object.keys(params).map(k=>k+"="+encodeURIComponent(params[k])).join("&");
-  const s = document.createElement("script");
-  s.src = API_URL + "?" + q + "&callback=" + fn + "&_=" + Date.now();
+  const q=Object.keys(params).map(k=>k+"="+encodeURIComponent(params[k])).join("&");
+  const s=document.createElement("script");
+  s.src=API_URL+"?"+q+"&callback="+fn;
   document.body.appendChild(s);
 }
 
-/* ---------- UPDATE UI ---------- */
+/* UI UPDATE */
 function updateUI(res){
-  if(res && res.runs!==undefined){
-    document.getElementById("score").innerText =
-      res.runs + " / " + res.wickets;
-    document.getElementById("overs").innerText =
-      "Overs: " + res.overs;
-  }
+  if(!res || res.runs===undefined) return;
+
+  document.getElementById("score").innerText =
+    res.runs+" / "+res.wickets;
+
+  document.getElementById("overs").innerText =
+    "Overs: "+res.overs;
+
+  document.getElementById("striker").innerText =
+    res.striker || "-";
+
+  document.getElementById("nonstriker").innerText =
+    res.nonstriker || "-";
+
+  const parts = String(res.overs).split(".");
+  document.getElementById("completed").innerText =
+    parts[0] || "0";
+
+  document.getElementById("running").innerText =
+    (parts[1] || "0")+"/6";
 }
 
-/* ---------- BUTTON ENTRY ---------- */
+/* SCORE */
 function send(type,value=0){
-  callAPI({
-    action:"updateScore",
-    type:type,
-    value:value
-  }, updateUI);
+  callAPI({action:"updateScore",type,value},updateUI);
 }
 
-/* ---------- MIC LOGIC ---------- */
+/* MIC */
 let recognition, listening=false;
 
 function initMic(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){ alert("Speech recognition not supported"); return; }
-
-  recognition = new SR();
-  recognition.lang = "en-IN";
-  recognition.continuous = false;
-  recognition.interimResults = false;
-
-  recognition.onresult = e=>{
-    const text = e.results[0][0].transcript.toLowerCase();
-    document.getElementById("result").innerText = text;
-    processVoice(text);
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert("Speech not supported");return;}
+  recognition=new SR();
+  recognition.lang="en-IN";
+  recognition.onresult=e=>{
+    const t=e.results[0][0].transcript.toLowerCase();
+    document.getElementById("result").innerText=t;
+    processVoice(t);
   };
-
-  recognition.onend = ()=>{
-    listening=false;
-    document.getElementById("status").innerText="Tap mic & speak";
-  };
+  recognition.onend=()=>listening=false;
 }
 
 function toggleMic(){
   if(!recognition) initMic();
   if(listening) return;
   listening=true;
-  document.getElementById("status").innerText="Listening...";
   recognition.start();
 }
 
-/* ---------- VOICE PARSER ---------- */
 function processVoice(text){
-  let type="", value=0;
-
+  let type="",value=0;
   if(text.includes("wide")) type="wide";
-  else if(text.includes("no ball") || text.includes("noball")) type="noball";
-  else if(text.includes("wicket") || text.includes("out")) type="wicket";
+  else if(text.includes("no ball")) type="noball";
+  else if(text.includes("wicket")) type="wicket";
   else{
     const map=[
-      {k:["zero"],v:0},
-      {k:["one","1"],v:1},
-      {k:["two","2"],v:2},
-      {k:["three","3"],v:3},
-      {k:["four","4"],v:4},
-      {k:["six","6"],v:6}
+      {k:["zero"],v:0},{k:["one","1"],v:1},{k:["two","2"],v:2},
+      {k:["three","3"],v:3},{k:["four","4"],v:4},{k:["six","6"],v:6}
     ];
     for(const m of map){
-      if(m.k.some(w=>text.includes(w))){
-        type="run"; value=m.v; break;
-      }
+      if(m.k.some(w=>text.includes(w))){type="run";value=m.v;}
     }
   }
-
-  if(!type){ alert("Voice not recognised"); return; }
-
-  send(type,value);
-  document.getElementById("status").innerText="Score updated ✔";
+  if(type) send(type,value);
 }
 
-/* ---------- LOAD LIVE SCORE ---------- */
-window.onload = ()=>{
-  callAPI({action:"getLiveScore"}, updateUI);
+/* LOAD */
+window.onload=()=>{
+  callAPI({action:"getLiveScore"},updateUI);
 };
 </script>
 </head>
@@ -207,45 +187,52 @@ window.onload = ()=>{
   ✍️ Score Entry
 </div>
 
-<div class="main">
+<div class="container">
 
-  <!-- 🔝 TOP HALF : LIVE SCORE -->
-  <div class="top">
-    <div class="card">
-      <div class="score" id="score">0 / 0</div>
-      <div class="sub" id="overs">Overs: 0.0</div>
+  <!-- LIVE SCORE -->
+  <div class="card center">
+    <div class="score" id="score">0 / 0</div>
+    <div class="sub" id="overs">Overs: 0.0</div>
+
+    <div class="row">
+      <div>Striker: <span class="player" id="striker">-</span></div>
+      <div>Non-Striker: <span class="player" id="nonstriker">-</span></div>
+    </div>
+
+    <div class="row">
+      <div>Completed Overs: <b id="completed">0</b></div>
+      <div>Running Over: <b id="running">0/6</b></div>
     </div>
   </div>
 
-  <!-- 🔽 BOTTOM HALF : ENTRY + MIC -->
-  <div class="bottom">
-
-    <div class="card">
-      <div class="grid">
-        <button onclick="send('run',0)">0</button>
-        <button onclick="send('run',1)">1</button>
-        <button onclick="send('run',2)">2</button>
-        <button onclick="send('run',3)">3</button>
-        <button onclick="send('run',4)">4</button>
-        <button onclick="send('run',6)">6</button>
-      </div>
+  <!-- RUNS -->
+  <div class="card">
+    <div class="grid">
+      <button onclick="send('run',0)">0</button>
+      <button onclick="send('run',1)">1</button>
+      <button onclick="send('run',2)">2</button>
+      <button onclick="send('run',3)">3</button>
+      <button onclick="send('run',4)">4</button>
+      <button onclick="send('run',6)">6</button>
     </div>
-
-    <div class="card">
-      <div class="grid">
-        <button class="extra" onclick="send('wide')">Wide</button>
-        <button class="extra" onclick="send('noball')">No Ball</button>
-        <button class="wicket" onclick="send('wicket')">Wicket</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <button class="mic-btn" onclick="toggleMic()">🎤</button>
-      <div class="status" id="status">Tap mic & speak</div>
-      <div class="result" id="result"></div>
-    </div>
-
   </div>
+
+  <!-- EXTRAS -->
+  <div class="card">
+    <div class="grid">
+      <button class="extra" onclick="send('wide')">Wide</button>
+      <button class="extra" onclick="send('noball')">No Ball</button>
+      <button class="wicket" onclick="send('wicket')">Wicket</button>
+    </div>
+  </div>
+
+  <!-- MIC -->
+  <div class="card center">
+    <button class="mic-btn" onclick="toggleMic()">🎤</button>
+    <div class="status">Tap mic & speak</div>
+    <div class="result" id="result"></div>
+  </div>
+
 </div>
 
 </body>
