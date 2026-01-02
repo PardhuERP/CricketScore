@@ -29,9 +29,6 @@ body{
   margin-bottom:16px;
   box-shadow:0 4px 10px rgba(0,0,0,0.08);
 }
-.section h3{
-  margin-top:0;
-}
 input, button{
   width:100%;
   padding:12px;
@@ -83,41 +80,40 @@ button{
 </div>
 
 <script>
-/* 🔒 FINAL & FOREVER API URL */
+/* 🔒 FINAL API URL */
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* Load teams on page load */
-window.onload = loadTeams;
-
-/* Fetch teams */
+/* ========= JSONP LOAD TEAMS ========= */
 function loadTeams(){
   const list = document.getElementById("teamsList");
   list.innerText = "Loading teams...";
 
-  fetch(API_URL + "?action=getTeams")
-    .then(res => res.json())
-    .then(data => {
-      list.innerHTML = "";
+  const cb = "cb_" + Date.now();
 
-      if(!data || data.length === 0){
-        list.innerText = "No teams created yet";
-        return;
-      }
+  window[cb] = function(data){
+    list.innerHTML = "";
 
-      data.forEach(team => {
-        const div = document.createElement("div");
-        div.className = "team";
-        div.innerText = "🏏 " + team;
-        list.appendChild(div);
+    if(!data || data.length === 0){
+      list.innerText = "No teams created yet";
+    } else {
+      data.forEach(team=>{
+        const d = document.createElement("div");
+        d.className = "team";
+        d.innerText = "🏏 " + team;
+        list.appendChild(d);
       });
-    })
-    .catch(()=>{
-      list.innerText = "❌ Error loading teams";
-    });
+    }
+
+    delete window[cb];
+  };
+
+  const s = document.createElement("script");
+  s.src = API_URL + "?action=getTeams&callback=" + cb;
+  document.body.appendChild(s);
 }
 
-/* Create team */
+/* ========= CREATE TEAM (POST) ========= */
 function createTeam(){
   const name = document.getElementById("teamName").value.trim();
   const msg = document.getElementById("msg");
@@ -145,7 +141,7 @@ function createTeam(){
   .then(()=>{
     msg.innerText = "✅ Team created";
     msg.style.color = "green";
-    document.getElementById("teamName").value = "";
+    document.getElementById("teamName").value="";
     loadTeams();
   })
   .catch(()=>{
@@ -153,6 +149,8 @@ function createTeam(){
     msg.style.color = "red";
   });
 }
+
+window.onload = loadTeams;
 </script>
 
 </body>
