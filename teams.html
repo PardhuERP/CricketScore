@@ -1,80 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Teams Management</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body{
-  margin:0;
-  font-family: Arial, sans-serif;
-  background:#f2f4f8;
-}
-.header{
-  background:#0a7cff;
-  color:#fff;
-  padding:14px;
-  text-align:center;
-  font-size:18px;
-  font-weight:bold;
-}
-.container{ padding:16px; }
-.section{
-  background:#fff;
-  border-radius:14px;
-  padding:16px;
-  margin-bottom:16px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.08);
-}
-input,button{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
-button{
-  background:#0a7cff;
-  color:#fff;
-  border:none;
-}
-.team{
-  padding:10px;
-  border-bottom:1px solid #eee;
-}
-#msg{ margin-top:10px; font-size:14px; }
-</style>
-</head>
-
-<body>
-
-<div class="header">👥 Teams Management</div>
-
-<div class="container">
-
-  <div class="section">
-    <h3>➕ Create Team</h3>
-    <input id="teamName" placeholder="Enter Team Name">
-    <button id="createBtn">Create Team</button>
-    <div id="msg"></div>
-  </div>
-
-  <div class="section">
-    <h3>🏏 Teams</h3>
-    <div id="teamsList">Loading…</div>
-  </div>
-
-</div>
-
 <script>
-/* ===== CONFIG ===== */
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
 /* ===== LOAD TEAMS (JSONP) ===== */
 function loadTeams(){
   const list = document.getElementById("teamsList");
+  if(!list){
+    console.error("teamsList not found");
+    return;
+  }
+
   list.innerText = "Loading teams...";
 
   const cb = "cb_" + Date.now();
@@ -132,12 +67,9 @@ function createTeam(){
   document.body.appendChild(s);
 }
 
-/* ===== SAFE INIT AFTER DOM LOAD ===== */
-window.addEventListener("load", function(){
-  document.getElementById("createBtn").onclick = createTeam;
+/* ===== SAFE DOM INIT ===== */
+document.addEventListener("DOMContentLoaded", function(){
+  document.getElementById("createBtn").addEventListener("click", createTeam);
   loadTeams();
 });
 </script>
-
-</body>
-</html>
