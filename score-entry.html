@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Score Entry Board</title>
+<title>Score Entry</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 body{
   margin:0;
-  font-family: Arial, sans-serif;
+  font-family:Arial;
   background:#f2f4f8;
 }
 .header{
@@ -37,9 +37,9 @@ body{
 
 .grid{
   display:grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns:repeat(3,1fr);
   gap:10px;
-  margin-top:12px;
+  margin-top:10px;
 }
 
 button{
@@ -51,16 +51,14 @@ button{
   background:#0a7cff;
   color:#fff;
 }
-
 .wicket{ background:#e53935; }
 .extra{ background:#ff9800; }
-.undo{ background:#777; }
 </style>
 </head>
 
 <body>
 
-<div class="header">✍️ Score Entry Board</div>
+<div class="header">✍️ Score Entry</div>
 
 <div class="container">
 
@@ -71,113 +69,53 @@ button{
 
   <div class="card">
     <div class="grid">
-      <button onclick="addRun(0)">0</button>
-      <button onclick="addRun(1)">1</button>
-      <button onclick="addRun(2)">2</button>
-      <button onclick="addRun(3)">3</button>
-      <button onclick="addRun(4)">4</button>
-      <button onclick="addRun(6)">6</button>
+      <button onclick="send('run',0)">0</button>
+      <button onclick="send('run',1)">1</button>
+      <button onclick="send('run',2)">2</button>
+      <button onclick="send('run',3)">3</button>
+      <button onclick="send('run',4)">4</button>
+      <button onclick="send('run',6)">6</button>
     </div>
   </div>
 
   <div class="card">
     <div class="grid">
-      <button class="extra" onclick="extraRun()">Wide</button>
-      <button class="extra" onclick="extraRun()">No Ball</button>
-      <button class="wicket" onclick="addWicket()">Wicket</button>
+      <button class="extra" onclick="send('wide')">Wide</button>
+      <button class="extra" onclick="send('noball')">No Ball</button>
+      <button class="wicket" onclick="send('wicket')">Wicket</button>
     </div>
-  </div>
-
-  <div class="card">
-    <button class="undo" onclick="undo()">Undo Last Ball</button>
   </div>
 
 </div>
 
 <script>
-/* 🔒 FINAL & FOREVER API URL */
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-let runs = 0;
-let wickets = 0;
-let balls = 0;
-let history = [];
+/* SEND SCORE (JSONP) */
+function send(type,value=0){
+  const cb = "cb_" + Date.now();
 
-/* Load current score from sheet */
-function loadScore(){
-  fetch(API_URL + "?action=getLiveScore")
-    .then(res => res.json())
-    .then(d => {
-      runs = Number(d.runs) || 0;
-      wickets = Number(d.wickets) || 0;
+  window[cb] = function(res){
+    if(res.status==="ok"){
+      document.getElementById("score").innerText =
+        res.runs + " / " + res.wickets;
+      document.getElementById("overs").innerText =
+        "Overs: " + res.overs;
+    }
+    delete window[cb];
+  };
 
-      const o = Number(d.overs) || 0;
-      balls = Math.floor(o) * 6 + Math.round((o % 1) * 10);
+  const s = document.createElement("script");
+  s.src =
+    API_URL +
+    "?action=updateScore" +
+    "&type=" + type +
+    "&value=" + value +
+    "&callback=" + cb;
 
-      updateUI();
-    })
-    .catch(()=> {
-      alert("❌ Error loading score");
-    });
+  document.body.appendChild(s);
 }
-
-function updateUI(){
-  const overs = Math.floor(balls / 6) + "." + (balls % 6);
-  document.getElementById("score").innerText = runs + " / " + wickets;
-  document.getElementById("overs").innerText = "Overs: " + overs;
-}
-
-/* Push update to sheet */
-function pushUpdate(){
-  fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"updateScore",
-      runs:runs,
-      wickets:wickets,
-      balls:balls
-    })
-  }).catch(()=> {
-    alert("❌ Server error");
-  });
-}
-
-/* Actions */
-function addRun(r){
-  history.push({runs,wickets,balls});
-  runs += r;
-  balls += 1;
-  updateUI();
-  pushUpdate();
-}
-
-function extraRun(){
-  history.push({runs,wickets,balls});
-  runs += 1;
-  updateUI();
-  pushUpdate();
-}
-
-function addWicket(){
-  history.push({runs,wickets,balls});
-  wickets += 1;
-  balls += 1;
-  updateUI();
-  pushUpdate();
-}
-
-function undo(){
-  if(history.length === 0) return;
-  const last = history.pop();
-  runs = last.runs;
-  wickets = last.wickets;
-  balls = last.balls;
-  updateUI();
-  pushUpdate();
-}
-
-loadScore();
 </script>
 
 </body>
