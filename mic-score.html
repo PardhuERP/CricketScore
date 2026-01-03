@@ -58,11 +58,13 @@ button{
 </div>
 
 <script>
-/* 🔒 FINAL & FOREVER API URL */
-const API_URL = "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+/* ✅ GOOGLE APPS SCRIPT URL */
+const API_URL =
+"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* 🎤 Speech Recognition Support Check */
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+/* 🎤 Speech Recognition */
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if(!SpeechRecognition){
   document.getElementById("status").innerText =
@@ -89,80 +91,39 @@ recognition.onerror = function(){
   document.getElementById("status").innerText = "❌ Mic error";
 };
 
-/* 🎯 Voice Command Processor */
+/* 🎯 VOICE COMMAND PARSER */
 function processCommand(cmd){
 
-  if(cmd.includes("undo")){
-    sendAction("undo");
-    return;
-  }
-  if(cmd.includes("wicket")){
-    sendAction("wicket");
-    return;
-  }
-  if(cmd.includes("wide")){
-    sendAction("wide");
-    return;
-  }
-  if(cmd.includes("no")){
-    sendAction("noball");
-    return;
-  }
-  if(cmd.includes("six")){
-    sendAction("run",6);
-    return;
-  }
-  if(cmd.includes("four")){
-    sendAction("run",4);
-    return;
-  }
-  if(cmd.includes("three")){
-    sendAction("run",3);
-    return;
-  }
-  if(cmd.includes("two")){
-    sendAction("run",2);
-    return;
-  }
-  if(cmd.includes("one")){
-    sendAction("run",1);
-    return;
-  }
-  if(cmd.includes("zero")){
-    sendAction("run",0);
-    return;
-  }
+  if(cmd.includes("wicket")) return sendAction("wicket");
+  if(cmd.includes("wide"))   return sendAction("wide");
+  if(cmd.includes("no"))     return sendAction("noball");
+
+  if(cmd.includes("six"))   return sendAction("run",6);
+  if(cmd.includes("four"))  return sendAction("run",4);
+  if(cmd.includes("three")) return sendAction("run",3);
+  if(cmd.includes("two"))   return sendAction("run",2);
+  if(cmd.includes("one"))   return sendAction("run",1);
+  if(cmd.includes("zero"))  return sendAction("run",0);
 
   document.getElementById("status").innerText =
     "❌ Command not recognized";
 }
 
-/* 🔁 Send Score Update to Backend */
-function sendAction(type, value = 0){
-  fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"voiceScore",
-      type:type,
-      value:value
-    })
-  })
-  .then(()=>{
-    document.getElementById("status").innerText =
-      "✅ Score Updated";
-  })
-  .catch(()=>{
-    document.getElementById("status").innerText =
-      "❌ Server error";
-  });
-}
-</script>
-
-  <script>
+/* ✅ FINAL JSONP SCORE UPDATE */
 function sendAction(type,value=0){
-  const cb = "cb_"+Date.now();
+  const cb = "cb_" + Date.now();
+
   window[cb] = function(res){
-    console.log("Score update:", res);
+    console.log("Score response:", res);
+
+    if(res.status === "ok" || res.status === "ended"){
+      document.getElementById("status").innerText =
+        "✅ Score Updated";
+    }else{
+      document.getElementById("status").innerText =
+        res.msg || "❌ Error";
+    }
+
     delete window[cb];
   };
 
@@ -176,7 +137,7 @@ function sendAction(type,value=0){
 
   document.body.appendChild(s);
 }
-  </script>
+</script>
 
 </body>
 </html>
