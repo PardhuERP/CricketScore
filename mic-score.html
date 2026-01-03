@@ -158,5 +158,25 @@ function sendAction(type, value = 0){
 }
 </script>
 
+  <script>
+function sendAction(type,value=0){
+  const cb = "cb_"+Date.now();
+  window[cb] = function(res){
+    console.log("Score update:", res);
+    delete window[cb];
+  };
+
+  const s = document.createElement("script");
+  s.src =
+    API_URL +
+    "?action=updateScore" +
+    "&type=" + encodeURIComponent(type) +
+    "&value=" + encodeURIComponent(value) +
+    "&callback=" + cb;
+
+  document.body.appendChild(s);
+}
+  </script>
+
 </body>
 </html>
