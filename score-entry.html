@@ -97,24 +97,28 @@ function callAPI(params, cb){
 
 /* ---------- UPDATE UI ---------- */
 function updateUI(res){
-  if(res && res.runs!==undefined){
-    document.getElementById("score").innerText =
-      res.runs + " / " + res.wickets;
-    document.getElementById("overs").innerText =
-      "Overs: " + res.overs;
-  }
+  if(!res) return;
+
+  document.getElementById("score").innerText =
+    (res.runs || 0) + " / " + (res.wickets || 0);
+
+  document.getElementById("overs").innerText =
+    "Overs: " + (res.overs || "0.0");
 }
 
-/* ---------- BUTTON ENTRY ---------- */
+/* ---------- BUTTON ENTRY (FIXED) ---------- */
 function send(type,value=0){
   callAPI({
     action:"updateScore",
     type:type,
     value:value
-  }, updateUI);
+  }, function(){
+    // 🔥 ALWAYS REFRESH AFTER UPDATE
+    callAPI({ action:"getLiveScore" }, updateUI);
+  });
 }
 
-/* ---------- MIC LOGIC ---------- */
+/* ---------- MIC ---------- */
 let recognition, listening=false;
 
 function initMic(){
@@ -146,57 +150,45 @@ function toggleMic(){
   recognition.start();
 }
 
-/* ---------- VOICE PARSER (FIXED) ---------- */
+/* ---------- VOICE PARSER ---------- */
 function processVoice(text){
   let type="", value=0;
 
-  if(text.includes("wide")){
-    type="wide";
-  }
-  else if(text.includes("no ball") || text.includes("noball")){
-    type="noball";
-  }
-  else if(text.includes("wicket") || text.includes("out")){
-    type="wicket";
-  }
+  if(text.includes("wide")) type="wide";
+  else if(text.includes("no")) type="noball";
+  else if(text.includes("wicket") || text.includes("out")) type="wicket";
   else{
     const map = [
-      {k:["zero"], v:0},
-      {k:["one","1"], v:1},
-      {k:["two","2"], v:2},
-      {k:["three","3"], v:3},
-      {k:["four","4"], v:4},
-      {k:["six","6"], v:6}
+      ["zero",0],["one",1],["two",2],["three",3],["four",4],["six",6]
     ];
     for(const m of map){
-      if(m.k.some(w=>text.includes(w))){
-        type="run";
-        value=m.v;
-        break;
+      if(text.includes(m[0])){
+        type="run"; value=m[1]; break;
       }
     }
   }
 
-  if(!type){
-    alert("Voice not recognised");
-    return;
-  }
+  if(!type){ alert("Voice not recognised"); return; }
 
   callAPI({
     action:"updateScore",
     type:type,
     value:value
-  }, res=>{
-    updateUI(res);
+  }, ()=>{
+    callAPI({ action:"getLiveScore" }, updateUI);
     document.getElementById("status").innerText="Score updated ✔";
   });
 }
 
-/* ---------- LOAD LIVE SCORE ---------- */
+/* ---------- INITIAL LOAD ---------- */
 window.onload = ()=>{
-  callAPI({action:"getLiveScore"}, updateUI);
+  callAPI({ action:"getLiveScore" }, updateUI);
+  setInterval(()=>{
+    callAPI({ action:"getLiveScore" }, updateUI);
+  }, 2000); // live refresh
 };
 </script>
+  
 </head>
 
 <body>
