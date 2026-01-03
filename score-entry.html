@@ -15,6 +15,7 @@ body{
   background:#0a7cff;
   color:#fff;
   padding:14px;
+  text-align:center;
   font-size:18px;
   font-weight:bold;
   display:flex;
@@ -25,7 +26,6 @@ body{
   font-size:20px;
   cursor:pointer;
 }
-
 .container{ padding:14px; }
 
 .card{
@@ -34,25 +34,16 @@ body{
   padding:14px;
   margin-bottom:14px;
   box-shadow:0 4px 10px rgba(0,0,0,0.08);
+  text-align:center;
 }
-
-.center{text-align:center}
 
 .score{
-  font-size:32px;
+  font-size:28px;
   font-weight:bold;
 }
-.sub{ color:#555; margin-top:4px }
-
-.row{
-  display:flex;
-  justify-content:space-between;
-  margin-top:8px;
-  font-size:14px;
-}
-
-.player{
-  font-weight:bold;
+.sub{
+  color:#555;
+  margin-top:4px;
 }
 
 .grid{
@@ -90,92 +81,120 @@ button{
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* JSONP */
+/* ---------- JSONP CALL ---------- */
 function callAPI(params, cb){
-  const fn="cb_"+Date.now();
-  window[fn]=res=>{
+  const fn = "cb_" + Date.now();
+  window[fn] = function(res){
     cb && cb(res);
     delete window[fn];
     s.remove();
   };
-  const q=Object.keys(params).map(k=>k+"="+encodeURIComponent(params[k])).join("&");
-  const s=document.createElement("script");
-  s.src=API_URL+"?"+q+"&callback="+fn;
+  const q = Object.keys(params).map(k=>k+"="+encodeURIComponent(params[k])).join("&");
+  const s = document.createElement("script");
+  s.src = API_URL + "?" + q + "&callback=" + fn + "&_=" + Date.now();
   document.body.appendChild(s);
 }
 
-/* UI UPDATE */
+/* ---------- UPDATE UI ---------- */
 function updateUI(res){
-  if(!res || res.runs===undefined) return;
-
-  document.getElementById("score").innerText =
-    res.runs+" / "+res.wickets;
-
-  document.getElementById("overs").innerText =
-    "Overs: "+res.overs;
-
-  document.getElementById("striker").innerText =
-    res.striker || "-";
-
-  document.getElementById("nonstriker").innerText =
-    res.nonstriker || "-";
-
-  const parts = String(res.overs).split(".");
-  document.getElementById("completed").innerText =
-    parts[0] || "0";
-
-  document.getElementById("running").innerText =
-    (parts[1] || "0")+"/6";
+  if(res && res.runs!==undefined){
+    document.getElementById("score").innerText =
+      res.runs + " / " + res.wickets;
+    document.getElementById("overs").innerText =
+      "Overs: " + res.overs;
+  }
 }
 
-/* SCORE */
+/* ---------- BUTTON ENTRY ---------- */
 function send(type,value=0){
-  callAPI({action:"updateScore",type,value},updateUI);
+  callAPI({
+    action:"updateScore",
+    type:type,
+    value:value
+  }, updateUI);
 }
 
-/* MIC */
+/* ---------- MIC LOGIC ---------- */
 let recognition, listening=false;
 
 function initMic(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){alert("Speech not supported");return;}
-  recognition=new SR();
-  recognition.lang="en-IN";
-  recognition.onresult=e=>{
-    const t=e.results[0][0].transcript.toLowerCase();
-    document.getElementById("result").innerText=t;
-    processVoice(t);
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ alert("Speech recognition not supported"); return; }
+
+  recognition = new SR();
+  recognition.lang = "en-IN";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onresult = e=>{
+    const text = e.results[0][0].transcript.toLowerCase();
+    document.getElementById("result").innerText = text;
+    processVoice(text);
   };
-  recognition.onend=()=>listening=false;
+
+  recognition.onend = ()=>{
+    listening=false;
+    document.getElementById("status").innerText="Tap mic & speak";
+  };
 }
 
 function toggleMic(){
   if(!recognition) initMic();
   if(listening) return;
   listening=true;
+  document.getElementById("status").innerText="Listening...";
   recognition.start();
 }
 
+/* ---------- VOICE PARSER (FIXED) ---------- */
 function processVoice(text){
-  let type="",value=0;
-  if(text.includes("wide")) type="wide";
-  else if(text.includes("no ball")) type="noball";
-  else if(text.includes("wicket")) type="wicket";
+  let type="", value=0;
+
+  if(text.includes("wide")){
+    type="wide";
+  }
+  else if(text.includes("no ball") || text.includes("noball")){
+    type="noball";
+  }
+  else if(text.includes("wicket") || text.includes("out")){
+    type="wicket";
+  }
   else{
-    const map=[
-      {k:["zero"],v:0},{k:["one","1"],v:1},{k:["two","2"],v:2},
-      {k:["three","3"],v:3},{k:["four","4"],v:4},{k:["six","6"],v:6}
+    const map = [
+      {k:["zero"], v:0},
+      {k:["one","1"], v:1},
+      {k:["two","2"], v:2},
+      {k:["three","3"], v:3},
+      {k:["four","4"], v:4},
+      {k:["six","6"], v:6}
     ];
     for(const m of map){
-      if(m.k.some(w=>text.includes(w))){type="run";value=m.v;}
+      if(m.k.some(w=>text.includes(w))){
+        type="run";
+        value=m.v;
+        break;
+      }
     }
   }
-  if(type) send(type,value);
+
+  if(!type){
+    alert("Voice not recognised");
+    return;
+  }
+
+  callAPI({
+    action:"updateScore",
+    type:type,
+    value:value
+  }, res=>{
+    updateUI(res);
+    document.getElementById("status").innerText="Score updated ✔";
+  });
 }
 
-/* LOAD */
-window.onload=()=>{
-  callAPI({action:"getLiveScore"},updateUI);
+/* ---------- LOAD LIVE SCORE ---------- */
+window.onload = ()=>{
+  callAPI({action:"getLiveScore"}, updateUI);
 };
 </script>
 </head>
@@ -190,22 +209,12 @@ window.onload=()=>{
 <div class="container">
 
   <!-- LIVE SCORE -->
-  <div class="card center">
+  <div class="card">
     <div class="score" id="score">0 / 0</div>
     <div class="sub" id="overs">Overs: 0.0</div>
-
-    <div class="row">
-      <div>Striker: <span class="player" id="striker">-</span></div>
-      <div>Non-Striker: <span class="player" id="nonstriker">-</span></div>
-    </div>
-
-    <div class="row">
-      <div>Completed Overs: <b id="completed">0</b></div>
-      <div>Running Over: <b id="running">0/6</b></div>
-    </div>
   </div>
 
-  <!-- RUNS -->
+  <!-- RUN BUTTONS -->
   <div class="card">
     <div class="grid">
       <button onclick="send('run',0)">0</button>
@@ -227,9 +236,9 @@ window.onload=()=>{
   </div>
 
   <!-- MIC -->
-  <div class="card center">
+  <div class="card">
     <button class="mic-btn" onclick="toggleMic()">🎤</button>
-    <div class="status">Tap mic & speak</div>
+    <div class="status" id="status">Tap mic & speak</div>
     <div class="result" id="result"></div>
   </div>
 
