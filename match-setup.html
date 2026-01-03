@@ -74,7 +74,7 @@ function loadTeams(t){
   ["batting","bowling"].forEach(id=>{
     const s=document.getElementById(id);
     s.innerHTML="<option value=''>Select</option>";
-    t.forEach(x=>s.innerHTML+=`<option>${x}</option>`);
+    t.forEach(x=>s.innerHTML+=`<option value="${x}">${x}</option>`);
   });
 }
 
@@ -83,7 +83,7 @@ function loadTeams(t){
   document.getElementById(id).onchange=()=>{
     const team=document.getElementById(id).value;
     if(!team) return;
-    jsonp(API+"?action=getPlayers&team="+team,id+"Players");
+    jsonp(API+"?action=getPlayers&team="+encodeURIComponent(team),id+"Players");
   };
 });
 
@@ -97,27 +97,37 @@ function fill(ids,p){
   ids.forEach(id=>{
     const s=document.getElementById(id);
     s.innerHTML="<option value=''>Select</option>";
-    p.forEach(x=>s.innerHTML+=`<option>${x.name}</option>`);
+    p.forEach(x=>s.innerHTML+=`<option value="${x.name}">${x.name}</option>`);
   });
 }
 
-/* START MATCH */
+/* START MATCH (FIXED) */
 function startMatch(){
+
+  if(!matchTitle.value || !batting.value || !bowling.value || !overs.value){
+    alert("Please fill all match details");
+    return;
+  }
+
   const q =
     "?action=startMatch"+
-    "&match="+matchTitle.value+
-    "&batting="+batting.value+
-    "&bowling="+bowling.value+
-    "&overs="+overs.value+
-    "&striker="+striker.value+
-    "&nonstriker="+nonstriker.value+
-    "&bowler="+bowler.value;
+    "&match="+encodeURIComponent(matchTitle.value)+
+    "&batting="+encodeURIComponent(batting.value)+
+    "&bowling="+encodeURIComponent(bowling.value)+
+    "&overs="+encodeURIComponent(overs.value)+
+    "&striker="+encodeURIComponent(striker.value||"Striker")+
+    "&nonstriker="+encodeURIComponent(nonstriker.value||"Non-Striker")+
+    "&bowler="+encodeURIComponent(bowler.value||"Bowler");
 
   jsonp(API+q,"done");
 }
 
-function done(){
-  location.href="score-entry.html";
+function done(res){
+  if(res.status==="ok"){
+    location.href="score-entry.html";
+  }else{
+    alert(res.msg || "Match not started");
+  }
 }
 </script>
 
