@@ -6,113 +6,117 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{font-family:Arial;background:#f2f4f8;margin:0}
-.header{background:#0a7cff;color:#fff;padding:14px;text-align:center}
-.card{background:#fff;margin:12px;padding:14px;border-radius:12px}
-button{padding:12px;width:100%;border:none;border-radius:10px;background:#0a7cff;color:#fff;font-size:16px}
-input,select{width:100%;padding:10px;margin-top:8px}
-.back{position:absolute;left:10px;cursor:pointer}
+body{margin:0;font-family:Arial;background:#f2f4f8}
+.header{background:#0a7cff;color:#fff;padding:14px;text-align:center;font-size:18px}
+.card{background:#fff;margin:15px;padding:15px;border-radius:12px}
+select,input,button{
+  width:100%;padding:12px;margin-top:10px;
+  border-radius:8px;border:1px solid #ccc;font-size:15px
+}
+button{background:#0a7cff;color:#fff;border:none}
 </style>
-
-<script>
-const API_URL =
-"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
-</script>
 </head>
 
 <body>
 
-<div class="header">
-  <span class="back" onclick="location.href='dashboard.html'">⬅</span>
-  🛠️ Match Setup
+<div class="header">🛠️ Match Setup</div>
+
+<div class="card">
+  <label>Match Title</label>
+  <input id="matchTitle" placeholder="Team A vs Team B">
+
+  <label>Overs Limit</label>
+  <select id="overs">
+    <option>5</option>
+    <option>10</option>
+    <option selected>20</option>
+  </select>
 </div>
 
 <div class="card">
+  <label>Batting Team</label>
+  <select id="batting"></select>
 
-  <!-- 🆕 MATCH TITLE (AUTO OPTIONAL) -->
-  <input id="match" placeholder="Match Title (auto optional)">
+  <label>Bowling Team</label>
+  <select id="bowling"></select>
+</div>
 
-  <!-- 🆕 TEAM DROPDOWNS -->
-  <select id="batting">
-    <option value="">Select Batting Team</option>
-  </select>
+<div class="card">
+  <label>Striker</label>
+  <select id="striker"></select>
 
-  <select id="bowling">
-    <option value="">Select Bowling Team</option>
-  </select>
+  <label>Non-Striker</label>
+  <select id="nonstriker"></select>
 
-  <input id="overs" type="number" placeholder="Overs (eg 20)">
+  <label>Bowler</label>
+  <select id="bowler"></select>
+</div>
 
-  <button onclick="startMatch()">Start Match</button>
+<div class="card">
+  <button onclick="startMatch()">▶ Start Match</button>
 </div>
 
 <script>
-/* ================= LOAD TEAMS ================= */
-function loadTeams(){
-  const cb="cbTeams_"+Date.now();
-  window[cb]=res=>{
-    const bat=document.getElementById("batting");
-    const bowl=document.getElementById("bowling");
+const API =
+"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-    res.forEach(t=>{
-      bat.innerHTML+=`<option value="${t}">${t}</option>`;
-      bowl.innerHTML+=`<option value="${t}">${t}</option>`;
-    });
-    delete window[cb];
-  };
-
+function jsonp(url,cb){
   const s=document.createElement("script");
-  s.src=API_URL+"?action=getTeams&callback="+cb;
+  s.src=url+"&callback="+cb;
   document.body.appendChild(s);
 }
 
-/* ================= START MATCH ================= */
+/* Load Teams */
+jsonp(API+"?action=getTeams","loadTeams");
+function loadTeams(t){
+  ["batting","bowling"].forEach(id=>{
+    const s=document.getElementById(id);
+    s.innerHTML="<option value=''>Select</option>";
+    t.forEach(x=>s.innerHTML+=`<option>${x}</option>`);
+  });
+}
+
+/* Load Players */
+["batting","bowling"].forEach(id=>{
+  document.getElementById(id).onchange=()=>{
+    const team=document.getElementById(id).value;
+    if(!team) return;
+    jsonp(API+"?action=getPlayers&team="+team,id+"Players");
+  };
+});
+
+function battingPlayers(p){
+  fill(["striker","nonstriker"],p);
+}
+function bowlingPlayers(p){
+  fill(["bowler"],p);
+}
+function fill(ids,p){
+  ids.forEach(id=>{
+    const s=document.getElementById(id);
+    s.innerHTML="<option value=''>Select</option>";
+    p.forEach(x=>s.innerHTML+=`<option>${x.name}</option>`);
+  });
+}
+
+/* START MATCH */
 function startMatch(){
-  let match = document.getElementById("match").value;
-  const batting = document.getElementById("batting").value;
-  const bowling = document.getElementById("bowling").value;
-  const overs = document.getElementById("overs").value;
+  const q =
+    "?action=startMatch"+
+    "&match="+matchTitle.value+
+    "&batting="+batting.value+
+    "&bowling="+bowling.value+
+    "&overs="+overs.value+
+    "&striker="+striker.value+
+    "&nonstriker="+nonstriker.value+
+    "&bowler="+bowler.value;
 
-  if(!batting || !bowling || !overs){
-    alert("Please select teams and overs");
-    return;
-  }
-
-  if(batting === bowling){
-    alert("Batting and Bowling teams cannot be same");
-    return;
-  }
-
-  /* 🧠 AUTO MATCH TITLE */
-  if(!match){
-    match = batting + " vs " + bowling;
-  }
-
-  const cb="cb_"+Date.now();
-  window[cb]=res=>{
-    if(res.status==="ok"){
-      alert("Match started");
-      location.href="score-entry.html";
-    }else{
-      alert(res.msg||"Error");
-    }
-    delete window[cb];
-  };
-
-  const s=document.createElement("script");
-  s.src = API_URL +
-    "?action=startMatch" +
-    "&match="+encodeURIComponent(match) +
-    "&batting="+encodeURIComponent(batting) +
-    "&bowling="+encodeURIComponent(bowling) +
-    "&overs="+overs +
-    "&callback="+cb;
-
-  document.body.appendChild(s);
+  jsonp(API+q,"done");
 }
 
-/* INIT */
-window.onload = loadTeams;
+function done(){
+  location.href="score-entry.html";
+}
 </script>
 
 </body>
