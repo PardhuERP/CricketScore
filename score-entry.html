@@ -13,17 +13,22 @@ body{margin:0;font-family:Arial;background:#f2f4f8}
 .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 4px 10px rgba(0,0,0,0.08);text-align:center}
 .score{font-size:28px;font-weight:bold}
 .sub{color:#555;margin-top:4px}
+.small{font-size:14px;margin-top:4px;color:#333}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
 button{padding:14px;font-size:18px;border:none;border-radius:10px;cursor:pointer;background:#0a7cff;color:#fff}
 .wicket{background:#e53935}
 .extra{background:#ff9800}
 .mic-btn{margin-top:10px;background:#e53935;width:80px;height:80px;border-radius:50%;font-size:36px}
 select{width:100%;padding:10px;margin-top:8px}
-.small{font-size:14px;color:#333;margin-top:4px}
 </style>
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+
+/* ===== LOCAL LIVE STATS ===== */
+let batRuns=0, batBalls=0;
+let nonRuns=0, nonBalls=0;
+let bowlerBalls=0;
 
 /* JSONP */
 function callAPI(p,cb){
@@ -50,19 +55,12 @@ function updateUI(r){
   score.innerText=(r.runs||0)+" / "+(r.wickets||0);
   overs.innerText="Overs: "+(r.overs||"0.0");
 
-  /* LIVE DETAILS */
-  strikerBox.innerText = "🏏 Striker: " + (r.striker||"-");
-  nonBox.innerText     = "🏏 Non-Striker: " + (r.nonstriker||"-");
-  bowlerBox.innerText  = "🎯 Bowler: " + (r.bowler||"-");
+  strikerBox.innerText=`🏏 ${r.striker||"-"} : ${batRuns} (${batBalls})`;
+  nonBox.innerText=`🏏 ${r.nonstriker||"-"} : ${nonRuns} (${nonBalls})`;
+  bowlerBox.innerText=`🎯 ${r.bowler||"-"} : ${bowlerBalls} balls`;
 
-  if(r.overs){
-    const p=r.overs.split(".");
-    ballsBox.innerText="⚾ Balls this over: "+(p[1]||0);
-    overBox.innerText ="⏱ Completed overs: "+p[0];
-  }
-
-  /* 1st innings end */
-  if(r.inningsStatus==="ENDED" && r.inningsNo==1){
+  /* 🔥 FIXED: SHOW 2ND INNINGS BUTTON */
+  if(r.inningsStatus==="ENDED"){
     secondBtn.style.display="block";
     disableEntry(true);
   }
@@ -82,16 +80,11 @@ function updateUI(r){
     disableEntry(false);
   }
 
-  /* COMPLETED */
+  /* MATCH COMPLETED */
   if(r.inningsStatus==="COMPLETED"){
     disableEntry(true);
     setTimeout(()=>{
-      const msg =
-        r.inningsNo==2 && r.target
-        ? `🏆 ${r.bowling} won the match`
-        : "🏆 Match Completed";
-
-      alert(msg);
+      alert("🏆 Match Completed");
       location.href="dashboard.html";
     },300);
   }
@@ -99,6 +92,20 @@ function updateUI(r){
 
 /* SCORE */
 function send(t,v=0){
+  if(t==="run"){
+    batRuns+=v; batBalls++; bowlerBalls++;
+    if(v%2===1){
+      [batRuns,nonRuns]=[nonRuns,batRuns];
+      [batBalls,nonBalls]=[nonBalls,batBalls];
+    }
+  }
+  if(t==="wicket"){
+    batBalls++; bowlerBalls++;
+  }
+  if(t==="wide"||t==="noball"){
+    // no ball count
+  }
+
   callAPI({action:"updateScore",type:t,value:v},
     ()=>callAPI({action:"getLiveScore"},updateUI)
   );
@@ -106,6 +113,9 @@ function send(t,v=0){
 
 /* SECOND INNINGS */
 function startSecondInnings(){
+  // reset local stats
+  batRuns=batBalls=nonRuns=nonBalls=bowlerBalls=0;
+
   callAPI({action:"startSecondInnings"},r=>{
     alert("Target: "+r.target);
     callAPI({action:"getLiveScore"},updateUI);
@@ -125,6 +135,9 @@ function loadPlayers(team,...ids){
 
 /* CONFIRM PLAYERS */
 function confirmPlayers(){
+  // reset stats again
+  batRuns=batBalls=nonRuns=nonBalls=bowlerBalls=0;
+
   callAPI({
     action:"setSecondInningsPlayers",
     striker:s2.value,
@@ -133,7 +146,7 @@ function confirmPlayers(){
   },()=>callAPI({action:"getLiveScore"},updateUI));
 }
 
-/* 🎤 MIC */
+/* MIC */
 let rec;
 function startMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -171,17 +184,13 @@ window.onload=()=>callAPI({action:"getLiveScore"},updateUI);
   <div class="score" id="score">0 / 0</div>
   <div class="sub" id="overs">Overs: 0.0</div>
 
-  <!-- LIVE DETAILS -->
   <div class="small" id="strikerBox"></div>
   <div class="small" id="nonBox"></div>
   <div class="small" id="bowlerBox"></div>
-  <div class="small" id="ballsBox"></div>
-  <div class="small" id="overBox"></div>
 
   <button id="secondBtn" style="display:none;background:#4caf50" onclick="startSecondInnings()">▶ Start 2nd Innings</button>
 </div>
 
-<!-- SETUP -->
 <div class="card" id="setupCard" style="display:none">
   <h3>2nd Innings Players</h3>
   <select id="s2"></select>
