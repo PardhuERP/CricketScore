@@ -59,18 +59,25 @@ function updateUI(r){
   nonBox.innerText=`🏏 ${r.nonstriker||"-"} : ${nonRuns} (${nonBalls})`;
   bowlerBox.innerText=`🎯 ${r.bowler||"-"} : ${bowlerBalls} balls`;
 
-  /* 🔥 FIXED: SHOW 2ND INNINGS BUTTON */
-  if(r.inningsStatus==="ENDED"){
+  /* ✅ SHOW 2ND INNINGS BUTTON ONLY AFTER 1ST */
+  if(r.inningsStatus==="ENDED" && r.inningsNo==1){
     secondBtn.style.display="block";
     disableEntry(true);
   }
 
-  /* 2nd innings setup */
+  /* 🔥 2ND INNINGS SETUP */
   if(r.inningsStatus==="SETUP"){
     setupCard.style.display="block";
     disableEntry(true);
-    loadPlayers(r.batting,"s2","ns2");
-    loadPlayers(r.bowling,"b2");
+
+    // 🔥 CLEAR OLD OPTIONS (FIX)
+    s2.innerHTML="<option value=''>Select Batsman 1</option>";
+    ns2.innerHTML="<option value=''>Select Batsman 2</option>";
+    b2.innerHTML="<option value=''>Select Bowler</option>";
+
+    // 🔥 CORRECT TEAMS
+    loadPlayers(r.batting,"s2","ns2");   // Team-B batsmen
+    loadPlayers(r.bowling,"b2");         // Team-A bowler
   }
 
   /* LIVE */
@@ -80,7 +87,7 @@ function updateUI(r){
     disableEntry(false);
   }
 
-  /* MATCH COMPLETED */
+  /* 🏆 MATCH COMPLETED */
   if(r.inningsStatus==="COMPLETED"){
     disableEntry(true);
     setTimeout(()=>{
@@ -101,10 +108,9 @@ function send(t,v=0){
   }
   if(t==="wicket"){
     batBalls++; bowlerBalls++;
+    batRuns=0; batBalls=0; // new batsman
   }
-  if(t==="wide"||t==="noball"){
-    // no ball count
-  }
+  if(t==="wide"||t==="noball"){ }
 
   callAPI({action:"updateScore",type:t,value:v},
     ()=>callAPI({action:"getLiveScore"},updateUI)
@@ -113,7 +119,6 @@ function send(t,v=0){
 
 /* SECOND INNINGS */
 function startSecondInnings(){
-  // reset local stats
   batRuns=batBalls=nonRuns=nonBalls=bowlerBalls=0;
 
   callAPI({action:"startSecondInnings"},r=>{
@@ -127,7 +132,6 @@ function loadPlayers(team,...ids){
   callAPI({action:"getPlayers",team:team},p=>{
     ids.forEach(id=>{
       const s=document.getElementById(id);
-      s.innerHTML="<option value=''>Select</option>";
       p.forEach(x=>s.innerHTML+=`<option>${x.name}</option>`);
     });
   });
@@ -135,7 +139,6 @@ function loadPlayers(team,...ids){
 
 /* CONFIRM PLAYERS */
 function confirmPlayers(){
-  // reset stats again
   batRuns=batBalls=nonRuns=nonBalls=bowlerBalls=0;
 
   callAPI({
@@ -146,7 +149,7 @@ function confirmPlayers(){
   },()=>callAPI({action:"getLiveScore"},updateUI));
 }
 
-/* MIC */
+/* 🎤 MIC */
 let rec;
 function startMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
