@@ -29,6 +29,7 @@ const API_URL="https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG3
 let batRuns=0, batBalls=0;
 let nonRuns=0, nonBalls=0;
 let bowlerBalls=0;
+let waitForNewBowler=false;
 
 /* JSONP */
 function callAPI(p,cb){
@@ -59,46 +60,56 @@ function updateUI(r){
   nonBox.innerText=`🏏 ${r.nonstriker||"-"} : ${nonRuns} (${nonBalls})`;
   bowlerBox.innerText=`🎯 ${r.bowler||"-"} : ${bowlerBalls} balls`;
 
-  /* ✅ SHOW 2ND INNINGS BUTTON ONLY AFTER 1ST */
+  /* 1ST INNINGS END */
   if(r.inningsStatus==="ENDED" && r.inningsNo==1){
     secondBtn.style.display="block";
     disableEntry(true);
   }
 
-  /* 🔥 2ND INNINGS SETUP */
+  /* 2ND INNINGS SETUP */
   if(r.inningsStatus==="SETUP"){
     setupCard.style.display="block";
     disableEntry(true);
 
-    // 🔥 CLEAR OLD OPTIONS (FIX)
     s2.innerHTML="<option value=''>Select Batsman 1</option>";
     ns2.innerHTML="<option value=''>Select Batsman 2</option>";
     b2.innerHTML="<option value=''>Select Bowler</option>";
 
-    // 🔥 CORRECT TEAMS
-    loadPlayers(r.batting,"s2","ns2");   // Team-B batsmen
-    loadPlayers(r.bowling,"b2");         // Team-A bowler
+    // ✅ FIXED
+    loadPlayers(r.batting,"s2","ns2");
+    loadPlayers(r.bowling,"b2");
   }
 
   /* LIVE */
   if(r.inningsStatus==="LIVE"){
     setupCard.style.display="none";
     secondBtn.style.display="none";
-    disableEntry(false);
+    disableEntry(!waitForNewBowler);
   }
 
-  /* 🏆 MATCH COMPLETED */
+  /* MATCH COMPLETED */
   if(r.inningsStatus==="COMPLETED"){
     disableEntry(true);
-    setTimeout(()=>{
-      alert("🏆 Match Completed");
-      location.href="dashboard.html";
-    },300);
+    let msg;
+    if(r.inningsNo==2){
+      const chasing=r.batting;
+      const defending=r.bowling;
+      const diff=r.target - r.runs - 1;
+      msg = diff>0
+        ? `${defending} won by ${diff} runs`
+        : `${chasing} won by ${10-r.wickets} wickets`;
+    }else{
+      msg="Match Completed";
+    }
+    alert("🏆 "+msg);
+    location.href="dashboard.html";
   }
 }
 
 /* SCORE */
 function send(t,v=0){
+  if(waitForNewBowler) return alert("Select new bowler");
+
   if(t==="run"){
     batRuns+=v; batBalls++; bowlerBalls++;
     if(v%2===1){
@@ -108,23 +119,44 @@ function send(t,v=0){
   }
   if(t==="wicket"){
     batBalls++; bowlerBalls++;
-    batRuns=0; batBalls=0; // new batsman
+    batRuns=0; batBalls=0;
   }
-  if(t==="wide"||t==="noball"){ }
+
+  /* 🔥 OVER COMPLETE → CHANGE BOWLER */
+  if(bowlerBalls>0 && bowlerBalls%6===0){
+    waitForNewBowler=true;
+    alert("Over completed. Select new bowler.");
+    setupBowlerChange();
+  }
 
   callAPI({action:"updateScore",type:t,value:v},
     ()=>callAPI({action:"getLiveScore"},updateUI)
   );
 }
 
-/* SECOND INNINGS */
-function startSecondInnings(){
-  batRuns=batBalls=nonRuns=nonBalls=bowlerBalls=0;
+/* CHANGE BOWLER */
+function setupBowlerChange(){
+  setupCard.style.display="block";
+  s2.style.display="none";
+  ns2.style.display="none";
+  b2.style.display="block";
 
-  callAPI({action:"startSecondInnings"},r=>{
-    alert("Target: "+r.target);
-    callAPI({action:"getLiveScore"},updateUI);
+  callAPI({action:"getLiveScore"},r=>{
+    loadPlayers(r.bowling,"b2");
   });
+}
+
+/* CONFIRM PLAYERS */
+function confirmPlayers(){
+  bowlerBalls=0;
+  waitForNewBowler=false;
+
+  callAPI({
+    action:"setSecondInningsPlayers",
+    striker:s2.value||undefined,
+    nonstriker:ns2.value||undefined,
+    bowler:b2.value
+  },()=>callAPI({action:"getLiveScore"},updateUI));
 }
 
 /* LOAD PLAYERS */
@@ -137,19 +169,16 @@ function loadPlayers(team,...ids){
   });
 }
 
-/* CONFIRM PLAYERS */
-function confirmPlayers(){
+/* SECOND INNINGS */
+function startSecondInnings(){
   batRuns=batBalls=nonRuns=nonBalls=bowlerBalls=0;
-
-  callAPI({
-    action:"setSecondInningsPlayers",
-    striker:s2.value,
-    nonstriker:ns2.value,
-    bowler:b2.value
-  },()=>callAPI({action:"getLiveScore"},updateUI));
+  callAPI({action:"startSecondInnings"},r=>{
+    alert("Target: "+r.target);
+    callAPI({action:"getLiveScore"},updateUI);
+  });
 }
 
-/* 🎤 MIC */
+/* MIC */
 let rec;
 function startMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -195,11 +224,11 @@ window.onload=()=>callAPI({action:"getLiveScore"},updateUI);
 </div>
 
 <div class="card" id="setupCard" style="display:none">
-  <h3>2nd Innings Players</h3>
+  <h3>Player Selection</h3>
   <select id="s2"></select>
   <select id="ns2"></select>
   <select id="b2"></select>
-  <button style="margin-top:10px;background:#4caf50" onclick="confirmPlayers()">Confirm Players</button>
+  <button style="margin-top:10px;background:#4caf50" onclick="confirmPlayers()">Confirm</button>
 </div>
 
 <div class="card">
