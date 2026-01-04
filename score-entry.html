@@ -144,12 +144,24 @@ function confirmBowler(){
   updateUI({runs:0,wickets:0,overs:""}); // force refresh
 }
 
-/* ===== LOAD PLAYERS ===== */
-function loadPlayers(team,...ids){
-  callAPI({action:"getPlayers",team:team},p=>{
-    ids.forEach(id=>{
-      const s=document.getElementById(id);
-      p.forEach(x=>s.innerHTML+=`<option>${x.name}</option>`);
+/* ===== LOAD PLAYERS (FIXED) ===== */
+function loadPlayers(team, ...ids){
+  callAPI({action:"getPlayers", team: team}, p => {
+    ids.forEach(id => {
+      const s = document.getElementById(id);
+
+      /* 🔥 FIX 1: CLEAR BEFORE LOAD */
+      s.innerHTML = "<option value=''>Select Bowler</option>";
+
+      /* 🔥 FIX 2: DOM SAFE APPEND */
+      setTimeout(() => {
+        p.forEach(x => {
+          const opt = document.createElement("option");
+          opt.value = x.name;
+          opt.textContent = x.name;
+          s.appendChild(opt);
+        });
+      }, 0);
     });
   });
 }
