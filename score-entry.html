@@ -73,6 +73,7 @@ button{
   border-radius:50%;
   font-size:36px;
 }
+
 .status{ margin-top:8px; font-size:14px; color:#555; }
 .result{ font-size:16px; margin-top:6px; font-weight:bold; }
 </style>
@@ -95,7 +96,17 @@ function callAPI(params, cb){
   document.body.appendChild(s);
 }
 
-/* ---------- UPDATE UI ---------- */
+/* 🔒 ENABLE / DISABLE ENTRY */
+function disableEntry(disabled){
+  document.querySelectorAll("button").forEach(b=>{
+    if(b.id !== "secondBtn"){
+      b.disabled = disabled;
+      b.style.opacity = disabled ? "0.5" : "1";
+    }
+  });
+}
+
+/* ---------- UPDATE UI (MODIFIED) ---------- */
 function updateUI(res){
   if(!res) return;
 
@@ -104,17 +115,42 @@ function updateUI(res){
 
   document.getElementById("overs").innerText =
     "Overs: " + (res.overs || "0.0");
+
+  /* 🔥 INNINGS CONTROL */
+  if(res.inningsStatus === "ENDED"){
+    disableEntry(true);
+
+    if(res.inningsNo == 1){
+      document.getElementById("secondBtn").style.display = "block";
+    }
+  }else{
+    disableEntry(false);
+    document.getElementById("secondBtn").style.display = "none";
+  }
 }
 
-/* ---------- BUTTON ENTRY (FIXED) ---------- */
+/* ---------- BUTTON ENTRY ---------- */
 function send(type,value=0){
   callAPI({
     action:"updateScore",
     type:type,
     value:value
-  }, function(){
-    // 🔥 ALWAYS REFRESH AFTER UPDATE
+  }, ()=>{
     callAPI({ action:"getLiveScore" }, updateUI);
+  });
+}
+
+/* ---------- SECOND INNINGS ---------- */
+function startSecondInnings(){
+  callAPI({ action:"startSecondInnings" }, res=>{
+    if(res.status==="ok"){
+      alert("2nd Innings Started. Target: " + res.target);
+      document.getElementById("secondBtn").style.display="none";
+      disableEntry(false);
+      callAPI({ action:"getLiveScore" }, updateUI);
+    }else{
+      alert(res.msg || "Cannot start second innings");
+    }
   });
 }
 
@@ -150,7 +186,6 @@ function toggleMic(){
   recognition.start();
 }
 
-/* ---------- VOICE PARSER ---------- */
 function processVoice(text){
   let type="", value=0;
 
@@ -170,14 +205,7 @@ function processVoice(text){
 
   if(!type){ alert("Voice not recognised"); return; }
 
-  callAPI({
-    action:"updateScore",
-    type:type,
-    value:value
-  }, ()=>{
-    callAPI({ action:"getLiveScore" }, updateUI);
-    document.getElementById("status").innerText="Score updated ✔";
-  });
+  send(type,value);
 }
 
 /* ---------- INITIAL LOAD ---------- */
@@ -185,10 +213,9 @@ window.onload = ()=>{
   callAPI({ action:"getLiveScore" }, updateUI);
   setInterval(()=>{
     callAPI({ action:"getLiveScore" }, updateUI);
-  }, 2000); // live refresh
+  }, 2000);
 };
 </script>
-  
 </head>
 
 <body>
@@ -204,6 +231,13 @@ window.onload = ()=>{
   <div class="card">
     <div class="score" id="score">0 / 0</div>
     <div class="sub" id="overs">Overs: 0.0</div>
+
+    <!-- 🆕 SECOND INNINGS BUTTON -->
+    <button id="secondBtn"
+      style="display:none;margin-top:10px;background:#4caf50"
+      onclick="startSecondInnings()">
+      ▶ Start 2nd Innings
+    </button>
   </div>
 
   <!-- RUN BUTTONS -->
