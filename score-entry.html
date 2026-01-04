@@ -27,7 +27,6 @@ const API_URL="https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG3
 /* ===== MATCH STATE ===== */
 let striker="", nonStriker="", bowler="";
 let batsmen={}, bowlers={};
-
 let overBalls = 0;
 let isOverComplete = false;
 
@@ -60,23 +59,12 @@ function updateUI(r){
   nonBox.innerText = nonStriker ? `🏏 ${nonStriker} : ${batsmen[nonStriker].runs} (${batsmen[nonStriker].balls})` : "";
   bowlerBox.innerText = bowler ? `🎯 ${bowler} : ${bowlers[bowler].balls} balls` : "";
 
-  /* Show change bowler button ONLY after over */
   if(isOverComplete){
     changeBowlerBtn.style.display="block";
     disableEntry(true);
   }else{
     changeBowlerBtn.style.display="none";
     disableEntry(false);
-  }
-
-  /* Match completed */
-  if(r.inningsStatus==="COMPLETED"){
-    let msg = r.runs >= r.target
-      ? `${r.batting} won by ${10-r.wickets} wickets`
-      : `${r.bowling} won by ${r.target-r.runs-1} runs`;
-
-    alert("🏆 " + msg);
-    location.href="dashboard.html";
   }
 }
 
@@ -102,11 +90,6 @@ function send(type,value=0){
     batsmen[striker] = {runs:0, balls:0};
   }
 
-  if(type==="wide" || type==="noball"){
-    // runs only, no ball count
-  }
-
-  /* Over completed AFTER scoring */
   if(overBalls === 6){
     overBalls = 0;
     [striker, nonStriker] = [nonStriker, striker];
@@ -119,11 +102,9 @@ function send(type,value=0){
   );
 }
 
-/* ===== CHANGE BOWLER FLOW ===== */
+/* ===== CHANGE BOWLER ===== */
 function openBowlerChange(){
   setupCard.style.display="block";
-  s2.style.display="none";
-  ns2.style.display="none";
   b2.style.display="block";
   b2.innerHTML="<option value=''>Select Bowler</option>";
 
@@ -141,27 +122,20 @@ function confirmBowler(){
   isOverComplete = false;
   setupCard.style.display="none";
   disableEntry(false);
-  updateUI({runs:0,wickets:0,overs:""}); // force refresh
 }
 
-/* ===== LOAD PLAYERS (FIXED) ===== */
-function loadPlayers(team, ...ids){
-  callAPI({action:"getPlayers", team: team}, p => {
-    ids.forEach(id => {
-      const s = document.getElementById(id);
-
-      /* 🔥 FIX 1: CLEAR BEFORE LOAD */
-      s.innerHTML = "<option value=''>Select Bowler</option>";
-
-      /* 🔥 FIX 2: DOM SAFE APPEND */
-      setTimeout(() => {
-        p.forEach(x => {
-          const opt = document.createElement("option");
-          opt.value = x.name;
-          opt.textContent = x.name;
-          s.appendChild(opt);
-        });
-      }, 0);
+/* ===== LOAD PLAYERS (FINAL FIX) ===== */
+function loadPlayers(team,...ids){
+  callAPI({action:"getPlayers", team}, players=>{
+    ids.forEach(id=>{
+      const s=document.getElementById(id);
+      s.innerHTML="<option value=''>Select Bowler</option>";
+      players.forEach(p=>{
+        const opt=document.createElement("option");
+        opt.value=p.name;
+        opt.textContent=p.name;
+        s.appendChild(opt);
+      });
     });
   });
 }
@@ -201,7 +175,6 @@ window.onload=()=>{
 
   <button id="changeBowlerBtn" style="display:none;background:#ff9800" onclick="openBowlerChange()">
     🔄 Change Bowler
-</div>
   </button>
 </div>
 
