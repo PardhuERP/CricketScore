@@ -13,19 +13,19 @@ body{margin:0;font-family:Arial;background:#f2f4f8}
 .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 4px 10px rgba(0,0,0,0.08);text-align:center}
 .score{font-size:28px;font-weight:bold}
 .sub{color:#555;margin-top:4px}
-.info{font-size:14px;margin-top:6px;color:#333}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
 button{padding:14px;font-size:18px;border:none;border-radius:10px;cursor:pointer;background:#0a7cff;color:#fff}
 .wicket{background:#e53935}
 .extra{background:#ff9800}
 .mic-btn{margin-top:10px;background:#e53935;width:80px;height:80px;border-radius:50%;font-size:36px}
 select{width:100%;padding:10px;margin-top:8px}
+.info{font-size:14px;margin-top:6px;color:#333}
 </style>
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* JSONP */
+/* ---------- JSONP ---------- */
 function callAPI(p,cb){
   const f="cb_"+Date.now();
   window[f]=r=>{cb&&cb(r);delete window[f];s.remove()};
@@ -35,7 +35,7 @@ function callAPI(p,cb){
   document.body.appendChild(s);
 }
 
-/* ENABLE / DISABLE */
+/* ---------- ENABLE / DISABLE ---------- */
 function disableEntry(d){
   document.querySelectorAll(".score-btn").forEach(b=>{
     b.disabled=d;
@@ -43,21 +43,20 @@ function disableEntry(d){
   });
 }
 
-/* UI UPDATE */
+/* ---------- UI UPDATE ---------- */
 function updateUI(r){
   if(!r) return;
 
   score.innerText=(r.runs||0)+" / "+(r.wickets||0);
   overs.innerText="Overs: "+(r.overs||"0.0");
 
-  /* extra info */
-  strikerInfo.innerText="Striker: "+(r.striker||"-");
-  nonInfo.innerText="Non-Striker: "+(r.nonstriker||"-");
-  bowlerInfo.innerText="Bowler: "+(r.bowler||"-");
+  strikerName.innerText = "Striker: " + (r.striker||"-");
+  nonStrikerName.innerText = "Non-Striker: " + (r.nonstriker||"-");
+  bowlerName.innerText = "Bowler: " + (r.bowler||"-");
 
-  const o=(r.overs||"0.0").split(".");
-  ballsInfo.innerText="Balls: "+(o[1]||0);
-  completedOvers.innerText="Completed Overs: "+(o[0]||0);
+  const parts = (r.overs||"0.0").split(".");
+  ballsInfo.innerText = "Balls: " + (parts[1]||0) + " / 6";
+  completedOvers.innerText = "Completed Overs: " + parts[0];
 
   /* 1st innings end */
   if(r.inningsStatus==="ENDED" && r.inningsNo==1){
@@ -65,7 +64,7 @@ function updateUI(r){
     disableEntry(true);
   }
 
-  /* SETUP */
+  /* 2nd innings setup */
   if(r.inningsStatus==="SETUP"){
     setupCard.style.display="block";
     disableEntry(true);
@@ -83,27 +82,32 @@ function updateUI(r){
   /* COMPLETED */
   if(r.inningsStatus==="COMPLETED"){
     disableEntry(true);
-
-    let msg="";
-    if(r.inningsNo==2){
-      if(r.runs>=r.target){
-        msg=`${r.batting} won by ${10-r.wickets} wickets`;
-      }else{
-        msg=`${r.bowling} won by ${r.target-r.runs-1} runs`;
-      }
-    }
-    alert("🏆 Match Completed\n"+msg);
+    showResult(r);
   }
 }
 
-/* SCORE */
+/* ---------- RESULT POPUP ---------- */
+function showResult(r){
+  let msg="";
+  if(r.inningsNo==2){
+    const diff = r.target - r.runs;
+    if(diff<=0){
+      msg = r.batting + " won by " + (10-r.wickets) + " wickets";
+    }else{
+      msg = r.bowling + " won by " + diff + " runs";
+    }
+  }
+  alert("🏆 Match Completed\n\n" + msg);
+}
+
+/* ---------- SCORE ---------- */
 function send(t,v=0){
   callAPI({action:"updateScore",type:t,value:v},
     ()=>callAPI({action:"getLiveScore"},updateUI)
   );
 }
 
-/* SECOND INNINGS */
+/* ---------- SECOND INNINGS ---------- */
 function startSecondInnings(){
   callAPI({action:"startSecondInnings"},r=>{
     alert("Target: "+r.target);
@@ -111,7 +115,7 @@ function startSecondInnings(){
   });
 }
 
-/* LOAD PLAYERS */
+/* ---------- LOAD PLAYERS ---------- */
 function loadPlayers(team,...ids){
   callAPI({action:"getPlayers",team:team},p=>{
     ids.forEach(id=>{
@@ -122,7 +126,7 @@ function loadPlayers(team,...ids){
   });
 }
 
-/* CONFIRM PLAYERS */
+/* ---------- CONFIRM PLAYERS ---------- */
 function confirmPlayers(){
   callAPI({
     action:"setSecondInningsPlayers",
@@ -132,7 +136,7 @@ function confirmPlayers(){
   },()=>callAPI({action:"getLiveScore"},updateUI));
 }
 
-/* MIC */
+/* ---------- 🎤 MIC ---------- */
 let rec;
 function startMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -170,15 +174,16 @@ window.onload=()=>callAPI({action:"getLiveScore"},updateUI);
   <div class="score" id="score">0 / 0</div>
   <div class="sub" id="overs">Overs: 0.0</div>
 
-  <div class="info" id="strikerInfo"></div>
-  <div class="info" id="nonInfo"></div>
-  <div class="info" id="bowlerInfo"></div>
+  <div class="info" id="strikerName"></div>
+  <div class="info" id="nonStrikerName"></div>
+  <div class="info" id="bowlerName"></div>
   <div class="info" id="ballsInfo"></div>
   <div class="info" id="completedOvers"></div>
 
   <button id="secondBtn" style="display:none;background:#4caf50" onclick="startSecondInnings()">▶ Start 2nd Innings</button>
 </div>
 
+<!-- SETUP -->
 <div class="card" id="setupCard" style="display:none">
   <h3>2nd Innings Players</h3>
   <select id="s2"></select>
@@ -208,7 +213,7 @@ window.onload=()=>callAPI({action:"getLiveScore"},updateUI);
 
 <div class="card">
   <button class="mic-btn" onclick="startMic()">🎤</button>
-  <div class="sub">Speak: one, two, four, six, wide, no ball, wicket</div>
+  <div class="sub">Tap & speak (one, two, four, six, wide, no ball, wicket)</div>
 </div>
 
 </div>
