@@ -19,12 +19,13 @@ button{padding:14px;font-size:18px;border:none;border-radius:10px;cursor:pointer
 .extra{background:#ff9800}
 .mic-btn{margin-top:10px;background:#e53935;width:80px;height:80px;border-radius:50%;font-size:36px}
 select{width:100%;padding:10px;margin-top:8px}
+.small{font-size:14px;color:#333;margin-top:4px}
 </style>
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* ---------- JSONP ---------- */
+/* JSONP */
 function callAPI(p,cb){
   const f="cb_"+Date.now();
   window[f]=r=>{cb&&cb(r);delete window[f];s.remove()};
@@ -34,7 +35,7 @@ function callAPI(p,cb){
   document.body.appendChild(s);
 }
 
-/* ---------- ENABLE / DISABLE ---------- */
+/* ENABLE / DISABLE */
 function disableEntry(d){
   document.querySelectorAll(".score-btn").forEach(b=>{
     b.disabled=d;
@@ -42,12 +43,23 @@ function disableEntry(d){
   });
 }
 
-/* ---------- UI UPDATE ---------- */
+/* UI UPDATE */
 function updateUI(r){
   if(!r) return;
 
   score.innerText=(r.runs||0)+" / "+(r.wickets||0);
   overs.innerText="Overs: "+(r.overs||"0.0");
+
+  /* LIVE DETAILS */
+  strikerBox.innerText = "🏏 Striker: " + (r.striker||"-");
+  nonBox.innerText     = "🏏 Non-Striker: " + (r.nonstriker||"-");
+  bowlerBox.innerText  = "🎯 Bowler: " + (r.bowler||"-");
+
+  if(r.overs){
+    const p=r.overs.split(".");
+    ballsBox.innerText="⚾ Balls this over: "+(p[1]||0);
+    overBox.innerText ="⏱ Completed overs: "+p[0];
+  }
 
   /* 1st innings end */
   if(r.inningsStatus==="ENDED" && r.inningsNo==1){
@@ -59,10 +71,7 @@ function updateUI(r){
   if(r.inningsStatus==="SETUP"){
     setupCard.style.display="block";
     disableEntry(true);
-
-    // Batting team players (2 batsmen)
     loadPlayers(r.batting,"s2","ns2");
-    // Bowling team players (1 bowler)
     loadPlayers(r.bowling,"b2");
   }
 
@@ -76,18 +85,26 @@ function updateUI(r){
   /* COMPLETED */
   if(r.inningsStatus==="COMPLETED"){
     disableEntry(true);
-    alert("🏆 Match Completed");
+    setTimeout(()=>{
+      const msg =
+        r.inningsNo==2 && r.target
+        ? `🏆 ${r.bowling} won the match`
+        : "🏆 Match Completed";
+
+      alert(msg);
+      location.href="dashboard.html";
+    },300);
   }
 }
 
-/* ---------- SCORE ---------- */
+/* SCORE */
 function send(t,v=0){
   callAPI({action:"updateScore",type:t,value:v},
     ()=>callAPI({action:"getLiveScore"},updateUI)
   );
 }
 
-/* ---------- SECOND INNINGS ---------- */
+/* SECOND INNINGS */
 function startSecondInnings(){
   callAPI({action:"startSecondInnings"},r=>{
     alert("Target: "+r.target);
@@ -95,19 +112,18 @@ function startSecondInnings(){
   });
 }
 
-/* ---------- LOAD PLAYERS ---------- */
+/* LOAD PLAYERS */
 function loadPlayers(team,...ids){
   callAPI({action:"getPlayers",team:team},p=>{
-    ids.forEach(id=>fill(id,p));
+    ids.forEach(id=>{
+      const s=document.getElementById(id);
+      s.innerHTML="<option value=''>Select</option>";
+      p.forEach(x=>s.innerHTML+=`<option>${x.name}</option>`);
+    });
   });
 }
-function fill(id,p){
-  const s=document.getElementById(id);
-  s.innerHTML="<option value=''>Select</option>";
-  p.forEach(x=>s.innerHTML+=`<option>${x.name}</option>`);
-}
 
-/* ---------- CONFIRM 2nd INNINGS PLAYERS ---------- */
+/* CONFIRM PLAYERS */
 function confirmPlayers(){
   callAPI({
     action:"setSecondInningsPlayers",
@@ -117,7 +133,7 @@ function confirmPlayers(){
   },()=>callAPI({action:"getLiveScore"},updateUI));
 }
 
-/* ---------- 🎤 MIC SUPPORT ---------- */
+/* 🎤 MIC */
 let rec;
 function startMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -154,15 +170,23 @@ window.onload=()=>callAPI({action:"getLiveScore"},updateUI);
 <div class="card">
   <div class="score" id="score">0 / 0</div>
   <div class="sub" id="overs">Overs: 0.0</div>
+
+  <!-- LIVE DETAILS -->
+  <div class="small" id="strikerBox"></div>
+  <div class="small" id="nonBox"></div>
+  <div class="small" id="bowlerBox"></div>
+  <div class="small" id="ballsBox"></div>
+  <div class="small" id="overBox"></div>
+
   <button id="secondBtn" style="display:none;background:#4caf50" onclick="startSecondInnings()">▶ Start 2nd Innings</button>
 </div>
 
-<!-- 2ND INNINGS SETUP -->
+<!-- SETUP -->
 <div class="card" id="setupCard" style="display:none">
   <h3>2nd Innings Players</h3>
-  <select id="s2"><option>Team-B Batsman 1</option></select>
-  <select id="ns2"><option>Team-B Batsman 2</option></select>
-  <select id="b2"><option>Team-A Bowler</option></select>
+  <select id="s2"></select>
+  <select id="ns2"></select>
+  <select id="b2"></select>
   <button style="margin-top:10px;background:#4caf50" onclick="confirmPlayers()">Confirm Players</button>
 </div>
 
@@ -187,7 +211,7 @@ window.onload=()=>callAPI({action:"getLiveScore"},updateUI);
 
 <div class="card">
   <button class="mic-btn" onclick="startMic()">🎤</button>
-  <div class="sub">Tap & speak (one, two, four, six, wide, no ball, wicket)</div>
+  <div class="sub">Speak: one, two, four, six, wide, no ball, wicket</div>
 </div>
 
 </div>
