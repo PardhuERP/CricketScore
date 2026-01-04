@@ -6,269 +6,147 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#f2f4f8;
-}
-.header{
-  background:#0a7cff;
-  color:#fff;
-  padding:14px;
-  text-align:center;
-  font-size:18px;
-  font-weight:bold;
-  display:flex;
-  align-items:center;
-}
-.back{
-  margin-right:10px;
-  font-size:20px;
-  cursor:pointer;
-}
-.container{ padding:14px; }
-
-.card{
-  background:#fff;
-  border-radius:14px;
-  padding:14px;
-  margin-bottom:14px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.08);
-  text-align:center;
-}
-
-.score{
-  font-size:28px;
-  font-weight:bold;
-}
-.sub{
-  color:#555;
-  margin-top:4px;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-top:10px;
-}
-
-button{
-  padding:14px;
-  font-size:18px;
-  border:none;
-  border-radius:10px;
-  cursor:pointer;
-  background:#0a7cff;
-  color:#fff;
-}
-.wicket{ background:#e53935; }
-.extra{ background:#ff9800; }
-
-.mic-btn{
-  margin-top:10px;
-  background:#e53935;
-  width:80px;
-  height:80px;
-  border-radius:50%;
-  font-size:36px;
-}
-
-.status{ margin-top:8px; font-size:14px; color:#555; }
-.result{ font-size:16px; margin-top:6px; font-weight:bold; }
+body{margin:0;font-family:Arial;background:#f2f4f8}
+.header{background:#0a7cff;color:#fff;padding:14px;text-align:center;font-size:18px;font-weight:bold;display:flex;align-items:center}
+.back{margin-right:10px;font-size:20px;cursor:pointer}
+.container{padding:14px}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 4px 10px rgba(0,0,0,0.08);text-align:center}
+.score{font-size:28px;font-weight:bold}
+.sub{color:#555;margin-top:4px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+button{padding:14px;font-size:18px;border:none;border-radius:10px;cursor:pointer;background:#0a7cff;color:#fff}
+.wicket{background:#e53935}
+.extra{background:#ff9800}
+.mic-btn{margin-top:10px;background:#e53935;width:80px;height:80px;border-radius:50%;font-size:36px}
+select{width:100%;padding:10px;margin-top:8px}
 </style>
 
 <script>
-const API_URL =
-"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* ---------- JSONP CALL ---------- */
-function callAPI(params, cb){
-  const fn = "cb_" + Date.now();
-  window[fn] = function(res){
-    cb && cb(res);
-    delete window[fn];
-    s.remove();
-  };
-  const q = Object.keys(params).map(k=>k+"="+encodeURIComponent(params[k])).join("&");
-  const s = document.createElement("script");
-  s.src = API_URL + "?" + q + "&callback=" + fn + "&_=" + Date.now();
+/* JSONP */
+function callAPI(p,cb){
+  const f="cb_"+Date.now();
+  window[f]=r=>{cb&&cb(r);delete window[f];s.remove()};
+  const q=Object.keys(p).map(k=>k+"="+encodeURIComponent(p[k])).join("&");
+  const s=document.createElement("script");
+  s.src=API_URL+"?"+q+"&callback="+f;
   document.body.appendChild(s);
 }
 
-/* 🔒 ENABLE / DISABLE ENTRY */
-function disableEntry(disabled){
-  document.querySelectorAll("button").forEach(b=>{
-    if(b.id !== "secondBtn"){
-      b.disabled = disabled;
-      b.style.opacity = disabled ? "0.5" : "1";
-    }
+/* ENABLE / DISABLE SCORE */
+function disableEntry(d){
+  document.querySelectorAll(".score-btn").forEach(b=>{
+    b.disabled=d;b.style.opacity=d?"0.4":"1";
   });
 }
 
-/* ---------- UPDATE UI (MODIFIED) ---------- */
-function updateUI(res){
-  if(!res) return;
+/* UI UPDATE */
+function updateUI(r){
+  if(!r) return;
+  score.innerText=(r.runs||0)+" / "+(r.wickets||0);
+  overs.innerText="Overs: "+(r.overs||"0.0");
 
-  document.getElementById("score").innerText =
-    (res.runs || 0) + " / " + (res.wickets || 0);
-
-  document.getElementById("overs").innerText =
-    "Overs: " + (res.overs || "0.0");
-
-  /* 🔥 INNINGS CONTROL */
-  if(res.inningsStatus === "ENDED"){
+  if(r.inningsStatus==="ENDED" && r.inningsNo==1){
+    secondBtn.style.display="block";
     disableEntry(true);
+  }
 
-    if(res.inningsNo == 1){
-      document.getElementById("secondBtn").style.display = "block";
-    }
-  }else{
+  if(r.inningsStatus==="SETUP"){
+    setupCard.style.display="block";
+    disableEntry(true);
+    loadPlayers(r.batting);
+  }
+
+  if(r.inningsStatus==="LIVE"){
+    setupCard.style.display="none";
     disableEntry(false);
-    document.getElementById("secondBtn").style.display = "none";
+  }
+
+  if(r.inningsStatus==="COMPLETED"){
+    disableEntry(true);
+    alert("Match Completed");
   }
 }
 
-/* ---------- BUTTON ENTRY ---------- */
-function send(type,value=0){
-  callAPI({
-    action:"updateScore",
-    type:type,
-    value:value
-  }, ()=>{
-    callAPI({ action:"getLiveScore" }, updateUI);
-  });
+/* SCORE */
+function send(t,v=0){
+  callAPI({action:"updateScore",type:t,value:v},()=>callAPI({action:"getLiveScore"},updateUI));
 }
 
-/* ---------- SECOND INNINGS ---------- */
+/* SECOND INNINGS */
 function startSecondInnings(){
-  callAPI({ action:"startSecondInnings" }, res=>{
-    if(res.status==="ok"){
-      alert("2nd Innings Started. Target: " + res.target);
-      document.getElementById("secondBtn").style.display="none";
-      disableEntry(false);
-      callAPI({ action:"getLiveScore" }, updateUI);
-    }else{
-      alert(res.msg || "Cannot start second innings");
-    }
+  callAPI({action:"startSecondInnings"},r=>{
+    alert("Target: "+r.target);
+    callAPI({action:"getLiveScore"},updateUI);
   });
 }
 
-/* ---------- MIC ---------- */
-let recognition, listening=false;
-
-function initMic(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){ alert("Speech recognition not supported"); return; }
-
-  recognition = new SR();
-  recognition.lang = "en-IN";
-  recognition.continuous = false;
-  recognition.interimResults = false;
-
-  recognition.onresult = e=>{
-    const text = e.results[0][0].transcript.toLowerCase();
-    document.getElementById("result").innerText = text;
-    processVoice(text);
-  };
-
-  recognition.onend = ()=>{
-    listening=false;
-    document.getElementById("status").innerText="Tap mic & speak";
-  };
+/* LOAD PLAYERS */
+function loadPlayers(team){
+  callAPI({action:"getPlayers",team:team},p=>{
+    fill("s2",p);fill("ns2",p);fill("b2",p);
+  });
+}
+function fill(id,p){
+  const s=document.getElementById(id);
+  s.innerHTML="<option value=''>Select</option>";
+  p.forEach(x=>s.innerHTML+=`<option>${x.name}</option>`);
 }
 
-function toggleMic(){
-  if(!recognition) initMic();
-  if(listening) return;
-  listening=true;
-  document.getElementById("status").innerText="Listening...";
-  recognition.start();
+/* CONFIRM PLAYERS */
+function confirmPlayers(){
+  callAPI({
+    action:"setSecondInningsPlayers",
+    striker:s2.value,
+    nonstriker:ns2.value,
+    bowler:b2.value
+  },()=>callAPI({action:"getLiveScore"},updateUI));
 }
 
-function processVoice(text){
-  let type="", value=0;
-
-  if(text.includes("wide")) type="wide";
-  else if(text.includes("no")) type="noball";
-  else if(text.includes("wicket") || text.includes("out")) type="wicket";
-  else{
-    const map = [
-      ["zero",0],["one",1],["two",2],["three",3],["four",4],["six",6]
-    ];
-    for(const m of map){
-      if(text.includes(m[0])){
-        type="run"; value=m[1]; break;
-      }
-    }
-  }
-
-  if(!type){ alert("Voice not recognised"); return; }
-
-  send(type,value);
-}
-
-/* ---------- INITIAL LOAD ---------- */
-window.onload = ()=>{
-  callAPI({ action:"getLiveScore" }, updateUI);
-  setInterval(()=>{
-    callAPI({ action:"getLiveScore" }, updateUI);
-  }, 2000);
-};
+window.onload=()=>callAPI({action:"getLiveScore"},updateUI);
 </script>
 </head>
 
 <body>
-
-<div class="header">
-  <div class="back" onclick="location.href='dashboard.html'">⬅</div>
-  ✍️ Score Entry
-</div>
+<div class="header"><div class="back" onclick="location.href='dashboard.html'">⬅</div>Score Entry</div>
 
 <div class="container">
 
-  <!-- LIVE SCORE -->
-  <div class="card">
-    <div class="score" id="score">0 / 0</div>
-    <div class="sub" id="overs">Overs: 0.0</div>
-
-    <!-- 🆕 SECOND INNINGS BUTTON -->
-    <button id="secondBtn"
-      style="display:none;margin-top:10px;background:#4caf50"
-      onclick="startSecondInnings()">
-      ▶ Start 2nd Innings
-    </button>
-  </div>
-
-  <!-- RUN BUTTONS -->
-  <div class="card">
-    <div class="grid">
-      <button onclick="send('run',0)">0</button>
-      <button onclick="send('run',1)">1</button>
-      <button onclick="send('run',2)">2</button>
-      <button onclick="send('run',3)">3</button>
-      <button onclick="send('run',4)">4</button>
-      <button onclick="send('run',6)">6</button>
-    </div>
-  </div>
-
-  <!-- EXTRAS -->
-  <div class="card">
-    <div class="grid">
-      <button class="extra" onclick="send('wide')">Wide</button>
-      <button class="extra" onclick="send('noball')">No Ball</button>
-      <button class="wicket" onclick="send('wicket')">Wicket</button>
-    </div>
-  </div>
-
-  <!-- MIC -->
-  <div class="card">
-    <button class="mic-btn" onclick="toggleMic()">🎤</button>
-    <div class="status" id="status">Tap mic & speak</div>
-    <div class="result" id="result"></div>
-  </div>
-
+<div class="card">
+  <div class="score" id="score">0 / 0</div>
+  <div class="sub" id="overs">Overs: 0.0</div>
+  <button id="secondBtn" style="display:none;background:#4caf50" onclick="startSecondInnings()">▶ Start 2nd Innings</button>
 </div>
 
+<!-- SETUP CARD -->
+<div class="card" id="setupCard" style="display:none">
+  <h3>Select 2nd Innings Players</h3>
+  <select id="s2"></select>
+  <select id="ns2"></select>
+  <select id="b2"></select>
+  <button onclick="confirmPlayers()" style="margin-top:10px;background:#4caf50">Confirm Players</button>
+</div>
+
+<div class="card">
+  <div class="grid">
+    <button class="score-btn" onclick="send('run',0)">0</button>
+    <button class="score-btn" onclick="send('run',1)">1</button>
+    <button class="score-btn" onclick="send('run',2)">2</button>
+    <button class="score-btn" onclick="send('run',3)">3</button>
+    <button class="score-btn" onclick="send('run',4)">4</button>
+    <button class="score-btn" onclick="send('run',6)">6</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="grid">
+    <button class="extra score-btn" onclick="send('wide')">Wide</button>
+    <button class="extra score-btn" onclick="send('noball')">No Ball</button>
+    <button class="wicket score-btn" onclick="send('wicket')">Wicket</button>
+  </div>
+</div>
+
+</div>
 </body>
 </html>
