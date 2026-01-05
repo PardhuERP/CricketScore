@@ -49,11 +49,11 @@ function updateUI(r){
   score.innerText = `${r.runs} / ${r.wickets}`;
   overs.innerText = "Overs: " + r.overs;
 
-  strikerBox.innerText = r.batsmanStats?.striker
+  strikerBox.innerText = r.batsmanStats?.[r.striker]
     ? `🏏 ${r.striker} : ${r.batsmanStats[r.striker].runs} (${r.batsmanStats[r.striker].balls})`
     : "";
 
-  nonBox.innerText = r.batsmanStats?.nonstriker
+  nonBox.innerText = r.batsmanStats?.[r.nonstriker]
     ? `🏏 ${r.nonstriker} : ${r.batsmanStats[r.nonstriker].runs} (${r.batsmanStats[r.nonstriker].balls})`
     : "";
 
@@ -61,27 +61,33 @@ function updateUI(r){
     ? `🎯 ${r.bowler} : ${r.bowlerStats[r.bowler].balls} balls`
     : "";
 
-  /* ---- OVER END (BUT NOT INNINGS END) ---- */
-  if(r.totalBalls % 6 === 0 && r.totalBalls !== 0 &&
-     r.totalBalls < r.oversLimit * 6 &&
-     r.inningsStatus === "LIVE"){
+  /* =====================================================
+     🔧 FIXED OVER-END LOGIC (ONLY CHANGE)
+  ===================================================== */
+  const balls = Number(r.totalBalls || 0);
+  const maxBalls = Number(r.oversLimit || 0) * 6;
 
+  if (
+    r.inningsStatus === "LIVE" &&
+    balls > 0 &&
+    balls % 6 === 0 &&
+    balls < maxBalls
+  ){
     changeBowlerBtn.style.display="block";
     disableEntry(true);
-
   }else{
     changeBowlerBtn.style.display="none";
     disableEntry(r.inningsStatus !== "LIVE");
   }
 
-  /* ---- 1ST INNINGS END ---- */
+  /* ---------- 1ST INNINGS END ---------- */
   if(r.inningsStatus==="ENDED" && r.inningsNo===1){
     changeBowlerBtn.style.display="none";
     endInningsBtn.style.display="block";
     disableEntry(true);
   }
 
-  /* ---- MATCH COMPLETED ---- */
+  /* ---------- MATCH COMPLETED ---------- */
   if(r.inningsStatus==="COMPLETED"){
     let msg = r.runs >= r.target
       ? `${r.batting} won by ${10-r.wickets} wickets`
