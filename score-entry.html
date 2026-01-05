@@ -45,9 +45,14 @@ function updateUI(r){
   if(!r) return;  
   
   inningsStatus = r.inningsStatus;  
-  // Convert overs string (e.g., "1.0") to float for comparison
-  const currentOvers = parseFloat(r.overs) || 0;
+  
+  // Logic from old code reference: Parse overs and balls
+  const currentOvers = parseFloat(r.overs) || 0;  
   const maxOvers = parseFloat(r.oversLimit) || 0;
+  
+  // Check if current over is finished (e.g., 1.0, 2.0 etc.)
+  // We use Number.isInteger to check if it's a complete over
+  const isOverFinished = Number.isInteger(currentOvers) && currentOvers > 0;
   
   score.innerText = `${r.runs} / ${r.wickets}`;  
   overs.innerText = "Overs: " + r.overs;  
@@ -63,31 +68,37 @@ function updateUI(r){
   nonBox.innerText = nonStriker ? `🏏 ${nonStriker} : ${batsmen[nonStriker]?.runs||0} (${batsmen[nonStriker]?.balls||0})` : "";  
   bowlerBox.innerText = bowler ? `🎯 ${bowler} : ${bowlers[bowler]?.balls||0} balls` : "";  
   
-  /* ===== LOGIC CORE - FIXED FOR OVER END ===== */  
+  /* ===== LOGIC CORE - UPDATED WITH OLD CODE REFERENCE ===== */  
   
   changeBowlerBtn.style.display="none";  
   secondInningsBtn.style.display="none";  
   
+  // Case 1: Innings is still Live
   if(inningsStatus==="LIVE"){  
-    disableScore(false);  
+    if(isOverFinished && currentOvers < maxOvers){
+       // ఓవర్ పూర్తయింది కానీ మ్యాచ్ ఇంకా ఉంది
+       disableScore(true);
+       changeBowlerBtn.style.display="block";
+    } else {
+       disableScore(false);
+    }
   }  
   
-  // Check specifically for OVER_END or if overs reached limit
+  // Case 2: Over actually ended according to GS
   if(inningsStatus==="OVER_END"){  
     disableScore(true);  
-    
-    // ఒకవేళ కరెంట్ ఓవర్స్, లిమిట్ కన్నా తక్కువ ఉంటేనే బౌలర్ మార్పు చూపించాలి
     if(currentOvers < maxOvers){  
       changeBowlerBtn.style.display="block";  
     } else {
-      // ఓవర్స్ పూర్తి అయిపోతే 2nd Innings బటన్
       secondInningsBtn.style.display="block";
     }
   }  
   
-  if(inningsStatus==="INNINGS_END"){  
+  // Case 3: Innings ended (Max overs reached or all out)
+  if(inningsStatus==="INNINGS_END" || (currentOvers >= maxOvers && isOverFinished)){  
     disableScore(true);  
-    secondInningsBtn.style.display="block";  
+    changeBowlerBtn.style.display="none"; // Hide bowler change
+    secondInningsBtn.style.display="block"; // Show start 2nd innings
   }  
   
   if(inningsStatus==="SETUP"){  
@@ -114,11 +125,11 @@ function send(type,value=0){
 /* ---------- CHANGE BOWLER ---------- */  
 function openBowlerChange(){  
   setupCard.style.display="block";  
-  b2.innerHTML="<option value=''>Loading Players...</option>";  
+  b2.innerHTML="<option value=''>Loading...</option>";  
   
   callAPI({action:"getLiveScore"},r=>{  
     callAPI({action:"getPlayers",team:r.bowling},players=>{  
-      b2.innerHTML="<option value=''>Select Next Bowler</option>";  
+      b2.innerHTML="<option value=''>Select Bowler</option>";  
       players.forEach(p=>{  
         const o=document.createElement("option");  
         o.value=p.name;  
@@ -132,14 +143,12 @@ function openBowlerChange(){
 function confirmBowler(){  
   if(!b2.value) return alert("Select bowler");  
   
-  // Using setSecondInningsPlayers action as per your original code for changing bowler
   callAPI(  
     {action:"setSecondInningsPlayers",bowler:b2.value},  
-    ()=>callAPI({action:"getLiveScore"}, r => {
-      setupCard.style.display="none";
-      updateUI(r);
-    })  
+    ()=>callAPI({action:"getLiveScore"},updateUI)  
   );  
+  
+  setupCard.style.display="none";  
 }  
   
 /* ---------- 2ND INNINGS ---------- */  
@@ -156,16 +165,13 @@ window.onload=()=>{
   <div class="sub" id="overs">Overs: 0.0</div>    <div class="small" id="strikerBox"></div>  
   <div class="small" id="nonBox"></div>  
   <div class="small" id="bowlerBox"></div>  
-  
-  <div style="margin-top:15px">
-    <button id="changeBowlerBtn" style="display:none;background:#ff9800;width:100%" onclick="openBowlerChange()">🔄 Next Over (Change Bowler)</button>
-    <button id="secondInningsBtn" style="display:none;background:#4caf50;width:100%" onclick="startSecondInnings()">▶ Start 2nd Innings</button>
-  </div>
+  <button id="changeBowlerBtn" style="display:none;background:#ff9800;width:100%;margin-top:10px" onclick="openBowlerChange()">🔄 Change Bowler</button>
+  <button id="secondInningsBtn" style="display:none;background:#4caf50;width:100%;margin-top:10px" onclick="startSecondInnings()">▶ Start 2nd Innings</button>
 
 </div>  <div class="card" id="setupCard" style="display:none">  
-  <h3>Select Next Bowler</h3>  
+  <h3>Select Bowler</h3>  
   <select id="b2"></select>  
-  <button style="margin-top:10px;background:#4caf50;width:100%" onclick="confirmBowler()">Confirm & Start Over</button>  
+  <button style="margin-top:10px;background:#4caf50;width:100%" onclick="confirmBowler()">Confirm</button>  
 </div>  <div class="card">  
   <div class="grid">  
     <button class="score-btn" onclick="send('run',0)">0</button>  
