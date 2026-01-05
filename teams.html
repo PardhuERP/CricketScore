@@ -72,44 +72,35 @@ button{
 </div>
 
 <script>
-/* ===== API ===== */
+console.log("JS FILE LOADED");
+/* ===== API URL ===== */
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* ===== LOAD TEAMS (FIXED) ===== */
+/* ===== LOAD TEAMS (JSONP) ===== */
 function loadTeams(){
   const list = document.getElementById("teamsList");
+  if(!list){
+    console.error("teamsList not found");
+    return;
+  }
+
   list.innerText = "Loading teams...";
 
   const cb = "cb_load_" + Date.now();
-  window[cb] = function(res){
-    console.log("getTeams raw response:", res);
+  window[cb] = function(data){
+    console.log("getTeams response:", data);
     list.innerHTML = "";
-
-    /* 🔥 NORMALIZE RESPONSE */
-    let teams = [];
-
-    if(Array.isArray(res)){
-      teams = res;
-    }
-    else if(res && Array.isArray(res.data)){
-      teams = res.data;
-    }
-    else if(res && Array.isArray(res.teams)){
-      teams = res.teams;
-    }
-
-    if(teams.length === 0){
+    if(!data || data.length === 0){
       list.innerText = "No teams yet";
     }else{
-      teams.forEach(t=>{
+      data.forEach(t=>{
         const d = document.createElement("div");
         d.className = "team";
         d.innerText = "🏏 " + t;
         list.appendChild(d);
       });
     }
-
     delete window[cb];
   };
 
@@ -118,10 +109,11 @@ function loadTeams(){
   document.body.appendChild(s);
 }
 
-/* ===== CREATE TEAM (UNCHANGED, SAFE) ===== */
+/* ===== CREATE TEAM (JSONP) ===== */
 function createTeam(){
   const name = document.getElementById("teamName").value.trim();
   const msg = document.getElementById("msg");
+  console.log("Create clicked, name =", name);
 
   if(!name){
     msg.innerText = "⚠️ Enter team name";
@@ -132,7 +124,6 @@ function createTeam(){
   const cb = "cb_create_" + Date.now();
   window[cb] = function(res){
     console.log("createTeam response:", res);
-
     if(res && res.status === "ok"){
       msg.innerText = "✅ Team created";
       msg.style.color = "green";
@@ -151,7 +142,6 @@ function createTeam(){
     "?action=createTeam" +
     "&teamName=" + encodeURIComponent(name) +
     "&callback=" + cb;
-
   document.body.appendChild(s);
 }
 
