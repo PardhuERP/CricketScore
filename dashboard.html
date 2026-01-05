@@ -40,7 +40,6 @@ body{
 </style>
 
 <script>
-/* 🔒 YOUR LIVE GOOGLE SCRIPT API */
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 </script>
@@ -107,7 +106,22 @@ function clearMatch(){
 
   const cb = "cb_" + Date.now();
   window[cb] = res => {
-    alert(res.message || "Match cleared");
+    console.log("clearMatch response:", res);
+
+    /* 🔥 FIX: SAFE MESSAGE */
+    let msg = "Match cleared";
+
+    if(typeof res === "string"){
+      msg = res;
+    }
+    else if(res && res.message){
+      msg = res.message;
+    }
+    else if(res && res.status === "ok"){
+      msg = "Match cleared successfully";
+    }
+
+    alert(msg);
     delete window[cb];
   };
 
