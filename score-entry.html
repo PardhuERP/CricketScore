@@ -25,6 +25,7 @@ select{width:100%;padding:10px;margin-top:8px}
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
+/* ===== STATE ===== */
 let bowlerChangedForThisOver = false;
 
 /* ===== JSONP ===== */
@@ -37,7 +38,7 @@ function callAPI(p,cb){
   document.body.appendChild(s);
 }
 
-/* ===== HELPERS ===== */
+/* ===== UI HELPERS ===== */
 function disableEntry(d){
   document.querySelectorAll(".score-btn").forEach(b=>{
     b.disabled=d;
@@ -67,20 +68,16 @@ function updateUI(r){
     ? `🎯 ${r.bowler} : ${bls[r.bowler].balls} balls`
     : "";
 
-  /* 🔥 ADD: 2ND INNINGS OVERS COMPLETED (TARGET NOT REACHED) */
-  if(
-    r.inningsNo === 2 &&
-    r.inningsStatus === "LIVE" &&
-    r.totalBalls >= r.oversLimit * 6 &&
-    r.runs < r.target
-  ){
+  /* ===== 2ND INNINGS SETUP ===== */
+  if(r.inningsStatus==="SETUP" && r.inningsNo===2){
+    setup2Card.style.display="block";
     disableEntry(true);
-    alert("🏆 " + r.bowling + " won by " + (r.target - r.runs - 1) + " runs");
-    location.href = "dashboard.html";
-    return;
+    loadSecondInningsPlayers(r.batting, r.bowling);
+  }else{
+    setup2Card.style.display="none";
   }
 
-  /* ===== OVER END ===== */
+  /* ===== OVER END (ONLY LIVE) ===== */
   const overEnded =
     r.inningsStatus==="LIVE" &&
     r.totalBalls>0 &&
@@ -103,7 +100,7 @@ function updateUI(r){
     endInningsBtn.style.display="none";
   }
 
-  /* ===== MATCH COMPLETED (TARGET ACHIEVED) ===== */
+  /* ===== MATCH COMPLETED ===== */
   if(r.inningsStatus==="COMPLETED"){
     const msg =
       r.runs>=r.target
@@ -115,7 +112,7 @@ function updateUI(r){
   }
 }
 
-/* ===== SCORE ===== */
+/* ===== SCORE ENTRY ===== */
 function send(type,value=0){
   callAPI(
     {action:"updateScore",type,value},
@@ -153,6 +150,42 @@ function confirmBowler(){
   );
 }
 
+/* ===== 2ND INNINGS PLAYER SET ===== */
+function loadSecondInningsPlayers(bat,bowl){
+  callAPI({action:"getPlayers",team:bat},p=>{
+    fillSelect("s2",p);
+    fillSelect("ns2",p);
+  });
+  callAPI({action:"getPlayers",team:bowl},p=>{
+    fillSelect("b2i",p);
+  });
+}
+
+function fillSelect(id,p){
+  const s=document.getElementById(id);
+  s.innerHTML="<option value=''>Select</option>";
+  p.forEach(x=>{
+    const o=document.createElement("option");
+    o.value=o.textContent=x.name;
+    s.appendChild(o);
+  });
+}
+
+function confirmSecondInnings(){
+  if(!s2.value||!ns2.value||!b2i.value)
+    return alert("Select all players");
+
+  callAPI(
+    {
+      action:"setSecondInningsPlayers",
+      striker:s2.value,
+      nonstriker:ns2.value,
+      bowler:b2i.value
+    },
+    ()=>callAPI({action:"getLiveScore"},updateUI)
+  );
+}
+
 /* ===== END INNINGS ===== */
 function endInnings(){
   location.href="dashboard.html";
@@ -167,9 +200,63 @@ window.onload=()=>{
 </head>
 
 <body>
+
 <div class="header">
   <div class="back" onclick="location.href='dashboard.html'">⬅</div>
   Score Entry
+</div>
+
+<div class="container">
+
+<div class="card">
+  <div class="score" id="score">0 / 0</div>
+  <div class="sub" id="overs">Overs: 0.0</div>
+  <div class="small" id="strikerBox"></div>
+  <div class="small" id="nonBox"></div>
+  <div class="small" id="bowlerBox"></div>
+
+  <button id="changeBowlerBtn" style="display:none;background:#ff9800"
+    onclick="openBowlerChange()">🔄 Change Bowler</button>
+
+  <button id="endInningsBtn" style="display:none;background:#e53935"
+    onclick="endInnings()">🛑 End Innings</button>
+</div>
+
+<div class="card" id="setupCard" style="display:none">
+  <h3>Select Bowler</h3>
+  <select id="b2"></select>
+  <button style="margin-top:10px;background:#4caf50"
+    onclick="confirmBowler()">Confirm</button>
+</div>
+
+<div class="card" id="setup2Card" style="display:none">
+  <h3>2nd Innings Players</h3>
+  <select id="s2"></select>
+  <select id="ns2"></select>
+  <select id="b2i"></select>
+  <button style="margin-top:10px;background:#4caf50"
+    onclick="confirmSecondInnings()">Start Innings</button>
+</div>
+
+<div class="card">
+  <div class="grid">
+    <button class="score-btn" onclick="send('run',0)">0</button>
+    <button class="score-btn" onclick="send('run',1)">1</button>
+    <button class="score-btn" onclick="send('run',2)">2</button>
+    <button class="score-btn" onclick="send('run',3)">3</button>
+    <button class="score-btn" onclick="send('run',4)">4</button>
+    <button class="score-btn" onclick="send('run',6)">6</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="grid">
+    <button class="extra score-btn" onclick="send('wide')">Wide</button>
+    <button class="extra score-btn" onclick="send('noball')">No Ball</button>
+    <button class="wicket score-btn" onclick="send('wicket')">Wicket</button>
+  </div>
+</div>
+
 </div>
 </body>
 </html>
