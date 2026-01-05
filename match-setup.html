@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Match Setup</title>
@@ -7,130 +7,147 @@
 
 <style>
 body{margin:0;font-family:Arial;background:#f2f4f8}
-.header{background:#0a7cff;color:#fff;padding:14px;text-align:center;font-size:18px}
-.card{background:#fff;margin:15px;padding:15px;border-radius:12px}
-select,input,button{
-  width:100%;padding:12px;margin-top:10px;
-  border-radius:8px;border:1px solid #ccc;font-size:15px
+.header{background:#0a7cff;color:#fff;padding:14px;text-align:center;font-size:18px;font-weight:bold}
+.container{padding:14px}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.08)}
+label{display:block;margin-top:10px;font-weight:bold}
+input,select,button{
+  width:100%;padding:12px;margin-top:6px;
+  border-radius:8px;border:1px solid #ccc;font-size:16px
 }
-button{background:#0a7cff;color:#fff;border:none}
+button{
+  background:#4caf50;color:#fff;border:none;
+  margin-top:18px;font-size:18px
+}
 </style>
-</head>
-
-<body>
-
-<div class="header">🛠️ Match Setup</div>
-
-<div class="card">
-  <label>Match Title</label>
-  <input id="matchTitle" placeholder="Team A vs Team B">
-
-  <label>Overs Limit</label>
-  <select id="overs">
-    <option>1</option>
-    <option>2</option>
-    <option>5</option>
-    <option>10</option>
-    <option>15</option>
-    <option selected>20</option>
-  </select>
-</div>
-
-<div class="card">
-  <label>Batting Team</label>
-  <select id="batting"></select>
-
-  <label>Bowling Team</label>
-  <select id="bowling"></select>
-</div>
-
-<div class="card">
-  <label>Striker</label>
-  <select id="striker"></select>
-
-  <label>Non-Striker</label>
-  <select id="nonstriker"></select>
-
-  <label>Bowler</label>
-  <select id="bowler"></select>
-</div>
-
-<div class="card">
-  <button onclick="startMatch()">▶ Start Match</button>
-</div>
 
 <script>
-const API =
-"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-function jsonp(url,cb){
+/* ========= JSONP ========= */
+function callAPI(p,cb){
+  const f="cb_"+Date.now();
+  window[f]=r=>{cb&&cb(r);delete window[f];s.remove()};
+  const q=Object.keys(p).map(k=>k+"="+encodeURIComponent(p[k])).join("&");
   const s=document.createElement("script");
-  s.src=url+"&callback="+cb;
+  s.src=API_URL+"?"+q+"&callback="+f;
   document.body.appendChild(s);
 }
 
-/* Load Teams */
-jsonp(API+"?action=getTeams","loadTeams");
-function loadTeams(t){
-  ["batting","bowling"].forEach(id=>{
-    const s=document.getElementById(id);
-    s.innerHTML="<option value=''>Select</option>";
-    t.forEach(x=>s.innerHTML+=`<option value="${x}">${x}</option>`);
+/* ========= LOAD TEAMS ========= */
+function loadTeams(){
+  callAPI({action:"getTeams"},teams=>{
+    batting.innerHTML='<option value="">Select Batting Team</option>';
+    bowling.innerHTML='<option value="">Select Bowling Team</option>';
+
+    teams.forEach(t=>{
+      batting.innerHTML+=`<option>${t}</option>`;
+      bowling.innerHTML+=`<option>${t}</option>`;
+    });
   });
 }
 
-/* Load Players */
-["batting","bowling"].forEach(id=>{
-  document.getElementById(id).onchange=()=>{
-    const team=document.getElementById(id).value;
-    if(!team) return;
-    jsonp(API+"?action=getPlayers&team="+encodeURIComponent(team),id+"Players");
-  };
-});
-
-function battingPlayers(p){
-  fill(["striker","nonstriker"],p);
-}
-function bowlingPlayers(p){
-  fill(["bowler"],p);
-}
-function fill(ids,p){
-  ids.forEach(id=>{
-    const s=document.getElementById(id);
-    s.innerHTML="<option value=''>Select</option>";
-    p.forEach(x=>s.innerHTML+=`<option value="${x.name}">${x.name}</option>`);
+/* ========= LOAD PLAYERS ========= */
+function loadPlayers(team,selectId){
+  if(!team) return;
+  callAPI({action:"getPlayers",team},players=>{
+    const s=document.getElementById(selectId);
+    s.innerHTML='<option value="">Select Player</option>';
+    players.forEach(p=>{
+      s.innerHTML+=`<option>${p.name}</option>`;
+    });
   });
 }
 
-/* START MATCH (FIXED) */
+/* ========= EVENT BINDS ========= */
+function onBattingChange(){
+  if(batting.value===bowling.value && bowling.value){
+    alert("Batting & Bowling teams must be different");
+    batting.value="";
+    return;
+  }
+  loadPlayers(batting.value,"striker");
+  loadPlayers(batting.value,"nonstriker");
+}
+
+function onBowlingChange(){
+  if(batting.value===bowling.value && batting.value){
+    alert("Batting & Bowling teams must be different");
+    bowling.value="";
+    return;
+  }
+  loadPlayers(bowling.value,"bowler");
+}
+
+/* ========= START MATCH ========= */
 function startMatch(){
+  const match=matchName.value.trim();
+  const bat=batting.value;
+  const bowl=bowling.value;
+  const overs=oversInput.value;
+  const s=striker.value;
+  const ns=nonstriker.value;
+  const b=bowler.value;
 
-  if(!matchTitle.value || !batting.value || !bowling.value || !overs.value){
-    alert("Please fill all match details");
+  if(!match||!bat||!bowl||!overs||!s||!ns||!b){
+    alert("⚠ Please fill ALL match details");
     return;
   }
 
-  const q =
-    "?action=startMatch"+
-    "&match="+encodeURIComponent(matchTitle.value)+
-    "&batting="+encodeURIComponent(batting.value)+
-    "&bowling="+encodeURIComponent(bowling.value)+
-    "&overs="+encodeURIComponent(overs.value)+
-    "&striker="+encodeURIComponent(striker.value||"Striker")+
-    "&nonstriker="+encodeURIComponent(nonstriker.value||"Non-Striker")+
-    "&bowler="+encodeURIComponent(bowler.value||"Bowler");
-
-  jsonp(API+q,"done");
+  callAPI({
+    action:"startMatch",
+    match,
+    batting:bat,
+    bowling:bowl,
+    overs,
+    striker:s,
+    nonstriker:ns,
+    bowler:b
+  },res=>{
+    if(res.status==="ok"){
+      location.href="score.html";
+    }else{
+      alert(res.msg||"Match start failed");
+    }
+  });
 }
 
-function done(res){
-  if(res.status==="ok"){
-    location.href="score-entry.html";
-  }else{
-    alert(res.msg || "Match not started");
-  }
-}
+/* ========= INIT ========= */
+window.onload=loadTeams;
 </script>
+</head>
 
+<body>
+<div class="header">Match Setup</div>
+
+<div class="container">
+<div class="card">
+
+<label>Match Title</label>
+<input id="matchName" placeholder="Team A vs Team B">
+
+<label>Batting Team</label>
+<select id="batting" onchange="onBattingChange()"></select>
+
+<label>Bowling Team</label>
+<select id="bowling" onchange="onBowlingChange()"></select>
+
+<label>Overs</label>
+<input id="oversInput" type="number" min="1" placeholder="Eg: 2">
+
+<label>Striker</label>
+<select id="striker"></select>
+
+<label>Non-Striker</label>
+<select id="nonstriker"></select>
+
+<label>Bowler</label>
+<select id="bowler"></select>
+
+<button onclick="startMatch()">▶ Start Match</button>
+
+</div>
+</div>
 </body>
 </html>
