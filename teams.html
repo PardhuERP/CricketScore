@@ -72,33 +72,31 @@ button{
 </div>
 
 <script>
-console.log("JS FILE LOADED");
-
-/* ===== API URL ===== */
+/* ===== API ===== */
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* ===== LOAD TEAMS (JSONP) ===== */
+/* ===== LOAD TEAMS (FIXED) ===== */
 function loadTeams(){
   const list = document.getElementById("teamsList");
   list.innerText = "Loading teams...";
 
   const cb = "cb_load_" + Date.now();
   window[cb] = function(res){
-    console.log("getTeams response:", res);
+    console.log("getTeams raw response:", res);
     list.innerHTML = "";
 
-    /* 🔥 FIX: NORMALIZE RESPONSE */
+    /* 🔥 NORMALIZE RESPONSE */
     let teams = [];
 
     if(Array.isArray(res)){
-      teams = res;                               // old format
-    }
-    else if(res && Array.isArray(res.teams)){
-      teams = res.teams;                         // new format (teams)
+      teams = res;
     }
     else if(res && Array.isArray(res.data)){
-      teams = res.data;                          // new format (data)
+      teams = res.data;
+    }
+    else if(res && Array.isArray(res.teams)){
+      teams = res.teams;
     }
 
     if(teams.length === 0){
@@ -120,7 +118,7 @@ function loadTeams(){
   document.body.appendChild(s);
 }
 
-/* ===== CREATE TEAM (JSONP) ===== */
+/* ===== CREATE TEAM (UNCHANGED, SAFE) ===== */
 function createTeam(){
   const name = document.getElementById("teamName").value.trim();
   const msg = document.getElementById("msg");
