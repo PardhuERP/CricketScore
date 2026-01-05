@@ -27,12 +27,12 @@ button{background:#0a7cff;color:#fff;border:none}
 
   <label>Overs Limit</label>
   <select id="overs">
-    <option>1</option>
-    <option>2</option>
-    <option>5</option>
-    <option>10</option>
-    <option>15</option>
-    <option selected>20</option>
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="5">5</option>
+    <option value="10">10</option>
+    <option value="15">15</option>
+    <option value="20" selected>20</option>
   </select>
 </div>
 
@@ -63,50 +63,87 @@ button{background:#0a7cff;color:#fff;border:none}
 const API =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-function jsonp(url,cb){
-  const s=document.createElement("script");
-  s.src=url+"&callback="+cb;
+/* ---------------- JSONP ---------------- */
+function jsonp(url, cbName){
+  const s = document.createElement("script");
+  s.src = url + "&callback=" + cbName;
   document.body.appendChild(s);
 }
 
-/* Load Teams */
-jsonp(API+"?action=getTeams","loadTeams");
-function loadTeams(t){
+/* ---------------- LOAD TEAMS ---------------- */
+jsonp(API + "?action=getTeams", "loadTeams");
+
+function loadTeams(teams){
   ["batting","bowling"].forEach(id=>{
-    const s=document.getElementById(id);
-    s.innerHTML="<option value=''>Select</option>";
-    t.forEach(x=>s.innerHTML+=`<option value="${x}">${x}</option>`);
+    const sel = document.getElementById(id);
+    sel.innerHTML = "<option value=''>Select</option>";
+    teams.forEach(t=>{
+      const o=document.createElement("option");
+      o.value=o.textContent=t;
+      sel.appendChild(o);
+    });
   });
 }
 
-/* Load Players */
-["batting","bowling"].forEach(id=>{
-  document.getElementById(id).onchange=()=>{
-    const team=document.getElementById(id).value;
-    if(!team) return;
-    jsonp(API+"?action=getPlayers&team="+encodeURIComponent(team),id+"Players");
-  };
-});
+/* ---------------- LOAD PLAYERS ---------------- */
+batting.onchange = ()=>{
+  const team = batting.value;
+  striker.innerHTML = "<option value=''>Select</option>";
+  nonstriker.innerHTML = "<option value=''>Select</option>";
+  if(!team) return;
+  jsonp(API + "?action=getPlayers&team=" + encodeURIComponent(team), "loadBatters");
+};
 
-function battingPlayers(p){
-  fill(["striker","nonstriker"],p);
-}
-function bowlingPlayers(p){
-  fill(["bowler"],p);
-}
-function fill(ids,p){
-  ids.forEach(id=>{
-    const s=document.getElementById(id);
-    s.innerHTML="<option value=''>Select</option>";
-    p.forEach(x=>s.innerHTML+=`<option value="${x.name}">${x.name}</option>`);
+bowling.onchange = ()=>{
+  const team = bowling.value;
+  bowler.innerHTML = "<option value=''>Select</option>";
+  if(!team) return;
+  jsonp(API + "?action=getPlayers&team=" + encodeURIComponent(team), "loadBowlers");
+};
+
+function loadBatters(players){
+  [striker, nonstriker].forEach(sel=>{
+    sel.innerHTML = "<option value=''>Select</option>";
+    players.forEach(p=>{
+      const o=document.createElement("option");
+      o.value=o.textContent=p.name;
+      sel.appendChild(o);
+    });
   });
 }
 
-/* START MATCH (FIXED) */
+function loadBowlers(players){
+  bowler.innerHTML = "<option value=''>Select</option>";
+  players.forEach(p=>{
+    const o=document.createElement("option");
+    o.value=o.textContent=p.name;
+    bowler.appendChild(o);
+  });
+}
+
+/* ---------------- START MATCH ---------------- */
 function startMatch(){
 
-  if(!matchTitle.value || !batting.value || !bowling.value || !overs.value){
-    alert("Please fill all match details");
+  if(
+    !matchTitle.value ||
+    !batting.value ||
+    !bowling.value ||
+    !overs.value ||
+    !striker.value ||
+    !nonstriker.value ||
+    !bowler.value
+  ){
+    alert("Please select all match details");
+    return;
+  }
+
+  if(batting.value === bowling.value){
+    alert("Batting and Bowling teams cannot be same");
+    return;
+  }
+
+  if(striker.value === nonstriker.value){
+    alert("Striker and Non-Striker must be different");
     return;
   }
 
@@ -116,18 +153,18 @@ function startMatch(){
     "&batting="+encodeURIComponent(batting.value)+
     "&bowling="+encodeURIComponent(bowling.value)+
     "&overs="+encodeURIComponent(overs.value)+
-    "&striker="+encodeURIComponent(striker.value||"Striker")+
-    "&nonstriker="+encodeURIComponent(nonstriker.value||"Non-Striker")+
-    "&bowler="+encodeURIComponent(bowler.value||"Bowler");
+    "&striker="+encodeURIComponent(striker.value)+
+    "&nonstriker="+encodeURIComponent(nonstriker.value)+
+    "&bowler="+encodeURIComponent(bowler.value);
 
-  jsonp(API+q,"done");
+  jsonp(API + q, "matchStarted");
 }
 
-function done(res){
-  if(res.status==="ok"){
-    location.href="score-entry.html";
+function matchStarted(res){
+  if(res.status === "ok"){
+    location.href = "score-entry.html";
   }else{
-    alert(res.msg || "Match not started");
+    alert(res.msg || "Failed to start match");
   }
 }
 </script>
