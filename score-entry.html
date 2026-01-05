@@ -7,8 +7,7 @@
 
 <style>
 body{margin:0;font-family:Arial;background:#f2f4f8}
-.header{background:#0a7cff;color:#fff;padding:14px;text-align:center;font-size:18px;font-weight:bold;display:flex;align-items:center}
-.back{margin-right:10px;font-size:20px;cursor:pointer}
+.header{background:#0a7cff;color:#fff;padding:14px;text-align:center;font-size:18px;font-weight:bold}
 .container{padding:14px}
 .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 4px 10px rgba(0,0,0,0.08);text-align:center}
 .score{font-size:28px;font-weight:bold}
@@ -16,15 +15,19 @@ body{margin:0;font-family:Arial;background:#f2f4f8}
 .small{font-size:14px;margin-top:4px;color:#333}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
 button{padding:14px;font-size:18px;border:none;border-radius:10px;cursor:pointer;background:#0a7cff;color:#fff}
-.wicket{background:#e53935}
 .extra{background:#ff9800}
+.wicket{background:#e53935}
 select{width:100%;padding:10px;margin-top:8px}
 </style>
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* ================= JSONP ================= */
+let striker="", nonStriker="", bowler="";
+let batsmen={}, bowlers={};
+let inningsStatus="LIVE";
+
+/* ---------- JSONP ---------- */
 function callAPI(p,cb){
   const f="cb_"+Date.now();
   window[f]=r=>{cb&&cb(r);delete window[f];s.remove()};
@@ -34,58 +37,114 @@ function callAPI(p,cb){
   document.body.appendChild(s);
 }
 
-/* ================= UI UPDATE ================= */
+/* ---------- UI CONTROL ---------- */
+function disableScore(dis){
+  document.querySelectorAll(".score-btn").forEach(b=>{
+    b.disabled=dis;
+    b.style.opacity=dis?"0.4":"1";
+  });
+}
+
+/* ---------- UI UPDATE ---------- */
 function updateUI(r){
   if(!r) return;
 
+  inningsStatus = r.inningsStatus;
+  const balls = r.balls || 0;
+  const oversLimit = (r.oversLimit||0)*6;
+
   score.innerText = `${r.runs} / ${r.wickets}`;
-  overs.innerText = `Overs: ${r.overs}`;
+  overs.innerText = "Overs: " + r.overs;
 
-  strikerBox.innerText = r.striker ? `🏏 ${r.striker}` : "";
-  nonBox.innerText = r.nonstriker ? `🏏 ${r.nonstriker}` : "";
-  bowlerBox.innerText = r.bowler ? `🎯 ${r.bowler}` : "";
+  batsmen = r.batsmen || batsmen;
+  bowlers = r.bowlers || bowlers;
 
-  /* BUTTON LOGIC BASED ON BACKEND STATUS */
-  disableEntry(false);
+  striker = r.striker;
+  nonStriker = r.nonstriker;
+  bowler = r.bowler;
+
+  strikerBox.innerText = striker ? `🏏 ${striker} : ${batsmen[striker]?.runs||0} (${batsmen[striker]?.balls||0})` : "";
+  nonBox.innerText = nonStriker ? `🏏 ${nonStriker} : ${batsmen[nonStriker]?.runs||0} (${batsmen[nonStriker]?.balls||0})` : "";
+  bowlerBox.innerText = bowler ? `🎯 ${bowler} : ${bowlers[bowler]?.balls||0} balls` : "";
+
+  /* ===== LOGIC CORE ===== */
+
   changeBowlerBtn.style.display="none";
   secondInningsBtn.style.display="none";
 
-  if(r.inningsStatus==="LIVE"){
-    disableEntry(false);
+  if(inningsStatus==="LIVE"){
+    disableScore(false);
   }
 
-  if(r.inningsStatus==="ENDED"){
-    disableEntry(true);
+  if(inningsStatus==="OVER_END"){
+    disableScore(true);
+
+    /* 🔥 ONLY if overs remaining */
+    if(balls < oversLimit){
+      changeBowlerBtn.style.display="block";
+    }
+  }
+
+  if(inningsStatus==="INNINGS_END"){
+    disableScore(true);
     secondInningsBtn.style.display="block";
   }
 
-  if(r.inningsStatus==="COMPLETED"){
-    disableEntry(true);
+  if(inningsStatus==="SETUP"){
+    disableScore(true);
+  }
+
+  if(inningsStatus==="COMPLETED"){
+    disableScore(true);
     alert("🏆 Match Completed");
     location.href="dashboard.html";
   }
 }
 
-/* ================= SCORE SEND ================= */
+/* ---------- SCORE ---------- */
 function send(type,value=0){
+  if(inningsStatus!=="LIVE") return;
+
   callAPI(
-    {action:"updateScore",type,value},
+    {action:"updateScore",type:type,value:value},
     ()=>callAPI({action:"getLiveScore"},updateUI)
   );
 }
 
-/* ================= START 2ND INNINGS ================= */
-function startSecondInnings(){
-  callAPI(
-    {action:"startSecondInnings"},
-    r=>{
-      alert("Target: " + r.target);
-      location.reload();
-    }
-  );
+/* ---------- CHANGE BOWLER ---------- */
+function openBowlerChange(){
+  setupCard.style.display="block";
+  b2.innerHTML="<option value=''>Select Bowler</option>";
+
+  callAPI({action:"getLiveScore"},r=>{
+    callAPI({action:"getPlayers",team:r.bowling},players=>{
+      players.forEach(p=>{
+        const o=document.createElement("option");
+        o.value=p.name;
+        o.textContent=p.name;
+        b2.appendChild(o);
+      });
+    });
+  });
 }
 
-/* ================= INIT ================= */
+function confirmBowler(){
+  if(!b2.value) return alert("Select bowler");
+
+  callAPI(
+    {action:"setSecondInningsPlayers",bowler:b2.value},
+    ()=>callAPI({action:"getLiveScore"},updateUI)
+  );
+
+  setupCard.style.display="none";
+}
+
+/* ---------- 2ND INNINGS ---------- */
+function startSecondInnings(){
+  callAPI({action:"startSecondInnings"},()=>location.reload());
+}
+
+/* ---------- INIT ---------- */
 window.onload=()=>{
   callAPI({action:"getLiveScore"},updateUI);
 };
@@ -93,10 +152,8 @@ window.onload=()=>{
 </head>
 
 <body>
-<div class="header">
-  <div class="back" onclick="location.href='dashboard.html'">⬅</div>
-  Score Entry
-</div>
+
+<div class="header">Score Entry</div>
 
 <div class="container">
 
@@ -108,11 +165,14 @@ window.onload=()=>{
   <div class="small" id="nonBox"></div>
   <div class="small" id="bowlerBox"></div>
 
-  <button id="secondInningsBtn"
-    style="display:none;background:#4caf50"
-    onclick="startSecondInnings()">
-    ▶ Start 2nd Innings
-  </button>
+  <button id="changeBowlerBtn" style="display:none;background:#ff9800" onclick="openBowlerChange()">🔄 Change Bowler</button>
+  <button id="secondInningsBtn" style="display:none;background:#4caf50" onclick="startSecondInnings()">▶ Start 2nd Innings</button>
+</div>
+
+<div class="card" id="setupCard" style="display:none">
+  <h3>Select Bowler</h3>
+  <select id="b2"></select>
+  <button style="margin-top:10px;background:#4caf50" onclick="confirmBowler()">Confirm</button>
 </div>
 
 <div class="card">
