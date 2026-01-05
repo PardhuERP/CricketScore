@@ -49,9 +49,10 @@ function disableScore(dis){
 function updateUI(r){
   if(!r) return;
 
-  inningsStatus = r.inningsStatus;
-  const balls = r.balls || 0;
-  const oversLimit = (r.oversLimit||0)*6;
+  inningsStatus = r.inningsStatus || "LIVE";
+
+  const balls = Number(r.balls || 0);
+  const oversLimit = Number(r.oversLimit || 0) * 6;
 
   score.innerText = `${r.runs} / ${r.wickets}`;
   overs.innerText = "Overs: " + r.overs;
@@ -67,21 +68,19 @@ function updateUI(r){
   nonBox.innerText = nonStriker ? `🏏 ${nonStriker} : ${batsmen[nonStriker]?.runs||0} (${batsmen[nonStriker]?.balls||0})` : "";
   bowlerBox.innerText = bowler ? `🎯 ${bowler} : ${bowlers[bowler]?.balls||0} balls` : "";
 
-  /* ===== LOGIC CORE ===== */
+  /* -------- FINAL FIXED LOGIC -------- */
 
   changeBowlerBtn.style.display="none";
   secondInningsBtn.style.display="none";
 
+  const isOverEnd = (balls > 0 && balls % 6 === 0 && balls < oversLimit);
+
   if(inningsStatus==="LIVE"){
-    disableScore(false);
-  }
-
-  if(inningsStatus==="OVER_END"){
-    disableScore(true);
-
-    /* 🔥 ONLY if overs remaining */
-    if(balls < oversLimit){
+    if(isOverEnd){
+      disableScore(true);
       changeBowlerBtn.style.display="block";
+    }else{
+      disableScore(false);
     }
   }
 
