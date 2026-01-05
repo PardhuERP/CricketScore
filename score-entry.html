@@ -45,8 +45,9 @@ function updateUI(r){
   if(!r) return;  
   
   inningsStatus = r.inningsStatus;  
-  const balls = parseInt(r.balls) || 0;  
-  const oversLimit = (parseInt(r.oversLimit)||0)*6;  
+  // Convert overs string (e.g., "1.0") to float for comparison
+  const currentOvers = parseFloat(r.overs) || 0;
+  const maxOvers = parseFloat(r.oversLimit) || 0;
   
   score.innerText = `${r.runs} / ${r.wickets}`;  
   overs.innerText = "Overs: " + r.overs;  
@@ -62,7 +63,7 @@ function updateUI(r){
   nonBox.innerText = nonStriker ? `🏏 ${nonStriker} : ${batsmen[nonStriker]?.runs||0} (${batsmen[nonStriker]?.balls||0})` : "";  
   bowlerBox.innerText = bowler ? `🎯 ${bowler} : ${bowlers[bowler]?.balls||0} balls` : "";  
   
-  /* ===== LOGIC CORE - FIXED ===== */  
+  /* ===== LOGIC CORE - FIXED FOR OVER END ===== */  
   
   changeBowlerBtn.style.display="none";  
   secondInningsBtn.style.display="none";  
@@ -71,15 +72,16 @@ function updateUI(r){
     disableScore(false);  
   }  
   
+  // Check specifically for OVER_END or if overs reached limit
   if(inningsStatus==="OVER_END"){  
     disableScore(true);  
-    // ఇక్కడ balls < oversLimit సరిగ్గా చెక్ చేస్తున్నాం
-    if(balls < oversLimit){  
+    
+    // ఒకవేళ కరెంట్ ఓవర్స్, లిమిట్ కన్నా తక్కువ ఉంటేనే బౌలర్ మార్పు చూపించాలి
+    if(currentOvers < maxOvers){  
       changeBowlerBtn.style.display="block";  
-      changeBowlerBtn.style.margin="10px auto"; // UI alignment కోసం
     } else {
-        // ఒకవేళ ఓవర్స్ అయిపోతే ఆటోమేటిక్ గా INNINGS_END కి వెళ్లాలి
-        secondInningsBtn.style.display="block";
+      // ఓవర్స్ పూర్తి అయిపోతే 2nd Innings బటన్
+      secondInningsBtn.style.display="block";
     }
   }  
   
@@ -116,7 +118,7 @@ function openBowlerChange(){
   
   callAPI({action:"getLiveScore"},r=>{  
     callAPI({action:"getPlayers",team:r.bowling},players=>{  
-      b2.innerHTML="<option value=''>Select Bowler</option>";  
+      b2.innerHTML="<option value=''>Select Next Bowler</option>";  
       players.forEach(p=>{  
         const o=document.createElement("option");  
         o.value=p.name;  
@@ -130,12 +132,14 @@ function openBowlerChange(){
 function confirmBowler(){  
   if(!b2.value) return alert("Select bowler");  
   
+  // Using setSecondInningsPlayers action as per your original code for changing bowler
   callAPI(  
     {action:"setSecondInningsPlayers",bowler:b2.value},  
-    ()=>callAPI({action:"getLiveScore"},updateUI)  
+    ()=>callAPI({action:"getLiveScore"}, r => {
+      setupCard.style.display="none";
+      updateUI(r);
+    })  
   );  
-  
-  setupCard.style.display="none";  
 }  
   
 /* ---------- 2ND INNINGS ---------- */  
@@ -152,13 +156,16 @@ window.onload=()=>{
   <div class="sub" id="overs">Overs: 0.0</div>    <div class="small" id="strikerBox"></div>  
   <div class="small" id="nonBox"></div>  
   <div class="small" id="bowlerBox"></div>  
-  <button id="changeBowlerBtn" style="display:none;background:#ff9800;width:100%" onclick="openBowlerChange()">🔄 Change Bowler</button>
-  <button id="secondInningsBtn" style="display:none;background:#4caf50;width:100%" onclick="startSecondInnings()">▶ Start 2nd Innings</button>
+  
+  <div style="margin-top:15px">
+    <button id="changeBowlerBtn" style="display:none;background:#ff9800;width:100%" onclick="openBowlerChange()">🔄 Next Over (Change Bowler)</button>
+    <button id="secondInningsBtn" style="display:none;background:#4caf50;width:100%" onclick="startSecondInnings()">▶ Start 2nd Innings</button>
+  </div>
 
 </div>  <div class="card" id="setupCard" style="display:none">  
-  <h3>Select Bowler</h3>  
+  <h3>Select Next Bowler</h3>  
   <select id="b2"></select>  
-  <button style="margin-top:10px;background:#4caf50;width:100%" onclick="confirmBowler()">Confirm Bowler</button>  
+  <button style="margin-top:10px;background:#4caf50;width:100%" onclick="confirmBowler()">Confirm & Start Over</button>  
 </div>  <div class="card">  
   <div class="grid">  
     <button class="score-btn" onclick="send('run',0)">0</button>  
