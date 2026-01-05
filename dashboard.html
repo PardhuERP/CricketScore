@@ -37,13 +37,35 @@ body{
 .card:hover{ transform:scale(1.03); }
 .icon{ font-size:36px; margin-bottom:10px; }
 .title{ font-size:16px; font-weight:bold; }
+
+/* 🔥 Special style for 2nd innings */
+.start2{
+  background:#4caf50;
+  color:#fff;
+}
+.start2:hover{
+  transform:scale(1.05);
+}
 </style>
 
 <script>
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
-</script>
 
+/* ---------- JSONP ---------- */
+function callAPI(params, cb){
+  const f = "cb_" + Date.now();
+  window[f] = res => {
+    cb && cb(res);
+    delete window[f];
+    s.remove();
+  };
+  const q = Object.keys(params).map(k=>k+"="+encodeURIComponent(params[k])).join("&");
+  const s = document.createElement("script");
+  s.src = API_URL + "?" + q + "&callback=" + f;
+  document.body.appendChild(s);
+}
+</script>
 </head>
 
 <body>
@@ -88,6 +110,12 @@ const API_URL =
       <div class="title">Overs</div>
     </div>
 
+    <!-- 🔥 START 2ND INNINGS (HIDDEN BY DEFAULT) -->
+    <div class="card start2" id="start2Card" style="display:none" onclick="startSecondInnings()">
+      <div class="icon">▶️</div>
+      <div class="title">Start 2nd Innings</div>
+    </div>
+
     <div class="card" onclick="clearMatch()">
       <div class="icon">🧹</div>
       <div class="title">Clear Match</div>
@@ -101,33 +129,42 @@ function go(page){
   location.href = page;
 }
 
+/* 🔥 CHECK MATCH STATUS ON LOAD */
+window.onload = ()=>{
+  callAPI({action:"getLiveScore"}, r=>{
+    if(!r) return;
+
+    console.log("LiveScore:", r);
+
+    if(r.inningsStatus === "ENDED" && r.inningsNo === 1){
+      document.getElementById("start2Card").style.display = "block";
+    }else{
+      document.getElementById("start2Card").style.display = "none";
+    }
+  });
+};
+
+/* 🔥 START 2ND INNINGS */
+function startSecondInnings(){
+  if(!confirm("Start 2nd Innings?")) return;
+
+  callAPI({action:"startSecondInnings"}, res=>{
+    if(res && res.status === "ok"){
+      location.href = "score-entry.html";
+    }else{
+      alert("Unable to start 2nd innings");
+    }
+  });
+}
+
+/* 🔥 CLEAR MATCH */
 function clearMatch(){
   if(!confirm("Clear current match? This cannot be undone.")) return;
 
-  const cb = "cb_" + Date.now();
-  window[cb] = res => {
-    console.log("clearMatch response:", res);
-
-    /* 🔥 FIX: SAFE MESSAGE */
-    let msg = "Match cleared";
-
-    if(typeof res === "string"){
-      msg = res;
-    }
-    else if(res && res.message){
-      msg = res.message;
-    }
-    else if(res && res.status === "ok"){
-      msg = "Match cleared successfully";
-    }
-
-    alert(msg);
-    delete window[cb];
-  };
-
-  const s = document.createElement("script");
-  s.src = API_URL + "?action=clearMatch&callback=" + cb;
-  document.body.appendChild(s);
+  callAPI({action:"clearMatch"}, res=>{
+    alert("Match cleared");
+    location.reload();
+  });
 }
 </script>
 
