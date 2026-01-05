@@ -28,7 +28,7 @@ let striker="", nonStriker="", bowler="";
 let batsmen={}, bowlers={};
 let inningsStatus="LIVE";
 
-/* ---------- JSONP ---------- */
+/* ===== JSONP ===== */
 function callAPI(p,cb){
   const f="cb_"+Date.now();
   window[f]=r=>{cb&&cb(r);delete window[f];s.remove()};
@@ -38,7 +38,7 @@ function callAPI(p,cb){
   document.body.appendChild(s);
 }
 
-/* ---------- ENABLE / DISABLE ---------- */
+/* ===== UI ENABLE / DISABLE ===== */
 function disableScore(dis){
   document.querySelectorAll(".score-btn").forEach(b=>{
     b.disabled=dis;
@@ -46,13 +46,11 @@ function disableScore(dis){
   });
 }
 
-/* ---------- UI UPDATE ---------- */
+/* ===== UPDATE UI ===== */
 function updateUI(r){
   if(!r) return;
 
   inningsStatus = r.inningsStatus;
-  const balls = r.balls || 0;
-  const oversLimit = (r.oversLimit || 0) * 6;
 
   score.innerText = `${r.runs} / ${r.wickets}`;
   overs.innerText = "Overs: " + r.overs;
@@ -64,43 +62,45 @@ function updateUI(r){
   nonStriker = r.nonstriker;
   bowler = r.bowler;
 
-  strikerBox.innerText = striker ? `🏏 ${striker} : ${batsmen[striker]?.runs||0} (${batsmen[striker]?.balls||0})` : "";
-  nonBox.innerText = nonStriker ? `🏏 ${nonStriker} : ${batsmen[nonStriker]?.runs||0} (${batsmen[nonStriker]?.balls||0})` : "";
-  bowlerBox.innerText = bowler ? `🎯 ${bowler} : ${bowlers[bowler]?.balls||0} balls` : "";
+  strikerBox.innerText = striker
+    ? `🏏 ${striker} : ${batsmen[striker]?.runs||0} (${batsmen[striker]?.balls||0})` : "";
+
+  nonBox.innerText = nonStriker
+    ? `🏏 ${nonStriker} : ${batsmen[nonStriker]?.runs||0} (${batsmen[nonStriker]?.balls||0})` : "";
+
+  bowlerBox.innerText = bowler
+    ? `🎯 ${bowler} : ${bowlers[bowler]?.balls||0} balls` : "";
 
   changeBowlerBtn.style.display="none";
   secondInningsBtn.style.display="none";
 
-  /* 🔥 FINAL OVER-END DETECTION (FIXED) */
-  const isOverEnd =
-    inningsStatus === "LIVE" &&
-    (
-      r.overs === String(parseInt(r.overs)) ||   // "1"
-      (r.overs && r.overs.endsWith(".0"))         // "1.0"
-    ) &&
-    r.overs !== "0" &&
-    r.overs !== "0.0";
-
+  /* ===== LIVE ===== */
   if(inningsStatus==="LIVE"){
     disableScore(false);
   }
 
-  if(isOverEnd){
+  /* ===== OVER END (MAIN FIX) ===== */
+  if(inningsStatus==="OVER_END"){
     disableScore(true);
-    if(balls < oversLimit){
+
+    // show bowler change ONLY if overs left
+    if(r.balls < r.oversLimit * 6){
       changeBowlerBtn.style.display="block";
     }
   }
 
+  /* ===== INNINGS END ===== */
   if(inningsStatus==="INNINGS_END"){
     disableScore(true);
     secondInningsBtn.style.display="block";
   }
 
+  /* ===== SETUP ===== */
   if(inningsStatus==="SETUP"){
     disableScore(true);
   }
 
+  /* ===== COMPLETED ===== */
   if(inningsStatus==="COMPLETED"){
     disableScore(true);
     alert("🏆 Match Completed");
@@ -108,7 +108,7 @@ function updateUI(r){
   }
 }
 
-/* ---------- SCORE ENTRY ---------- */
+/* ===== SCORE ===== */
 function send(type,value=0){
   if(inningsStatus!=="LIVE") return;
 
@@ -118,7 +118,7 @@ function send(type,value=0){
   );
 }
 
-/* ---------- CHANGE BOWLER ---------- */
+/* ===== CHANGE BOWLER ===== */
 function openBowlerChange(){
   setupCard.style.display="block";
   b2.innerHTML="<option value=''>Select Bowler</option>";
@@ -146,12 +146,12 @@ function confirmBowler(){
   setupCard.style.display="none";
 }
 
-/* ---------- 2ND INNINGS ---------- */
+/* ===== 2ND INNINGS ===== */
 function startSecondInnings(){
   callAPI({action:"startSecondInnings"},()=>location.reload());
 }
 
-/* ---------- INIT ---------- */
+/* ===== INIT ===== */
 window.onload=()=>{
   callAPI({action:"getLiveScore"},updateUI);
 };
@@ -172,14 +172,18 @@ window.onload=()=>{
   <div class="small" id="nonBox"></div>
   <div class="small" id="bowlerBox"></div>
 
-  <button id="changeBowlerBtn" style="display:none;background:#ff9800" onclick="openBowlerChange()">🔄 Change Bowler</button>
-  <button id="secondInningsBtn" style="display:none;background:#4caf50" onclick="startSecondInnings()">▶ Start 2nd Innings</button>
+  <button id="changeBowlerBtn" style="display:none;background:#ff9800"
+    onclick="openBowlerChange()">🔄 Change Bowler</button>
+
+  <button id="secondInningsBtn" style="display:none;background:#4caf50"
+    onclick="startSecondInnings()">▶ Start 2nd Innings</button>
 </div>
 
 <div class="card" id="setupCard" style="display:none">
   <h3>Select Bowler</h3>
   <select id="b2"></select>
-  <button style="margin-top:10px;background:#4caf50" onclick="confirmBowler()">Confirm</button>
+  <button style="margin-top:10px;background:#4caf50"
+    onclick="confirmBowler()">Confirm</button>
 </div>
 
 <div class="card">
