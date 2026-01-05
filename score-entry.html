@@ -21,7 +21,8 @@ select{width:100%;padding:10px;margin-top:8px}
 </style>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+const API_URL =
+"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
 let striker="", nonStriker="", bowler="";
 let batsmen={}, bowlers={};
@@ -37,7 +38,7 @@ function callAPI(p,cb){
   document.body.appendChild(s);
 }
 
-/* ---------- UI CONTROL ---------- */
+/* ---------- ENABLE / DISABLE ---------- */
 function disableScore(dis){
   document.querySelectorAll(".score-btn").forEach(b=>{
     b.disabled=dis;
@@ -49,10 +50,9 @@ function disableScore(dis){
 function updateUI(r){
   if(!r) return;
 
-  inningsStatus = r.inningsStatus || "LIVE";
-
-  const balls = Number(r.balls || 0);
-  const oversLimit = Number(r.oversLimit || 0) * 6;
+  inningsStatus = r.inningsStatus;
+  const balls = r.balls || 0;
+  const oversLimit = (r.oversLimit || 0) * 6;
 
   score.innerText = `${r.runs} / ${r.wickets}`;
   overs.innerText = "Overs: " + r.overs;
@@ -68,19 +68,27 @@ function updateUI(r){
   nonBox.innerText = nonStriker ? `🏏 ${nonStriker} : ${batsmen[nonStriker]?.runs||0} (${batsmen[nonStriker]?.balls||0})` : "";
   bowlerBox.innerText = bowler ? `🎯 ${bowler} : ${bowlers[bowler]?.balls||0} balls` : "";
 
-  /* -------- FINAL FIXED LOGIC -------- */
-
   changeBowlerBtn.style.display="none";
   secondInningsBtn.style.display="none";
 
-  const isOverEnd = (balls > 0 && balls % 6 === 0 && balls < oversLimit);
+  /* 🔥 FINAL OVER-END DETECTION (FIXED) */
+  const isOverEnd =
+    inningsStatus === "LIVE" &&
+    (
+      r.overs === String(parseInt(r.overs)) ||   // "1"
+      (r.overs && r.overs.endsWith(".0"))         // "1.0"
+    ) &&
+    r.overs !== "0" &&
+    r.overs !== "0.0";
 
   if(inningsStatus==="LIVE"){
-    if(isOverEnd){
-      disableScore(true);
+    disableScore(false);
+  }
+
+  if(isOverEnd){
+    disableScore(true);
+    if(balls < oversLimit){
       changeBowlerBtn.style.display="block";
-    }else{
-      disableScore(false);
     }
   }
 
@@ -100,7 +108,7 @@ function updateUI(r){
   }
 }
 
-/* ---------- SCORE ---------- */
+/* ---------- SCORE ENTRY ---------- */
 function send(type,value=0){
   if(inningsStatus!=="LIVE") return;
 
