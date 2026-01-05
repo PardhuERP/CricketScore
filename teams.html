@@ -81,28 +81,37 @@ const API_URL =
 /* ===== LOAD TEAMS (JSONP) ===== */
 function loadTeams(){
   const list = document.getElementById("teamsList");
-  if(!list){
-    console.error("teamsList not found");
-    return;
-  }
-
   list.innerText = "Loading teams...";
 
   const cb = "cb_load_" + Date.now();
-  window[cb] = function(data){
-    console.log("getTeams response:", data);
+  window[cb] = function(res){
+    console.log("getTeams response:", res);
     list.innerHTML = "";
 
-    if(!data || data.length === 0){
+    /* 🔥 FIX: NORMALIZE RESPONSE */
+    let teams = [];
+
+    if(Array.isArray(res)){
+      teams = res;                               // old format
+    }
+    else if(res && Array.isArray(res.teams)){
+      teams = res.teams;                         // new format (teams)
+    }
+    else if(res && Array.isArray(res.data)){
+      teams = res.data;                          // new format (data)
+    }
+
+    if(teams.length === 0){
       list.innerText = "No teams yet";
     }else{
-      data.forEach(t=>{
+      teams.forEach(t=>{
         const d = document.createElement("div");
         d.className = "team";
         d.innerText = "🏏 " + t;
         list.appendChild(d);
       });
     }
+
     delete window[cb];
   };
 
@@ -115,8 +124,6 @@ function loadTeams(){
 function createTeam(){
   const name = document.getElementById("teamName").value.trim();
   const msg = document.getElementById("msg");
-
-  console.log("Create clicked, name =", name);
 
   if(!name){
     msg.innerText = "⚠️ Enter team name";
