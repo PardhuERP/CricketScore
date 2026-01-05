@@ -29,6 +29,7 @@ let striker="", nonStriker="", bowler="";
 let batsmen={}, bowlers={};
 let overBalls = 0;
 let isOverComplete = false;
+let inningsStatus = "LIVE";
 
 /* ===== JSONP ===== */
 function callAPI(p,cb){
@@ -52,6 +53,8 @@ function disableEntry(disabled){
 function updateUI(r){
   if(!r) return;
 
+  inningsStatus = r.inningsStatus || "LIVE";
+
   score.innerText = `${r.runs} / ${r.wickets}`;
   overs.innerText = "Overs: " + r.overs;
 
@@ -59,18 +62,27 @@ function updateUI(r){
   nonBox.innerText = nonStriker ? `🏏 ${nonStriker} : ${batsmen[nonStriker].runs} (${batsmen[nonStriker].balls})` : "";
   bowlerBox.innerText = bowler ? `🎯 ${bowler} : ${bowlers[bowler].balls} balls` : "";
 
-  if(isOverComplete){
+  /* ✅ BOWLER CHANGE ONLY IF OVER COMPLETE & INNINGS LIVE */
+  if(isOverComplete && inningsStatus === "LIVE"){
     changeBowlerBtn.style.display="block";
     disableEntry(true);
   }else{
     changeBowlerBtn.style.display="none";
     disableEntry(false);
   }
+
+  /* ✅ INNINGS END CLEANUP */
+  if(inningsStatus === "ENDED"){
+    isOverComplete = false;
+    overBalls = 0;
+    changeBowlerBtn.style.display="none";
+    disableEntry(true);
+  }
 }
 
 /* ===== SCORE ENTRY ===== */
 function send(type,value=0){
-  if(isOverComplete) return;
+  if(isOverComplete || inningsStatus !== "LIVE") return;
 
   if(type==="run"){
     batsmen[striker].runs += value;
@@ -90,6 +102,7 @@ function send(type,value=0){
     batsmen[striker] = {runs:0, balls:0};
   }
 
+  /* ✅ OVER COMPLETE LOGIC */
   if(overBalls === 6){
     overBalls = 0;
     [striker, nonStriker] = [nonStriker, striker];
@@ -105,7 +118,6 @@ function send(type,value=0){
 /* ===== CHANGE BOWLER ===== */
 function openBowlerChange(){
   setupCard.style.display="block";
-  b2.style.display="block";
   b2.innerHTML="<option value=''>Select Bowler</option>";
 
   callAPI({action:"getLiveScore"}, r=>{
@@ -124,7 +136,7 @@ function confirmBowler(){
   disableEntry(false);
 }
 
-/* ===== LOAD PLAYERS (FINAL FIX) ===== */
+/* ===== LOAD PLAYERS ===== */
 function loadPlayers(team,...ids){
   callAPI({action:"getPlayers", team}, players=>{
     ids.forEach(id=>{
