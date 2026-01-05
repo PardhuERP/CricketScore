@@ -25,6 +25,9 @@ select{width:100%;padding:10px;margin-top:8px}
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
+/* 🔑 NEW FLAG */
+let bowlerChangedForThisOver = false;
+
 /* ================= JSONP ================= */
 function callAPI(p,cb){
   const f="cb_"+Date.now();
@@ -72,7 +75,7 @@ function updateUI(r){
     r.totalBalls < r.oversLimit * 6 &&
     r.inningsStatus === "LIVE";
 
-  if(overEnded){
+  if(overEnded && !bowlerChangedForThisOver){
     changeBowlerBtn.style.display="block";
     disableEntry(true);
   }else{
@@ -105,7 +108,13 @@ function updateUI(r){
 function send(type,value=0){
   callAPI(
     {action:"updateScore",type,value},
-    ()=>callAPI({action:"getLiveScore"},updateUI)
+    ()=>{
+      /* 🔄 RESET FLAG WHEN NEW BALL STARTS */
+      if(type==="run" || type==="wicket"){
+        bowlerChangedForThisOver = false;
+      }
+      callAPI({action:"getLiveScore"},updateUI);
+    }
   );
 }
 
@@ -131,7 +140,9 @@ function confirmBowler(){
   callAPI(
     {action:"setBowler",bowler:b2.value},
     ()=>{
+      bowlerChangedForThisOver = true;   // ✅ IMPORTANT
       setupCard.style.display="none";
+      disableEntry(false);               // ✅ UNFREEZE
       callAPI({action:"getLiveScore"},updateUI);
     }
   );
