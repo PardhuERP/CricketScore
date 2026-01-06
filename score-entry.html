@@ -27,7 +27,6 @@ const API_URL =
 
 /* ===== STATE ===== */
 let bowlerChangedForThisOver = false;
-let waitingForNewBatsman = false;
 
 /* ===== JSONP ===== */
 function callAPI(p,cb){
@@ -72,6 +71,16 @@ function updateUI(r){
       ? `🎯 ${r.bowler} : ${bls[r.bowler].balls} balls`
       : "";
 
+  /* ===== 2ND INNINGS SETUP ===== */
+  if(r.inningsStatus==="SETUP" && r.inningsNo===2){
+    setup2Card.style.display="block";
+    disableEntry(true);
+    loadSecondInningsPlayers(r.batting, r.bowling);
+    return;
+  }else{
+    setup2Card.style.display="none";
+  }
+
   /* ===== OVER END ===== */
   const overEnded =
     r.inningsStatus==="LIVE" &&
@@ -84,9 +93,7 @@ function updateUI(r){
     disableEntry(true);
   }else{
     changeBowlerBtn.style.display="none";
-    if(!waitingForNewBatsman){
-      disableEntry(r.inningsStatus!=="LIVE");
-    }
+    disableEntry(r.inningsStatus!=="LIVE");
   }
 
   /* ===== 1ST INNINGS END ===== */
@@ -97,58 +104,6 @@ function updateUI(r){
     endInningsBtn.style.display="none";
   }
 
-  /* ===== 2ND INNINGS SETUP ===== */
-if(r.inningsStatus === "SETUP" && r.inningsNo === 2){
-  setup2Card.style.display = "block";
-  disableEntry(true);
-  loadSecondInningsPlayers(r.batting, r.bowling);
-  return; // ⛔ stop further UI logic
-}else{
-  setup2Card.style.display = "none";
-}
-
-  function loadSecondInningsPlayers(battingTeam, bowlingTeam){
-
-  // batting team → striker & non-striker
-  callAPI({action:"getPlayers", team: battingTeam}, players=>{
-    fillSelect("s2", players);
-    fillSelect("ns2", players);
-  });
-
-  // bowling team → bowler
-  callAPI({action:"getPlayers", team: bowlingTeam}, players=>{
-    fillSelect("b2i", players);
-  });
-}
-
-function fillSelect(id, players){
-  const s = document.getElementById(id);
-  s.innerHTML = "<option value=''>Select</option>";
-  players.forEach(p=>{
-    const o = document.createElement("option");
-    o.value = p.name;
-    o.textContent = p.name;
-    s.appendChild(o);
-  });
-}
-  function confirmSecondInnings(){
-  if(!s2.value || !ns2.value || !b2i.value){
-    alert("Select striker, non-striker and bowler");
-    return;
-  }
-
-  callAPI(
-    {
-      action:"setSecondInningsPlayers",
-      striker: s2.value,
-      nonstriker: ns2.value,
-      bowler: b2i.value
-    },
-    ()=>{
-      callAPI({action:"getLiveScore"}, updateUI);
-    }
-  );
-  }
   /* ===== MATCH COMPLETED ===== */
   if(r.inningsStatus==="COMPLETED"){
     const msg =
@@ -163,21 +118,9 @@ function fillSelect(id, players){
 
 /* ===== SCORE ENTRY ===== */
 function send(type,value=0){
-  if(waitingForNewBatsman){
-    alert("Select new batsman");
-    return;
-  }
-
   callAPI(
     {action:"updateScore",type,value},
-    ()=>{
-      if(type==="wicket"){
-        waitingForNewBatsman = true;
-        disableEntry(true);
-        openNewBatsmanSelection();
-      }
-      callAPI({action:"getLiveScore"},updateUI);
-    }
+    ()=>callAPI({action:"getLiveScore"},updateUI)
   );
 }
 
@@ -211,33 +154,41 @@ function confirmBowler(){
   );
 }
 
-/* ===== ✅ NEW BATSMAN (FIXED) ===== */
-function openNewBatsmanSelection(){
-  newBatCard.style.display="block";
-  newBat.innerHTML="<option value=''>Select New Batsman</option>";
-
-  callAPI({action:"getLiveScore"},r=>{
-    callAPI({action:"getPlayers",team:r.batting},players=>{
-      players.forEach(p=>{
-        const o=document.createElement("option");
-        o.value=o.textContent=p.name;
-        newBat.appendChild(o);
-      });
-    });
+/* ===== 2ND INNINGS HELPERS ===== */
+function loadSecondInningsPlayers(bat,bowl){
+  callAPI({action:"getPlayers",team:bat},p=>{
+    fillSelect("s2",p);
+    fillSelect("ns2",p);
+  });
+  callAPI({action:"getPlayers",team:bowl},p=>{
+    fillSelect("b2i",p);
   });
 }
 
-function confirmNewBatsman(){
-  if(!newBat.value) return alert("Select batsman");
+function fillSelect(id,p){
+  const s=document.getElementById(id);
+  s.innerHTML="<option value=''>Select</option>";
+  p.forEach(x=>{
+    const o=document.createElement("option");
+    o.value=o.textContent=x.name;
+    s.appendChild(o);
+  });
+}
+
+function confirmSecondInnings(){
+  if(!s2.value||!ns2.value||!b2i.value){
+    alert("Select all players");
+    return;
+  }
 
   callAPI(
-    { action:"setNewBatsman", batsman:newBat.value },
-    ()=>{
-      waitingForNewBatsman=false;
-      newBatCard.style.display="none";
-      disableEntry(false);
-      callAPI({action:"getLiveScore"},updateUI);
-    }
+    {
+      action:"setSecondInningsPlayers",
+      striker:s2.value,
+      nonstriker:ns2.value,
+      bowler:b2i.value
+    },
+    ()=>callAPI({action:"getLiveScore"},updateUI)
   );
 }
 
@@ -249,7 +200,6 @@ function endInnings(){
 /* ===== INIT ===== */
 window.onload=()=>{
   bowlerChangedForThisOver=false;
-  waitingForNewBatsman=false;
   callAPI({action:"getLiveScore"},updateUI);
 };
 </script>
@@ -285,22 +235,14 @@ window.onload=()=>{
     onclick="confirmBowler()">Confirm</button>
 </div>
 
-<div class="card" id="newBatCard" style="display:none">
-  <h3>Select New Batsman</h3>
-  <select id="newBat"></select>
-  <button style="margin-top:10px;background:#4caf50"
-    onclick="confirmNewBatsman()">Confirm</button>
-</div>
-  <div class="card" id="setup2Card" style="display:none">
+<div class="card" id="setup2Card" style="display:none">
   <h3>2nd Innings Players</h3>
-
   <select id="s2"></select>
   <select id="ns2"></select>
   <select id="b2i"></select>
-
   <button style="margin-top:10px;background:#4caf50"
     onclick="confirmSecondInnings()">Start Innings</button>
-  </div>
+</div>
 
 <div class="card">
   <div class="grid">
