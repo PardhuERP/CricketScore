@@ -72,6 +72,9 @@ function updateUI(r){
       ? `🎯 ${r.bowler} : ${bls[r.bowler].balls} balls`
       : "";
 
+  /* 🔁 SWAP BUTTON VISIBILITY */
+  swapBtn.style.display = r.inningsStatus==="LIVE" ? "block" : "none";
+
   /* ===== OVER END ===== */
   const overEnded =
     r.inningsStatus==="LIVE" &&
@@ -189,6 +192,14 @@ function confirmBowler(){
   );
 }
 
+/* 🔁 SWAP STRIKE (NEW) */
+function swapStrikeUI(){
+  callAPI(
+    {action:"swapStrike"},
+    ()=>callAPI({action:"getLiveScore"},updateUI)
+  );
+}
+
 /* ===== END INNINGS ===== */
 function endInnings(){
   location.href="dashboard.html";
@@ -218,6 +229,11 @@ window.onload=()=>{
   <div class="small" id="strikerBox"></div>
   <div class="small" id="nonBox"></div>
   <div class="small" id="bowlerBox"></div>
+
+  <!-- 🔁 NEW SWAP BUTTON -->
+  <button id="swapBtn"
+    style="display:none;background:#9c27b0;margin-top:8px"
+    onclick="swapStrikeUI()">🔁 Swap Strike</button>
 
   <button id="changeBowlerBtn"
     style="display:none;background:#ff9800"
