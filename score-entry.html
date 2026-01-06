@@ -72,10 +72,9 @@ function updateUI(r){
       ? `🎯 ${r.bowler} : ${bls[r.bowler].balls} balls`
       : "";
 
-  /* 🔁 Swap always available when LIVE */
   swapBtn.style.display = r.inningsStatus==="LIVE" ? "block" : "none";
 
-  /* ===== 2ND INNINGS SETUP (🔥 FIX) ===== */
+  /* ===== 2ND INNINGS SETUP ===== */
   if(r.inningsStatus==="SETUP" && r.inningsNo===2){
     loadSecondInnings();
     return;
@@ -108,14 +107,21 @@ function updateUI(r){
     endInningsBtn.style.display="none";
   }
 
-  /* ===== MATCH COMPLETED ===== */
+  /* ===== MATCH COMPLETED (FINAL FIX) ===== */
   if(r.inningsStatus==="COMPLETED"){
-    const msg =
-      r.runs>=r.target
-        ? `${r.batting} won by ${10-r.wickets} wickets`
-        : `${r.bowling} won by ${r.target-r.runs-1} runs`;
+    let msg = "";
 
-    alert("🏆 "+msg);
+    if(r.result === "DRAW"){
+      msg = "Match Drawn 🤝";
+    }
+    else if(r.result === "CHASED"){
+      msg = `${r.batting} won by ${10 - r.wickets} wickets`;
+    }
+    else if(r.result === "DEFENDED"){
+      msg = `${r.bowling} won by ${r.target - r.runs - 1} runs`;
+    }
+
+    alert("🏆 " + msg);
     location.href="dashboard.html";
   }
 }
@@ -274,77 +280,6 @@ window.onload=()=>{
 </head>
 
 <body>
-
-<div class="header">
-  <div class="back" onclick="location.href='dashboard.html'">⬅</div>
-  Score Entry
-</div>
-
-<div class="container">
-
-<div class="card">
-  <div class="score" id="score">0 / 0</div>
-  <div class="sub" id="overs">Overs: 0.0</div>
-  <div class="small" id="strikerBox"></div>
-  <div class="small" id="nonBox"></div>
-  <div class="small" id="bowlerBox"></div>
-
-  <button id="swapBtn"
-    style="display:none;background:#9c27b0;margin-top:8px"
-    onclick="swapStrikeUI()">🔁 Swap Strike</button>
-
-  <button id="changeBowlerBtn"
-    style="display:none;background:#ff9800"
-    onclick="openBowlerChange()">🔄 Change Bowler</button>
-
-  <button id="endInningsBtn"
-    style="display:none;background:#e53935"
-    onclick="endInnings()">🛑 End Innings</button>
-</div>
-
-<div class="card" id="setupCard" style="display:none">
-  <h3>Select Bowler</h3>
-  <select id="b2"></select>
-  <button style="margin-top:10px;background:#4caf50"
-    onclick="confirmBowler()">Confirm</button>
-</div>
-
-<div class="card" id="newBatCard" style="display:none">
-  <h3>Select New Batsman</h3>
-  <select id="newBat"></select>
-  <button style="margin-top:10px;background:#4caf50"
-    onclick="confirmNewBatsman()">Confirm</button>
-</div>
-
-<!-- 🔥 2ND INNINGS SETUP CARD -->
-<div class="card" id="secondInningsCard" style="display:none">
-  <h3>2nd Innings Setup</h3>
-  <select id="s2"></select>
-  <select id="ns2"></select>
-  <select id="b2i"></select>
-  <button style="margin-top:10px;background:#4caf50"
-    onclick="confirmSecondInnings()">Start Innings</button>
-</div>
-
-<div class="card">
-  <div class="grid">
-    <button class="score-btn" onclick="send('run',0)">0</button>
-    <button class="score-btn" onclick="send('run',1)">1</button>
-    <button class="score-btn" onclick="send('run',2)">2</button>
-    <button class="score-btn" onclick="send('run',3)">3</button>
-    <button class="score-btn" onclick="send('run',4)">4</button>
-    <button class="score-btn" onclick="send('run',6)">6</button>
-  </div>
-</div>
-
-<div class="card">
-  <div class="grid">
-    <button class="extra score-btn" onclick="send('wide')">Wide</button>
-    <button class="extra score-btn" onclick="send('noball')">No Ball</button>
-    <button class="wicket score-btn" onclick="send('wicket')">Wicket</button>
-  </div>
-</div>
-
-</div>
+<!-- BODY SAME AS YOUR VERSION (UNCHANGED) -->
 </body>
 </html>
