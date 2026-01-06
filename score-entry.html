@@ -25,11 +25,11 @@ select{width:100%;padding:10px;margin-top:8px}
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
 
-/* ========= STATE ========= */
+/* ===== STATE ===== */
 let bowlerChangedForThisOver = false;
-let waitingForNewBatsman = false;
+let waitingForNewBatsman = false; // 🔥 NEW
 
-/* ========= JSONP ========= */
+/* ===== JSONP ===== */
 function callAPI(p,cb){
   const f="cb_"+Date.now();
   window[f]=r=>{cb&&cb(r);delete window[f];s.remove()};
@@ -39,7 +39,7 @@ function callAPI(p,cb){
   document.body.appendChild(s);
 }
 
-/* ========= UI HELPERS ========= */
+/* ===== UI HELPERS ===== */
 function disableEntry(d){
   document.querySelectorAll(".score-btn").forEach(b=>{
     b.disabled=d;
@@ -47,7 +47,7 @@ function disableEntry(d){
   });
 }
 
-/* ========= UI UPDATE ========= */
+/* ===== UI UPDATE ===== */
 function updateUI(r){
   if(!r) return;
 
@@ -57,18 +57,15 @@ function updateUI(r){
   const bs = r.batsmanStats || {};
   const bls = r.bowlerStats || {};
 
-  strikerBox.innerText =
-    r.striker && bs[r.striker]
+  strikerBox.innerText = r.striker && bs[r.striker]
     ? `🏏 ${r.striker} : ${bs[r.striker].runs} (${bs[r.striker].balls})`
     : "";
 
-  nonBox.innerText =
-    r.nonstriker && bs[r.nonstriker]
+  nonBox.innerText = r.nonstriker && bs[r.nonstriker]
     ? `🏏 ${r.nonstriker} : ${bs[r.nonstriker].runs} (${bs[r.nonstriker].balls})`
     : "";
 
-  bowlerBox.innerText =
-    r.bowler && bls[r.bowler]
+  bowlerBox.innerText = r.bowler && bls[r.bowler]
     ? `🎯 ${r.bowler} : ${bls[r.bowler].balls} balls`
     : "";
 
@@ -89,7 +86,7 @@ function updateUI(r){
     }
   }
 
-  /* ===== INNINGS END ===== */
+  /* ===== 1ST INNINGS END ===== */
   if(r.inningsStatus==="ENDED" && r.inningsNo===1){
     endInningsBtn.style.display="block";
     disableEntry(true);
@@ -103,13 +100,15 @@ function updateUI(r){
       r.runs>=r.target
         ? `${r.batting} won by ${10-r.wickets} wickets`
         : `${r.bowling} won by ${r.target-r.runs-1} runs`;
+
     alert("🏆 "+msg);
     location.href="dashboard.html";
   }
 }
 
-/* ========= SCORE ENTRY ========= */
+/* ===== SCORE ENTRY ===== */
 function send(type,value=0){
+
   if(waitingForNewBatsman){
     alert("Select new batsman");
     return;
@@ -119,16 +118,16 @@ function send(type,value=0){
     {action:"updateScore",type,value},
     ()=>{
       if(type==="wicket"){
-        waitingForNewBatsman=true;
+        waitingForNewBatsman = true;
         disableEntry(true);
-        openNewBatsmanSelection();
+        openNewBatsmanSelection(); // 🔥 NEW
       }
       callAPI({action:"getLiveScore"},updateUI);
     }
   );
 }
 
-/* ========= CHANGE BOWLER ========= */
+/* ===== CHANGE BOWLER ===== */
 function openBowlerChange(){
   setupCard.style.display="block";
   b2.innerHTML="<option value=''>Select Bowler</option>";
@@ -158,7 +157,7 @@ function confirmBowler(){
   );
 }
 
-/* ========= NEW BATSMAN ========= */
+/* ===== 🔥 NEW BATSMAN SELECTION ===== */
 function openNewBatsmanSelection(){
   newBatCard.style.display="block";
   newBat.innerHTML="<option value=''>Select New Batsman</option>";
@@ -166,11 +165,9 @@ function openNewBatsmanSelection(){
   callAPI({action:"getLiveScore"},r=>{
     callAPI({action:"getPlayers",team:r.batting},players=>{
       players.forEach(p=>{
-        if(p.name!==r.striker && p.name!==r.nonstriker){
-          const o=document.createElement("option");
-          o.value=o.textContent=p.name;
-          newBat.appendChild(o);
-        }
+        const o=document.createElement("option");
+        o.value=o.textContent=p.name;
+        newBat.appendChild(o);
       });
     });
   });
@@ -181,8 +178,8 @@ function confirmNewBatsman(){
 
   callAPI(
     {
-      action:"setNewBatsman",
-      batsman:newBat.value
+      action:"setSecondInningsPlayers",
+      striker:newBat.value
     },
     ()=>{
       waitingForNewBatsman=false;
@@ -193,12 +190,12 @@ function confirmNewBatsman(){
   );
 }
 
-/* ========= END INNINGS ========= */
+/* ===== END INNINGS ===== */
 function endInnings(){
   location.href="dashboard.html";
 }
 
-/* ========= INIT ========= */
+/* ===== INIT ===== */
 window.onload=()=>{
   bowlerChangedForThisOver=false;
   waitingForNewBatsman=false;
@@ -237,6 +234,7 @@ window.onload=()=>{
     onclick="confirmBowler()">Confirm</button>
 </div>
 
+<!-- 🔥 NEW BATSMAN CARD -->
 <div class="card" id="newBatCard" style="display:none">
   <h3>Select New Batsman</h3>
   <select id="newBat"></select>
