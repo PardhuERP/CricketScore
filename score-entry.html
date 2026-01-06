@@ -52,25 +52,20 @@ function disableEntry(d){
 function updateUI(r){
   if(!r) return;
 
-  /* ===== FIX #1: SAFE SCORE VALUES ===== */
-  const runs = (r.runs ?? 0);
-  const wickets = (r.wickets ?? 0);
-  const oversTxt = (r.overs ?? "0.0");
+  score.innerText = `${r.runs} / ${r.wickets}`;
+  overs.innerText = "Overs: " + r.overs;
 
-  score.innerText = `${runs} / ${wickets}`;
-  overs.innerText = "Overs: " + oversTxt;
-
-  /* ===== FIX #2: SAFE PLAYER RENDER ===== */
   const bs = r.batsmanStats || {};
   const bls = r.bowlerStats || {};
 
+  /* ✅ ALWAYS SHOW PLAYERS EVEN AT 0 BALLS */
   if(r.striker){
-    const s = bs[r.striker] || {runs:0, balls:0};
+    const s = bs[r.striker] || {runs:0,balls:0};
     strikerBox.innerText = `🏏 ${r.striker} : ${s.runs} (${s.balls})`;
   }else strikerBox.innerText="";
 
   if(r.nonstriker){
-    const n = bs[r.nonstriker] || {runs:0, balls:0};
+    const n = bs[r.nonstriker] || {runs:0,balls:0};
     nonBox.innerText = `🏏 ${r.nonstriker} : ${n.runs} (${n.balls})`;
   }else nonBox.innerText="";
 
@@ -121,7 +116,7 @@ function updateUI(r){
     else if(r.result==="CHASED") msg=`${r.batting} won by ${10-r.wickets} wickets`;
     else if(r.result==="DEFENDED") msg=`${r.bowling} won by ${r.target-r.runs-1} runs`;
 
-    alert("🏆 "+msg);
+    alert("🏆 " + msg);
     location.href="dashboard.html";
   }
 }
@@ -154,7 +149,6 @@ function send(type,value=0){
 function openNewBatsman(){
   newBatCard.style.display="block";
   newBat.innerHTML="<option value=''>Select New Batsman</option>";
-
   callAPI({action:"getLiveScore"},r=>{
     callAPI({action:"getPlayers",team:r.batting},players=>{
       players.forEach(p=>newBat.add(new Option(p.name,p.name)));
@@ -164,7 +158,6 @@ function openNewBatsman(){
 
 function confirmNewBatsman(){
   if(!newBat.value) return alert("Select batsman");
-
   callAPI({action:"setNewBatsman",batsman:newBat.value},()=>{
     waitingForNewBatsman=false;
     newBatCard.style.display="none";
@@ -177,7 +170,6 @@ function confirmNewBatsman(){
 function openBowlerChange(){
   setupCard.style.display="block";
   b2.innerHTML="<option value=''>Select Bowler</option>";
-
   callAPI({action:"getLiveScore"},r=>{
     callAPI({action:"getPlayers",team:r.bowling},players=>{
       players.forEach(p=>b2.add(new Option(p.name,p.name)));
@@ -187,7 +179,6 @@ function openBowlerChange(){
 
 function confirmBowler(){
   if(!b2.value) return alert("Select bowler");
-
   callAPI({action:"setBowler",bowler:b2.value},()=>{
     bowlerChangedForThisOver=true;
     setupCard.style.display="none";
@@ -196,12 +187,12 @@ function confirmBowler(){
   });
 }
 
-/* ===== SWAP STRIKE ===== */
+/* 🔁 SWAP */
 function swapStrikeUI(){
   callAPI({action:"swapStrike"},()=>callAPI({action:"getLiveScore"},updateUI));
 }
 
-/* ===== REFRESH ===== */
+/* 🔄 REFRESH */
 function refreshScore(){
   callAPI({action:"getLiveScore"},updateUI);
 }
@@ -210,48 +201,33 @@ function refreshScore(){
 function loadSecondInnings(){
   secondInningsCard.style.display="block";
   disableEntry(true);
-
   s2.innerHTML="<option value=''>Select Striker</option>";
   ns2.innerHTML="<option value=''>Select Non-Striker</option>";
   b2i.innerHTML="<option value=''>Select Bowler</option>";
 
   callAPI({action:"getLiveScore"},r=>{
-    callAPI({action:"getPlayers",team:r.batting},players=>{
-      players.forEach(p=>{
-        s2.add(new Option(p.name,p.name));
-        ns2.add(new Option(p.name,p.name));
-      });
-    });
-    callAPI({action:"getPlayers",team:r.bowling},players=>{
-      players.forEach(p=>b2i.add(new Option(p.name,p.name)));
-    });
+    callAPI({action:"getPlayers",team:r.batting},p=>p.forEach(x=>{
+      s2.add(new Option(x.name,x.name));
+      ns2.add(new Option(x.name,x.name));
+    }));
+    callAPI({action:"getPlayers",team:r.bowling},p=>p.forEach(x=>{
+      b2i.add(new Option(x.name,x.name));
+    }));
   });
 }
 
 function confirmSecondInnings(){
-  if(!s2.value||!ns2.value||!b2i.value)
-    return alert("Select all players");
-
-  callAPI({
-    action:"setSecondInningsPlayers",
-    striker:s2.value,
-    nonstriker:ns2.value,
-    bowler:b2i.value
-  },()=>{
+  if(!s2.value||!ns2.value||!b2i.value) return alert("Select all players");
+  callAPI({action:"setSecondInningsPlayers",striker:s2.value,nonstriker:ns2.value,bowler:b2i.value},()=>{
     secondInningsCard.style.display="none";
     disableEntry(false);
     callAPI({action:"getLiveScore"},updateUI);
   });
 }
 
-/* ===== INIT (FIX #3) ===== */
+/* ===== INIT ===== */
 window.onload=()=>{
-  waitingForNewBatsman=false;
-  bowlerChangedForThisOver=false;
-
-  setTimeout(()=>{
-    callAPI({action:"getLiveScore"},updateUI);
-  },300);
+  callAPI({action:"getLiveScore"},updateUI);
 };
 </script>
 </head>
@@ -272,10 +248,10 @@ window.onload=()=>{
   <div class="small" id="nonBox"></div>
   <div class="small" id="bowlerBox"></div>
 
-  <button id="swapBtn" style="display:none;background:#9c27b0;margin-top:8px" onclick="swapStrikeUI()">🔁 Swap Strike</button>
-  <button style="background:#607d8b;margin-top:8px" onclick="refreshScore()">🔄 Refresh</button>
-  <button id="changeBowlerBtn" style="display:none;background:#ff9800" onclick="openBowlerChange()">🔄 Change Bowler</button>
-  <button id="endInningsBtn" style="display:none;background:#e53935" onclick="location.href='dashboard.html'">🛑 End Innings</button>
+  <button id="swapBtn" style="display:none;background:#9c27b0" onclick="swapStrikeUI()">🔁 Swap</button>
+  <button style="background:#607d8b" onclick="refreshScore()">🔄 Refresh</button>
+  <button id="changeBowlerBtn" style="display:none;background:#ff9800" onclick="openBowlerChange()">🔄 Bowler</button>
+  <button id="endInningsBtn" style="display:none;background:#e53935" onclick="location.href='dashboard.html'">🛑 End</button>
 </div>
 
 <div class="card" id="setupCard" style="display:none">
@@ -295,7 +271,7 @@ window.onload=()=>{
   <select id="s2"></select>
   <select id="ns2"></select>
   <select id="b2i"></select>
-  <button onclick="confirmSecondInnings()">Start Innings</button>
+  <button onclick="confirmSecondInnings()">Start</button>
 </div>
 
 <div class="card">
