@@ -28,6 +28,7 @@ const API_URL =
 /* ===== STATE ===== */
 let waitingForNewBatsman = false;
 let bowlerChangedForThisOver = false;
+let scoreLocked = false;   // 🔒 prevents double click / double ball
 
 /* ===== JSONP ===== */
 function callAPI(p,cb){
@@ -127,8 +128,12 @@ function updateUI(r){
 
 /* ===== SCORE ENTRY ===== */
 function send(type,value=0){
+  if(scoreLocked) return;          // 🚫 block double click
+  scoreLocked = true;              // 🔒 lock immediately
+
   if(waitingForNewBatsman){
     alert("Select new batsman first");
+    scoreLocked = false;
     return;
   }
 
@@ -136,11 +141,15 @@ function send(type,value=0){
     {action:"updateScore",type,value},
     ()=>{
       if(type==="wicket"){
-        waitingForNewBatsman=true;
+        waitingForNewBatsman = true;
         disableEntry(true);
         openNewBatsman();
       }
-      callAPI({action:"getLiveScore"},updateUI);
+
+      callAPI({action:"getLiveScore"}, r=>{
+        updateUI(r);
+        scoreLocked = false;        // 🔓 unlock ONLY after UI refresh
+      });
     }
   );
 }
