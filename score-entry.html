@@ -27,7 +27,7 @@ const API_URL =
 
 /* ===== STATE ===== */
 let bowlerChangedForThisOver = false;
-let waitingForNewBatsman = false; // 🔥 NEW
+let waitingForNewBatsman = false;
 
 /* ===== JSONP ===== */
 function callAPI(p,cb){
@@ -47,26 +47,38 @@ function disableEntry(d){
   });
 }
 
-/* ===== UI UPDATE ===== */
+/* ===== UI UPDATE (FINAL – SAFE) ===== */
 function updateUI(r){
   if(!r) return;
+
+  /* 🔥 SAFETY: ALWAYS CREATE EMPTY STATS IF MISSING */
+  r.batsmanStats ||= {};
+  r.bowlerStats  ||= {};
+
+  if(r.striker && !r.batsmanStats[r.striker]){
+    r.batsmanStats[r.striker] = {runs:0, balls:0};
+  }
+  if(r.nonstriker && !r.batsmanStats[r.nonstriker]){
+    r.batsmanStats[r.nonstriker] = {runs:0, balls:0};
+  }
+  if(r.bowler && !r.bowlerStats[r.bowler]){
+    r.bowlerStats[r.bowler] = {balls:0};
+  }
 
   score.innerText = `${r.runs} / ${r.wickets}`;
   overs.innerText = "Overs: " + r.overs;
 
-  const bs = r.batsmanStats || {};
-  const bls = r.bowlerStats || {};
-
-  strikerBox.innerText = r.striker && bs[r.striker]
-    ? `🏏 ${r.striker} : ${bs[r.striker].runs} (${bs[r.striker].balls})`
+  /* 🔥 ALWAYS RENDER BOTH BATSMEN FROM BACKEND */
+  strikerBox.innerText = r.striker
+    ? `🏏 ${r.striker} : ${r.batsmanStats[r.striker].runs} (${r.batsmanStats[r.striker].balls})`
     : "";
 
-  nonBox.innerText = r.nonstriker && bs[r.nonstriker]
-    ? `🏏 ${r.nonstriker} : ${bs[r.nonstriker].runs} (${bs[r.nonstriker].balls})`
+  nonBox.innerText = r.nonstriker
+    ? `🏏 ${r.nonstriker} : ${r.batsmanStats[r.nonstriker].runs} (${r.batsmanStats[r.nonstriker].balls})`
     : "";
 
-  bowlerBox.innerText = r.bowler && bls[r.bowler]
-    ? `🎯 ${r.bowler} : ${bls[r.bowler].balls} balls`
+  bowlerBox.innerText = r.bowler
+    ? `🎯 ${r.bowler} : ${r.bowlerStats[r.bowler].balls} balls`
     : "";
 
   /* ===== OVER END ===== */
@@ -108,7 +120,6 @@ function updateUI(r){
 
 /* ===== SCORE ENTRY ===== */
 function send(type,value=0){
-
   if(waitingForNewBatsman){
     alert("Select new batsman");
     return;
@@ -120,7 +131,7 @@ function send(type,value=0){
       if(type==="wicket"){
         waitingForNewBatsman = true;
         disableEntry(true);
-        openNewBatsmanSelection(); // 🔥 NEW
+        openNewBatsmanSelection();
       }
       callAPI({action:"getLiveScore"},updateUI);
     }
@@ -157,7 +168,7 @@ function confirmBowler(){
   );
 }
 
-/* ===== 🔥 NEW BATSMAN SELECTION ===== */
+/* ===== NEW BATSMAN ===== */
 function openNewBatsmanSelection(){
   newBatCard.style.display="block";
   newBat.innerHTML="<option value=''>Select New Batsman</option>";
@@ -234,7 +245,6 @@ window.onload=()=>{
     onclick="confirmBowler()">Confirm</button>
 </div>
 
-<!-- 🔥 NEW BATSMAN CARD -->
 <div class="card" id="newBatCard" style="display:none">
   <h3>Select New Batsman</h3>
   <select id="newBat"></select>
