@@ -28,7 +28,7 @@ const API_URL =
 /* ===== STATE ===== */
 let waitingForNewBatsman = false;
 let bowlerChangedForThisOver = false;
-let scoreLocked = false;   // 🔒 prevents double click / double ball
+let scoreLocked = false;
 
 /* ===== JSONP ===== */
 function callAPI(p,cb){
@@ -52,13 +52,18 @@ function disableEntry(d){
 function updateUI(r){
   if(!r) return;
 
-  score.innerText = `${r.runs} / ${r.wickets}`;
-  overs.innerText = "Overs: " + r.overs;
+  /* ===== FIX #1: SAFE SCORE VALUES ===== */
+  const runs = (r.runs ?? 0);
+  const wickets = (r.wickets ?? 0);
+  const oversTxt = (r.overs ?? "0.0");
 
+  score.innerText = `${runs} / ${wickets}`;
+  overs.innerText = "Overs: " + oversTxt;
+
+  /* ===== FIX #2: SAFE PLAYER RENDER ===== */
   const bs = r.batsmanStats || {};
   const bls = r.bowlerStats || {};
 
-  /* 🔥 FIX: SHOW PLAYERS EVEN BEFORE FIRST BALL */
   if(r.striker){
     const s = bs[r.striker] || {runs:0, balls:0};
     strikerBox.innerText = `🏏 ${r.striker} : ${s.runs} (${s.balls})`;
@@ -112,46 +117,37 @@ function updateUI(r){
   /* ===== MATCH COMPLETED ===== */
   if(r.inningsStatus==="COMPLETED"){
     let msg="";
+    if(r.result==="DRAW") msg="Match Drawn 🤝";
+    else if(r.result==="CHASED") msg=`${r.batting} won by ${10-r.wickets} wickets`;
+    else if(r.result==="DEFENDED") msg=`${r.bowling} won by ${r.target-r.runs-1} runs`;
 
-    if(r.result==="DRAW"){
-      msg="Match Drawn 🤝";
-    }else if(r.result==="CHASED"){
-      msg=`${r.batting} won by ${10-r.wickets} wickets`;
-    }else if(r.result==="DEFENDED"){
-      msg=`${r.bowling} won by ${r.target-r.runs-1} runs`;
-    }
-
-    alert("🏆 " + msg);
+    alert("🏆 "+msg);
     location.href="dashboard.html";
   }
 }
 
 /* ===== SCORE ENTRY ===== */
 function send(type,value=0){
-  if(scoreLocked) return;          // 🚫 block double click
-  scoreLocked = true;              // 🔒 lock immediately
+  if(scoreLocked) return;
+  scoreLocked = true;
 
   if(waitingForNewBatsman){
     alert("Select new batsman first");
-    scoreLocked = false;
+    scoreLocked=false;
     return;
   }
 
-  callAPI(
-    {action:"updateScore",type,value},
-    ()=>{
-      if(type==="wicket"){
-        waitingForNewBatsman = true;
-        disableEntry(true);
-        openNewBatsman();
-      }
-
-      callAPI({action:"getLiveScore"}, r=>{
-        updateUI(r);
-        scoreLocked = false;        // 🔓 unlock ONLY after UI refresh
-      });
+  callAPI({action:"updateScore",type,value},()=>{
+    if(type==="wicket"){
+      waitingForNewBatsman=true;
+      disableEntry(true);
+      openNewBatsman();
     }
-  );
+    callAPI({action:"getLiveScore"},r=>{
+      updateUI(r);
+      scoreLocked=false;
+    });
+  });
 }
 
 /* ===== NEW BATSMAN ===== */
@@ -161,11 +157,7 @@ function openNewBatsman(){
 
   callAPI({action:"getLiveScore"},r=>{
     callAPI({action:"getPlayers",team:r.batting},players=>{
-      players.forEach(p=>{
-        const o=document.createElement("option");
-        o.value=o.textContent=p.name;
-        newBat.appendChild(o);
-      });
+      players.forEach(p=>newBat.add(new Option(p.name,p.name)));
     });
   });
 }
@@ -173,15 +165,12 @@ function openNewBatsman(){
 function confirmNewBatsman(){
   if(!newBat.value) return alert("Select batsman");
 
-  callAPI(
-    {action:"setNewBatsman",batsman:newBat.value},
-    ()=>{
-      waitingForNewBatsman=false;
-      newBatCard.style.display="none";
-      disableEntry(false);
-      callAPI({action:"getLiveScore"},updateUI);
-    }
-  );
+  callAPI({action:"setNewBatsman",batsman:newBat.value},()=>{
+    waitingForNewBatsman=false;
+    newBatCard.style.display="none";
+    disableEntry(false);
+    callAPI({action:"getLiveScore"},updateUI);
+  });
 }
 
 /* ===== CHANGE BOWLER ===== */
@@ -191,11 +180,7 @@ function openBowlerChange(){
 
   callAPI({action:"getLiveScore"},r=>{
     callAPI({action:"getPlayers",team:r.bowling},players=>{
-      players.forEach(p=>{
-        const o=document.createElement("option");
-        o.value=o.textContent=p.name;
-        b2.appendChild(o);
-      });
+      players.forEach(p=>b2.add(new Option(p.name,p.name)));
     });
   });
 }
@@ -203,28 +188,25 @@ function openBowlerChange(){
 function confirmBowler(){
   if(!b2.value) return alert("Select bowler");
 
-  callAPI(
-    {action:"setBowler",bowler:b2.value},
-    ()=>{
-      bowlerChangedForThisOver=true;
-      setupCard.style.display="none";
-      disableEntry(false);
-      callAPI({action:"getLiveScore"},updateUI);
-    }
-  );
+  callAPI({action:"setBowler",bowler:b2.value},()=>{
+    bowlerChangedForThisOver=true;
+    setupCard.style.display="none";
+    disableEntry(false);
+    callAPI({action:"getLiveScore"},updateUI);
+  });
 }
 
-/* 🔁 SWAP STRIKE */
+/* ===== SWAP STRIKE ===== */
 function swapStrikeUI(){
   callAPI({action:"swapStrike"},()=>callAPI({action:"getLiveScore"},updateUI));
 }
 
-/* 🔄 REFRESH BUTTON */
+/* ===== REFRESH ===== */
 function refreshScore(){
   callAPI({action:"getLiveScore"},updateUI);
 }
 
-/* ===== 2ND INNINGS SETUP ===== */
+/* ===== 2ND INNINGS ===== */
 function loadSecondInnings(){
   secondInningsCard.style.display="block";
   disableEntry(true);
@@ -241,9 +223,7 @@ function loadSecondInnings(){
       });
     });
     callAPI({action:"getPlayers",team:r.bowling},players=>{
-      players.forEach(p=>{
-        b2i.add(new Option(p.name,p.name));
-      });
+      players.forEach(p=>b2i.add(new Option(p.name,p.name)));
     });
   });
 }
@@ -252,21 +232,26 @@ function confirmSecondInnings(){
   if(!s2.value||!ns2.value||!b2i.value)
     return alert("Select all players");
 
-  callAPI(
-    {action:"setSecondInningsPlayers",striker:s2.value,nonstriker:ns2.value,bowler:b2i.value},
-    ()=>{
-      secondInningsCard.style.display="none";
-      disableEntry(false);
-      callAPI({action:"getLiveScore"},updateUI);
-    }
-  );
+  callAPI({
+    action:"setSecondInningsPlayers",
+    striker:s2.value,
+    nonstriker:ns2.value,
+    bowler:b2i.value
+  },()=>{
+    secondInningsCard.style.display="none";
+    disableEntry(false);
+    callAPI({action:"getLiveScore"},updateUI);
+  });
 }
 
-/* ===== INIT ===== */
+/* ===== INIT (FIX #3) ===== */
 window.onload=()=>{
   waitingForNewBatsman=false;
   bowlerChangedForThisOver=false;
-  callAPI({action:"getLiveScore"},updateUI);
+
+  setTimeout(()=>{
+    callAPI({action:"getLiveScore"},updateUI);
+  },300);
 };
 </script>
 </head>
@@ -290,7 +275,7 @@ window.onload=()=>{
   <button id="swapBtn" style="display:none;background:#9c27b0;margin-top:8px" onclick="swapStrikeUI()">🔁 Swap Strike</button>
   <button style="background:#607d8b;margin-top:8px" onclick="refreshScore()">🔄 Refresh</button>
   <button id="changeBowlerBtn" style="display:none;background:#ff9800" onclick="openBowlerChange()">🔄 Change Bowler</button>
-  <button id="endInningsBtn" style="display:none;background:#e53935" onclick="endInnings()">🛑 End Innings</button>
+  <button id="endInningsBtn" style="display:none;background:#e53935" onclick="location.href='dashboard.html'">🛑 End Innings</button>
 </div>
 
 <div class="card" id="setupCard" style="display:none">
