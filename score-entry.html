@@ -27,7 +27,7 @@ const API_URL =
 
 /* ===== STATE ===== */
 let bowlerChangedForThisOver = false;
-let waitingForNewBatsman = false; // 🔥 NEW
+let waitingForNewBatsman = false;
 
 /* ===== JSONP ===== */
 function callAPI(p,cb){
@@ -57,17 +57,20 @@ function updateUI(r){
   const bs = r.batsmanStats || {};
   const bls = r.bowlerStats || {};
 
-  strikerBox.innerText = r.striker && bs[r.striker]
-    ? `🏏 ${r.striker} : ${bs[r.striker].runs} (${bs[r.striker].balls})`
-    : "";
+  strikerBox.innerText =
+    r.striker && bs[r.striker]
+      ? `🏏 ${r.striker} : ${bs[r.striker].runs} (${bs[r.striker].balls})`
+      : "";
 
-  nonBox.innerText = r.nonstriker && bs[r.nonstriker]
-    ? `🏏 ${r.nonstriker} : ${bs[r.nonstriker].runs} (${bs[r.nonstriker].balls})`
-    : "";
+  nonBox.innerText =
+    r.nonstriker && bs[r.nonstriker]
+      ? `🏏 ${r.nonstriker} : ${bs[r.nonstriker].runs} (${bs[r.nonstriker].balls})`
+      : "";
 
-  bowlerBox.innerText = r.bowler && bls[r.bowler]
-    ? `🎯 ${r.bowler} : ${bls[r.bowler].balls} balls`
-    : "";
+  bowlerBox.innerText =
+    r.bowler && bls[r.bowler]
+      ? `🎯 ${r.bowler} : ${bls[r.bowler].balls} balls`
+      : "";
 
   /* ===== OVER END ===== */
   const overEnded =
@@ -108,7 +111,6 @@ function updateUI(r){
 
 /* ===== SCORE ENTRY ===== */
 function send(type,value=0){
-
   if(waitingForNewBatsman){
     alert("Select new batsman");
     return;
@@ -120,7 +122,7 @@ function send(type,value=0){
       if(type==="wicket"){
         waitingForNewBatsman = true;
         disableEntry(true);
-        openNewBatsmanSelection(); // 🔥 NEW
+        openNewBatsmanSelection();
       }
       callAPI({action:"getLiveScore"},updateUI);
     }
@@ -157,7 +159,7 @@ function confirmBowler(){
   );
 }
 
-/* ===== 🔥 NEW BATSMAN SELECTION ===== */
+/* ===== ✅ NEW BATSMAN (FIXED) ===== */
 function openNewBatsmanSelection(){
   newBatCard.style.display="block";
   newBat.innerHTML="<option value=''>Select New Batsman</option>";
@@ -177,10 +179,7 @@ function confirmNewBatsman(){
   if(!newBat.value) return alert("Select batsman");
 
   callAPI(
-    {
-      action:"setSecondInningsPlayers",
-      striker:newBat.value
-    },
+    { action:"setNewBatsman", batsman:newBat.value },
     ()=>{
       waitingForNewBatsman=false;
       newBatCard.style.display="none";
@@ -234,7 +233,6 @@ window.onload=()=>{
     onclick="confirmBowler()">Confirm</button>
 </div>
 
-<!-- 🔥 NEW BATSMAN CARD -->
 <div class="card" id="newBatCard" style="display:none">
   <h3>Select New Batsman</h3>
   <select id="newBat"></select>
