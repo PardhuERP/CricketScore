@@ -60,14 +60,20 @@ function login() {
     .then(r => r.json())
     .then(d => {
       show(d);
+
       if (d.token) {
+        // Save session
         localStorage.setItem("token", d.token);
         localStorage.setItem("userId", d.userId);
 
-        // REDIRECT
+        // Redirect to dashboard
         window.location.href = "dashboard.html";
       }
     });
+}
+
+function show(data) {
+  result.innerText = JSON.stringify(data, null, 2);
 }
 </script>
 
