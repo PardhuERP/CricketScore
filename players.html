@@ -1,227 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Players Management</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body{
-  margin:0;
-  font-family:Arial;
-  background:#f2f4f8;
-}
-.header{
-  background:#0a7cff;
-  color:#fff;
-  padding:14px;
-  text-align:center;
-  font-size:18px;
-  font-weight:bold;
-}
-.container{ padding:16px; }
-
-.card{
-  background:#fff;
-  border-radius:14px;
-  padding:16px;
-  margin-bottom:14px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.08);
-}
-
-input, select, button{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:15px;
-}
-
-button{
-  background:#0a7cff;
-  color:#fff;
-  border:none;
-  cursor:pointer;
-}
-
-.player{
-  padding:8px 0;
-  border-bottom:1px solid #eee;
-  font-size:14px;
-}
-.player:last-child{ border-bottom:none; }
-
-.badge{
-  background:#eee;
-  padding:2px 6px;
-  border-radius:6px;
-  font-size:11px;
-  margin-left:6px;
-}
-.captain{ background:#ffc107; }
-.keeper{ background:#4caf50; color:#fff; }
-
-.back{
-  margin-bottom:10px;
-  background:#555;
-}
-</style>
+  <title>Players</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
-
 <body>
 
-<div class="header">👥 Players Management</div>
+<h2>Add Player</h2>
 
-<div class="container">
+<input id="teamId" placeholder="Team ID (T1)">
+<input id="name" placeholder="Player Name">
+<input id="role" placeholder="Role (Batsman/Bowler)">
+<input id="jersey" placeholder="Jersey No (optional)">
+<button onclick="addPlayer()">Add Player</button>
 
-  <button class="back" onclick="location='dashboard.html'">⬅ Back to Dashboard</button>
+<hr>
 
-  <!-- ADD PLAYER -->
-  <div class="card">
-    <h3>➕ Add Player</h3>
+<button onclick="loadPlayers()">Load Players</button>
 
-    <select id="teamSelect"></select>
-
-    <input id="playerName" placeholder="Player Name">
-
-    <select id="role">
-      <option value="">Select Role</option>
-      <option value="BAT">Batsman</option>
-      <option value="BOWL">Bowler</option>
-      <option value="AR">All Rounder</option>
-      <option value="WK">Wicket Keeper</option>
-    </select>
-
-    <label>
-      <input type="checkbox" id="isCaptain"> Captain
-    </label><br>
-
-    <label>
-      <input type="checkbox" id="isKeeper"> Wicket Keeper
-    </label>
-
-    <button onclick="addPlayer()">Add Player</button>
-
-    <div id="msg"></div>
-  </div>
-
-  <!-- PLAYERS LIST -->
-  <div class="card">
-    <h3>📋 Players</h3>
-    <select id="filterTeam" onchange="loadPlayers()"></select>
-    <div id="playersList">Loading...</div>
-  </div>
-
-</div>
+<pre id="result"></pre>
 
 <script>
-const API_URL =
-"https://script.google.com/macros/s/AKfycbzdz3UnRjf-nDbzd9WCdKpQG32jXc1ehGKeXy9q_Czm8ASwHSszmvWlNQa8OSL-6VE/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
+const token = localStorage.getItem("token");
 
-/* ========== LOAD TEAMS ========== */
-function loadTeams(){
-  const cb = "cbTeams_" + Date.now();
-  window[cb] = function(data){
-    const teamSel = document.getElementById("teamSelect");
-    const filterSel = document.getElementById("filterTeam");
-    teamSel.innerHTML = "";
-    filterSel.innerHTML = "";
-
-    data.forEach(t=>{
-      teamSel.innerHTML += `<option value="${t}">${t}</option>`;
-      filterSel.innerHTML += `<option value="${t}">${t}</option>`;
-    });
-
-    loadPlayers();
-    delete window[cb];
-  };
-
-  const s = document.createElement("script");
-  s.src = API_URL + "?action=getTeams&callback=" + cb;
-  document.body.appendChild(s);
+function addPlayer() {
+  fetch(BASE_URL + "?action=addPlayer"
+    + "&token=" + token
+    + "&teamId=" + teamId.value
+    + "&name=" + name.value
+    + "&role=" + role.value
+    + "&jersey=" + jersey.value)
+  .then(r => r.json())
+  .then(d => show(d));
 }
 
-/* ========== ADD PLAYER ========== */
-function addPlayer(){
-  const team = teamSelect.value;
-  const name = playerName.value.trim();
-  const role = document.getElementById("role").value;
-  const captain = isCaptain.checked ? "YES" : "";
-  const keeper = isKeeper.checked ? "YES" : "";
-
-  const msg = document.getElementById("msg");
-
-  if(!team || !name || !role){
-    msg.innerText = "⚠️ Fill all required fields";
-    msg.style.color = "orange";
-    return;
-  }
-
-  const cb = "cbAdd_" + Date.now();
-  window[cb] = function(res){
-    if(res.status === "ok"){
-      msg.innerText = "✅ Player added";
-      msg.style.color = "green";
-      playerName.value = "";
-      isCaptain.checked = false;
-      isKeeper.checked = false;
-      loadPlayers();
-    }else{
-      msg.innerText = "❌ Error";
-      msg.style.color = "red";
-    }
-    delete window[cb];
-  };
-
-  const s = document.createElement("script");
-  s.src =
-    API_URL +
-    "?action=addPlayer" +
-    "&team=" + encodeURIComponent(team) +
-    "&name=" + encodeURIComponent(name) +
-    "&role=" + role +
-    "&isCaptain=" + captain +
-    "&isKeeper=" + keeper +
-    "&callback=" + cb;
-
-  document.body.appendChild(s);
+function loadPlayers() {
+  fetch(BASE_URL + "?action=getPlayers&teamId=" + teamId.value)
+    .then(r => r.json())
+    .then(d => show(d));
 }
 
-/* ========== LOAD PLAYERS ========== */
-function loadPlayers(){
-  const team = filterTeam.value;
-  const list = document.getElementById("playersList");
-  list.innerHTML = "Loading...";
-
-  const cb = "cbPlayers_" + Date.now();
-  window[cb] = function(data){
-    list.innerHTML = "";
-    if(!data || data.length === 0){
-      list.innerText = "No players";
-    }else{
-      data.forEach(p=>{
-        let html = p.name + " (" + p.role + ")";
-        if(p.isCaptain==="YES") html += `<span class="badge captain">C</span>`;
-        if(p.isKeeper==="YES") html += `<span class="badge keeper">WK</span>`;
-        list.innerHTML += `<div class="player">${html}</div>`;
-      });
-    }
-    delete window[cb];
-  };
-
-  const s = document.createElement("script");
-  s.src =
-    API_URL +
-    "?action=getPlayers" +
-    "&team=" + encodeURIComponent(team) +
-    "&callback=" + cb;
-
-  document.body.appendChild(s);
+function show(data) {
+  result.innerText = JSON.stringify(data, null, 2);
 }
-
-/* INIT */
-window.onload = loadTeams;
 </script>
 
 </body>
