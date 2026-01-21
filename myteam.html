@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Team</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+<h2>My Team</h2>
+
+<div>
+  <input id="teamName" placeholder="Team Name">
+  <input id="shortName" placeholder="Short Name">
+  <input id="city" placeholder="City">
+  <button onclick="createTeam()">Create Team</button>
+</div>
+
+<hr>
+
+<button onclick="loadMyTeam()">Load My Team</button>
+
+<pre id="result"></pre>
+
+<script>
+const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
+const token = localStorage.getItem("token");
+
+function createTeam() {
+  fetch(BASE_URL + "?action=createTeam"
+    + "&token=" + token
+    + "&teamName=" + teamName.value
+    + "&shortName=" + shortName.value
+    + "&city=" + city.value)
+  .then(r => r.json())
+  .then(d => show(d));
+}
+
+function loadMyTeam() {
+  fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+    .then(r => r.json())
+    .then(d => show(d));
+}
+
+function show(data) {
+  result.innerText = JSON.stringify(data, null, 2);
+}
+</script>
+
+</body>
+</html>
