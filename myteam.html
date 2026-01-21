@@ -1,52 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Team</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard</title>
 </head>
 <body>
 
+<h2>Dashboard</h2>
+<p id="info"></p>
 
-<h2>My Team</h2>
-
-<div>
-  <input id="teamName" placeholder="Team Name">
-  <input id="shortName" placeholder="Short Name">
-  <input id="city" placeholder="City">
-  <button onclick="createTeam()">Create Team</button>
-</div>
+<h3>Create Team</h3>
+<input id="teamName" placeholder="Team Name"><br>
+<input id="shortName" placeholder="Short Name"><br>
+<input id="city" placeholder="City"><br>
+<button onclick="createTeam()">Create Team</button>
 
 <hr>
-
-<button onclick="loadMyTeam()">Load My Team</button>
-
 <pre id="result"></pre>
 
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
-const token = localStorage.getItem("token");
 
 const token = localStorage.getItem("token");
-if (!token) window.location.href = "auth.html";
-  
+const userId = localStorage.getItem("userId");
+
+if (!token) {
+  alert("No token. Please login again.");
+  window.location.href = "auth.html";
+}
+
+info.innerText = "Logged in as: " + userId + "\nToken: " + token;
+
 function createTeam() {
-  fetch(BASE_URL + "?action=createTeam"
+  const url = BASE_URL 
+    + "?action=createTeam"
     + "&token=" + token
     + "&teamName=" + teamName.value
     + "&shortName=" + shortName.value
-    + "&city=" + city.value)
-  .then(r => r.json())
-  .then(d => show(d));
-}
+    + "&city=" + city.value;
 
-function loadMyTeam() {
-  fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+  fetch(url)
     .then(r => r.json())
-    .then(d => show(d));
-}
-
-function show(data) {
-  result.innerText = JSON.stringify(data, null, 2);
+    .then(d => {
+      result.innerText = JSON.stringify(d, null, 2);
+    })
+    .catch(err => {
+      result.innerText = "JS Error: " + err;
+    });
 }
 </script>
 
