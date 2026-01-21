@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>LocalCricketApp - Auth</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+<h2>Signup</h2>
+<input id="su_name" placeholder="Name"><br>
+<input id="su_email" placeholder="Email"><br>
+<input id="su_password" type="password" placeholder="Password"><br>
+<button onclick="signup()">Signup</button>
+
+<hr>
+
+<h2>Verify OTP</h2>
+<input id="vo_email" placeholder="Email"><br>
+<input id="vo_otp" placeholder="OTP"><br>
+<button onclick="verifyOtp()">Verify</button>
+
+<hr>
+
+<h2>Login</h2>
+<input id="li_email" placeholder="Email"><br>
+<input id="li_password" type="password" placeholder="Password"><br>
+<button onclick="login()">Login</button>
+
+<hr>
+
+<pre id="result"></pre>
+
+<script>
+const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
+
+function signup() {
+  const name = su_name.value;
+  const email = su_email.value;
+  const password = su_password.value;
+
+  fetch(BASE_URL + "?action=signup&name=" + name + "&email=" + email + "&password=" + password)
+    .then(r => r.json())
+    .then(d => show(d));
+}
+
+function verifyOtp() {
+  const email = vo_email.value;
+  const otp = vo_otp.value;
+
+  fetch(BASE_URL + "?action=verifyOtp&email=" + email + "&otp=" + otp)
+    .then(r => r.json())
+    .then(d => show(d));
+}
+
+function login() {
+  const email = li_email.value;
+  const password = li_password.value;
+
+  fetch(BASE_URL + "?action=login&email=" + email + "&password=" + password)
+    .then(r => r.json())
+    .then(d => {
+      show(d);
+      if (d.token) {
+        localStorage.setItem("token", d.token);
+        localStorage.setItem("userId", d.userId);
+      }
+    });
+}
+
+function show(data) {
+  result.innerText = JSON.stringify(data, null, 2);
+}
+</script>
+
+</body>
+</html>
