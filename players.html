@@ -8,10 +8,36 @@
 
 <h2>Add Player</h2>
 
-<input id="teamId" placeholder="Team ID (T1)">
-<input id="name" placeholder="Player Name">
-<input id="role" placeholder="Role (Batsman/Bowler)">
-<input id="jersey" placeholder="Jersey No (optional)">
+<input id="teamId" placeholder="Team ID (T1)"><br>
+<input id="name" placeholder="Player Name"><br>
+
+<select id="role">
+  <option value="">Select Role</option>
+  <option value="Batsman">Batsman</option>
+  <option value="Bowler">Bowler</option>
+  <option value="Allrounder">Allrounder</option>
+  <option value="WicketKeeper">Wicket Keeper</option>
+</select><br>
+
+<select id="batStyle">
+  <option value="">Batting Style</option>
+  <option value="Right Hand">Right Hand</option>
+  <option value="Left Hand">Left Hand</option>
+</select><br>
+
+<select id="bowlStyle">
+  <option value="">Bowling Style</option>
+  <option value="Right Arm Fast">Right Arm Fast</option>
+  <option value="Right Arm Spin">Right Arm Spin</option>
+  <option value="Left Arm Fast">Left Arm Fast</option>
+  <option value="Left Arm Spin">Left Arm Spin</option>
+</select><br>
+
+<input id="jersey" placeholder="Jersey No (optional)"><br>
+
+<input type="file" id="photo"><br>
+<small>Photo will be visible only after Superadmin approval</small><br><br>
+
 <button onclick="addPlayer()">Add Player</button>
 
 <hr>
@@ -24,25 +50,36 @@
 const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
 const token = localStorage.getItem("token");
 
+if (!token) {
+  alert("Please login again");
+  window.location.href = "auth.html";
+}
+
 function addPlayer() {
-  fetch(BASE_URL + "?action=addPlayer"
+  const url = BASE_URL 
+    + "?action=addPlayer"
     + "&token=" + token
     + "&teamId=" + teamId.value
     + "&name=" + name.value
     + "&role=" + role.value
-    + "&jersey=" + jersey.value)
-  .then(r => r.json())
-  .then(d => show(d));
+    + "&jersey=" + jersey.value
+    + "&batStyle=" + batStyle.value
+    + "&bowlStyle=" + bowlStyle.value;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(d => {
+      result.innerText = JSON.stringify(d, null, 2);
+      alert("Player added (photo pending approval)");
+    });
 }
 
 function loadPlayers() {
   fetch(BASE_URL + "?action=getPlayers&teamId=" + teamId.value)
     .then(r => r.json())
-    .then(d => show(d));
-}
-
-function show(data) {
-  result.innerText = JSON.stringify(data, null, 2);
+    .then(d => {
+      result.innerText = JSON.stringify(d, null, 2);
+    });
 }
 </script>
 
