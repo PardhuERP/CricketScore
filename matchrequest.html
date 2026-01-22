@@ -68,6 +68,13 @@
       color: #000;
     }
 
+    label {
+  font-size: 13px;
+  color: #cbd5f5;
+  margin-top: 8px;
+  display: block;
+    }
+
     .back {
       text-align: center;
       color: #60a5fa;
@@ -114,9 +121,11 @@
 
 <input id="customBallType" placeholder="Enter custom ball type" style="display:none;">
 
-    <input id="dateTime" type="datetime-local">
-    <input id="expiryAt" type="datetime-local">
-<small>Request valid till this time</small>
+    <label>Match Date & Time</label>
+<input id="dateTime" type="datetime-local">
+
+<label>Request Expiry Time</label>
+<input id="expiryAt" type="datetime-local">
 
     <button onclick="createMatch()">Create Match</button>
   </div>
