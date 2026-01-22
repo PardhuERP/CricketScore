@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Open Matches</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      margin: 0;
+    }
+
+    .header {
+      background: #020617;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .match-card {
+      background: linear-gradient(135deg,#1e293b,#020617);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .row {
+      font-size: 14px;
+      margin: 3px 0;
+    }
+
+    .accept {
+      width: 100%;
+      background: #22c55e;
+      color: #000;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      margin-top: 6px;
+      border-radius: 6px;
+      border: none;
+      padding: 8px;
+    }
+
+    .back {
+      text-align: center;
+      color: #60a5fa;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="header">Open Matches</div>
+<div class="container" id="list"></div>
+
+<div class="back" onclick="goBack()">← Back to Dashboard</div>
+
+<script>
+const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
+const token = localStorage.getItem("token");
+
+let TEAM_ID = null;
+
+if (!token) {
+  window.location.href = "auth.html";
+}
+
+// Get my team
+fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+  .then(r => r.json())
+  .then(d => {
+    TEAM_ID = d.team[0];
+    loadOpenMatches();
+  });
+
+function loadOpenMatches() {
+  fetch(BASE_URL + "?action=getOpenMatches")
+    .then(r => r.json())
+    .then(d => {
+      list.innerHTML = "";
+
+      if (d.matches.length === 0) {
+        list.innerHTML = "<p>No open matches available</p>";
+        return;
+      }
+
+      d.matches.forEach(r => {
+        list.innerHTML += `
+          <div class="match-card">
+            <div class="row"><b>From Team:</b> ${r[1]}</div>
+            <div class="row"><b>City:</b> ${r[3]}</div>
+            <div class="row"><b>Ground:</b> ${r[4]}</div>
+            <div class="row"><b>Overs:</b> ${r[5]}</div>
+            <div class="row"><b>Ball:</b> ${r[6]}</div>
+            <div class="row"><b>Date:</b> ${new Date(r[7]).toLocaleString()}</div>
+            <div class="row"><b>Message:</b> ${r[14] || "-"}</div>
+
+            <textarea id="reply_${r[0]}" placeholder="Reply message (optional)"></textarea>
+            <button class="accept" onclick="acceptMatch('${r[0]}')">Accept Match</button>
+          </div>
+        `;
+      });
+    });
+}
+
+function acceptMatch(id) {
+  var msg = document.getElementById("reply_" + id).value;
+  fetch(BASE_URL + "?action=acceptMatch&token=" + token + "&requestId=" + id + "&teamId=" + TEAM_ID + "&message=" + encodeURIComponent(msg))
+    .then(r => r.json())
+    .then(d => {
+      alert(d.message);
+      loadOpenMatches();
+    });
+}
+
+function goBack() {
+  window.location.href = "dashboard.html";
+}
+</script>
+
+</body>
+</html>
