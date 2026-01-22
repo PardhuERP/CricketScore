@@ -193,7 +193,7 @@ function setType(type) {
 
 function createMatch() {
 
-  if (!city.value || !ground.value || !overs.value || !ballType.value || !dateTime.value) {
+  if (!city.value || !ground.value || !overs.value || !ballType.value || !dateTime.value + "&message=" + encodeURIComponent(message.value)) {
     alert("Fill all fields");
     return;
   }
