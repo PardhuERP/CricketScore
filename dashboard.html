@@ -2,15 +2,89 @@
 <html>
 <head>
   <title>LocalCricketApp - Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .header {
+      background: #020617;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .user {
+      margin-bottom: 20px;
+      color: #94a3b8;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .card {
+      background: #111827;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .card:hover {
+      background: #1f2933;
+    }
+
+    .logout {
+      margin-top: 30px;
+      background: #ef4444;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
 
-<h2>Dashboard</h2>
-<p id="userInfo"></p>
+<div class="header">LocalCricketApp</div>
 
-<button onclick="go('myteam.html')">My Team</button>
-<button onclick="go('players.html')">Players</button>
-<button onclick="logout()">Logout</button>
+<div class="container">
+  <div class="user" id="userInfo"></div>
+
+  <div class="grid">
+    <div class="card" onclick="go('myteam.html')">
+      🏏 My Team
+    </div>
+    <div class="card" onclick="go('players.html')">
+      👥 Players
+    </div>
+    <div class="card" onclick="go('matches.html')">
+      📅 Matches
+    </div>
+    <div class="card" onclick="go('scoreboard.html')">
+      📊 Scoreboard
+    </div>
+  </div>
+
+  <div class="logout" onclick="logout()">Logout</div>
+</div>
 
 <script>
 const token = localStorage.getItem("token");
