@@ -159,6 +159,11 @@ function saveXI() {
       alert("Substitutes cannot be part of Playing 11");
       return;
     }
+      // 5. Warn if no substitutes
+if (subs.length === 0) {
+  const proceed = confirm("You didn’t add any substitutes. Continue without subs?");
+  if (!proceed) return;
+    }
   }
 
   // Build payload
