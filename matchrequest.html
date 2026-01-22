@@ -26,9 +26,9 @@
 
     .card {
       background: #111827;
-      padding: 15px;
-      border-radius: 12px;
-      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 6px;
     }
 
     input, select {
@@ -66,13 +66,6 @@
     .toggle .active {
       background: #22c55e;
       color: #000;
-    }
-
-    label {
-  font-size: 13px;
-  color: #cbd5f5;
-  margin-top: 8px;
-  display: block;
     }
 
     .back {
@@ -121,11 +114,11 @@
 
 <input id="customBallType" placeholder="Enter custom ball type" style="display:none;">
 
-    <label>Match Date & Time</label>
-<input id="dateTime" type="datetime-local">
+    <input id="dateTime" placeholder="Match Date & Time"
+       onfocus="this.type='datetime-local'">
 
-<label>Request Expiry Time</label>
-<input id="expiryAt" type="datetime-local">
+<input id="expiryAt" placeholder="Request Expiry Time"
+       onfocus="this.type='datetime-local'">
 
     <button onclick="createMatch()">Create Match</button>
   </div>
