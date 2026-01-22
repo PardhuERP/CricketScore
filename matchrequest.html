@@ -193,13 +193,8 @@ function setType(type) {
 
 function createMatch() {
 
-  if (!city.value || !ground.value || !overs.value || !ballType.value || !dateTime.value + "&message=" + encodeURIComponent(message.value)) {
+  if (!city.value || !ground.value || !overs.value || !ballType.value || !dateTime.value) {
     alert("Fill all fields");
-    return;
-  }
-
-  if (MATCH_TYPE === "DIRECT" && !toTeamId.value) {
-    alert("Select opponent team");
     return;
   }
 
@@ -221,7 +216,8 @@ function createMatch() {
     + "&overs=" + overs.value
     + "&ballType=" + encodeURIComponent(finalBallType)
     + "&dateTime=" + encodeURIComponent(dateTime.value)
-    + "&matchType=" + MATCH_TYPE;
+    + "&matchType=" + MATCH_TYPE
+    + "&message=" + encodeURIComponent(message.value);
 
   if (MATCH_TYPE === "DIRECT") {
     url += "&toTeamId=" + toTeamId.value;
