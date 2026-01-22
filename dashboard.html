@@ -94,7 +94,25 @@ if (!token) {
   window.location.href = "auth.html";
 }
 
-userInfo.innerText = "Logged in as: " + userId;
+const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
+
+const token = localStorage.getItem("token");
+if (!token) {
+  window.location.href = "auth.html";
+}
+
+// Get user + team info
+fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+  .then(r => r.json())
+  .then(teamRes => {
+    const teamName = teamRes.team ? teamRes.team[2] : "No Team";
+
+    fetch(BASE_URL + "?action=getUserByToken&token=" + token)
+      .then(r => r.json())
+      .then(userRes => {
+        userInfo.innerText = `Logged in as: ${userRes.name} (${teamName})`;
+      });
+  });
 
 function go(page) {
   window.location.href = page;
