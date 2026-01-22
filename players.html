@@ -1,65 +1,177 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Players</title>
+  <title>LocalCricketApp - Players</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      margin: 0;
+    }
+
+    .header {
+      background: #020617;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .card {
+      background: #111827;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #22c55e;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .player-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .player-card {
+      background: linear-gradient(135deg,#1e293b,#020617);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .player-photo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 5px;
+      font-size: 22px;
+    }
+
+    .badge {
+      font-size: 11px;
+      color: #22c55e;
+    }
+
+    .back {
+      text-align: center;
+      color: #60a5fa;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
 </head>
+
 <body>
 
-<h2>Add Player</h2>
+<div class="header">Players</div>
 
-<input id="teamId" placeholder="Team ID (T1)"><br>
-<input id="name" placeholder="Player Name"><br>
+<div class="container">
 
-<select id="role">
-  <option value="">Select Role</option>
-  <option value="Batsman">Batsman</option>
-  <option value="Bowler">Bowler</option>
-  <option value="Allrounder">Allrounder</option>
-  <option value="WicketKeeper">Wicket Keeper</option>
-</select><br>
+  <!-- ADD PLAYER -->
+  <div class="card">
+    <h3>Add Player</h3>
 
-<select id="batStyle">
-  <option value="">Batting Style</option>
-  <option value="Right Hand">Right Hand</option>
-  <option value="Left Hand">Left Hand</option>
-</select><br>
+    <div id="teamInfo"></div>
 
-<select id="bowlStyle">
-  <option value="">Bowling Style</option>
-  <option value="Right Arm Fast">Right Arm Fast</option>
-  <option value="Right Arm Spin">Right Arm Spin</option>
-  <option value="Left Arm Fast">Left Arm Fast</option>
-  <option value="Left Arm Spin">Left Arm Spin</option>
-</select><br>
+    <input id="name" placeholder="Player Name">
 
-<input id="jersey" placeholder="Jersey No (optional)"><br>
+    <select id="role">
+      <option value="">Select Role</option>
+      <option value="Batsman">Batsman</option>
+      <option value="Bowler">Bowler</option>
+      <option value="Allrounder">Allrounder</option>
+      <option value="WicketKeeper">Wicket Keeper</option>
+    </select>
 
-<input type="file" id="photo"><br>
-<small>Photo will be visible only after Superadmin approval</small><br><br>
+    <select id="batStyle">
+      <option value="">Batting Style</option>
+      <option value="Right Hand">Right Hand</option>
+      <option value="Left Hand">Left Hand</option>
+    </select>
 
-<button onclick="addPlayer()">Add Player</button>
+    <select id="bowlStyle">
+      <option value="">Bowling Style</option>
+      <option value="Right Arm Fast">Right Arm Fast</option>
+      <option value="Right Arm Spin">Right Arm Spin</option>
+      <option value="Left Arm Fast">Left Arm Fast</option>
+      <option value="Left Arm Spin">Left Arm Spin</option>
+    </select>
 
-<hr>
+    <input id="jersey" placeholder="Jersey No (optional)">
+    <input type="file" disabled>
+    <small>Photo upload (Superadmin approval required)</small>
 
-<button onclick="loadPlayers()">Load Players</button>
+    <button onclick="addPlayer()">Add Player</button>
+  </div>
 
-<pre id="result"></pre>
+  <!-- PLAYER LIST -->
+  <div class="card">
+    <h3>My Players</h3>
+    <div id="playerList" class="player-grid"></div>
+  </div>
+
+  <div class="back" onclick="goBack()">← Back to Dashboard</div>
+</div>
 
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
 const token = localStorage.getItem("token");
 
+let TEAM_ID = null;
+
 if (!token) {
-  alert("Please login again");
   window.location.href = "auth.html";
 }
+
+/* Load My Team First */
+fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+  .then(r => r.json())
+  .then(d => {
+    if (!d.team) {
+      alert("Create team first");
+      window.location.href = "myteam.html";
+      return;
+    }
+
+    TEAM_ID = d.team[0];
+    teamInfo.innerHTML = `<b>Team:</b> ${d.team[2]} (${d.team[3]})`;
+    loadPlayers();
+  });
 
 function addPlayer() {
   const url = BASE_URL 
     + "?action=addPlayer"
     + "&token=" + token
-    + "&teamId=" + teamId.value
+    + "&teamId=" + TEAM_ID
     + "&name=" + name.value
     + "&role=" + role.value
     + "&jersey=" + jersey.value
@@ -69,20 +181,39 @@ function addPlayer() {
   fetch(url)
     .then(r => r.json())
     .then(d => {
-      result.innerText = JSON.stringify(d, null, 2);
-      alert("Player added (photo pending approval)");
+      if (d.status === "OK") {
+        alert("Player added");
+        loadPlayers();
+        name.value = "";
+        jersey.value = "";
+      } else {
+        alert(d.message);
+      }
     });
 }
 
 function loadPlayers() {
-  var teamIdVal = document.getElementById("teamId").value;
-  alert("Loading players for teamId = " + teamIdVal);
-
-  fetch(BASE_URL + "?action=getPlayers&teamId=" + teamIdVal)
+  fetch(BASE_URL + "?action=getPlayers&teamId=" + TEAM_ID)
     .then(r => r.json())
     .then(d => {
-      result.innerText = JSON.stringify(d, null, 2);
+      playerList.innerHTML = "";
+
+      d.players.forEach(p => {
+        playerList.innerHTML += `
+          <div class="player-card">
+            <div class="player-photo">${p[2][0]}</div>
+            <b>${p[2]}</b><br>
+            <span class="badge">${p[4]}</span><br>
+            <small>${p[5]} | ${p[6]}</small><br>
+            <small>Jersey: ${p[3] || "-"}</small>
+          </div>
+        `;
+      });
     });
+}
+
+function goBack() {
+  window.location.href = "dashboard.html";
 }
 </script>
 
