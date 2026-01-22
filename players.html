@@ -169,7 +169,10 @@ fetch(BASE_URL + "?action=getMyTeam&token=" + token)
 
 function addPlayer() {
 
-  if (!name.value || !role.value) {
+  var nameVal = document.getElementById("name").value;
+  var roleVal = document.getElementById("role").value;
+
+  if (!nameVal || !roleVal) {
     alert("Enter player name and role");
     return;
   }
@@ -178,8 +181,8 @@ function addPlayer() {
     + "?action=addPlayer"
     + "&token=" + token
     + "&teamId=" + TEAM_ID
-    + "&name=" + name.value
-    + "&role=" + role.value
+    + "&name=" + nameVal
+    + "&role=" + roleVal
     + "&jersey=" + jersey.value
     + "&batStyle=" + batStyle.value
     + "&bowlStyle=" + bowlStyle.value;
@@ -190,8 +193,8 @@ function addPlayer() {
       if (d.status === "OK") {
         alert("Player added");
         loadPlayers();
-        name.value = "";
-        jersey.value = "";
+        document.getElementById("name").value = "";
+        document.getElementById("jersey").value = "";
       } else {
         alert(d.message);
       }
