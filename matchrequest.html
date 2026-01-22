@@ -104,13 +104,19 @@
 
     <input id="overs" type="number" placeholder="Overs">
 
-    <select id="ballType">
-      <option value="">Ball Type</option>
-      <option value="Tennis">Tennis</option>
-      <option value="Leather">Leather</option>
-    </select>
+    <select id="ballType" onchange="handleBallType()">
+  <option value="">Ball Type</option>
+  <option value="Leather">Leather Ball</option>
+  <option value="Cork">Cork Ball</option>
+  <option value="Tennis">Tennis Ball</option>
+  <option value="Custom">Custom</option>
+</select>
+
+<input id="customBallType" placeholder="Enter custom ball type" style="display:none;">
 
     <input id="dateTime" type="datetime-local">
+    <input id="expiryAt" type="datetime-local">
+<small>Request valid till this time</small>
 
     <button onclick="createMatch()">Create Match</button>
   </div>
@@ -171,6 +177,14 @@ function setType(type) {
   }
 }
 
+  function handleBallType() {
+  if (ballType.value === "Custom") {
+    customBallType.style.display = "block";
+  } else {
+    customBallType.style.display = "none";
+  }
+  }
+
 function createMatch() {
 
   if (!city.value || !ground.value || !overs.value || !ballType.value || !dateTime.value) {
@@ -183,6 +197,15 @@ function createMatch() {
     return;
   }
 
+  let finalBallType = ballType.value;
+  if (ballType.value === "Custom") {
+    if (!customBallType.value) {
+      alert("Enter custom ball type");
+      return;
+    }
+    finalBallType = customBallType.value;
+  }
+
   let url = BASE_URL 
     + "?action=createMatchRequest"
     + "&token=" + token
@@ -190,12 +213,16 @@ function createMatch() {
     + "&city=" + encodeURIComponent(city.value)
     + "&ground=" + encodeURIComponent(ground.value)
     + "&overs=" + overs.value
-    + "&ballType=" + ballType.value
+    + "&ballType=" + encodeURIComponent(finalBallType)
     + "&dateTime=" + encodeURIComponent(dateTime.value)
     + "&matchType=" + MATCH_TYPE;
 
   if (MATCH_TYPE === "DIRECT") {
     url += "&toTeamId=" + toTeamId.value;
+  }
+
+  if (expiryAt.value) {
+    url += "&expiryAt=" + encodeURIComponent(expiryAt.value);
   }
 
   fetch(url)
