@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Playing 11</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: #fff;
+      margin: 0;
+    }
+    .header {
+      background: #020617;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .container { padding: 15px; }
+    .player-row {
+      background: #1e293b;
+      margin-bottom: 6px;
+      padding: 10px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .actions {
+      display: flex;
+      gap: 6px;
+      font-size: 12px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: #22c55e;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .note { font-size: 12px; color: #94a3b8; }
+  </style>
+</head>
+
+<body>
+
+<div class="header">Select Playing 11</div>
+<div class="container">
+  <div id="teamName"></div>
+  <p class="note">Select exactly 11 players. Max 3 substitutes.</p>
+  <div id="players"></div>
+  <button onclick="saveXI()">Save Playing 11</button>
+</div>
+
+<script>
+const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
+const token = localStorage.getItem("token");
+
+const urlParams = new URLSearchParams(window.location.search);
+const matchId = urlParams.get("matchId");
+
+let TEAM_ID = null;
+let PLAYER_DATA = [];
+
+if (!token || !matchId) {
+  alert("Invalid session");
+  window.location.href = "dashboard.html";
+}
+
+// Get my team
+fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+  .then(r => r.json())
+  .then(d => {
+    TEAM_ID = d.team[0];
+    teamName.innerHTML = `<b>Team:</b> ${d.team[2]}`;
+    loadPlayers();
+  });
+
+function loadPlayers() {
+  fetch(BASE_URL + "?action=getPlayers&teamId=" + TEAM_ID)
+    .then(r => r.json())
+    .then(d => {
+      PLAYER_DATA = d.players;
+      renderPlayers();
+    });
+}
+
+function renderPlayers() {
+  players.innerHTML = "";
+
+  PLAYER_DATA.forEach(p => {
+    players.innerHTML += `
+      <div class="player-row">
+        <div>
+          <input type="checkbox" class="sel" value="${p[0]}">
+          ${p[2]}
+        </div>
+        <div class="actions">
+          C <input type="radio" name="captain" value="${p[0]}">
+          WK <input type="radio" name="keeper" value="${p[0]}">
+          SUB <input type="checkbox" class="sub" value="${p[0]}">
+        </div>
+      </div>
+    `;
+  });
+}
+
+function saveXI() {
+  const selected = [...document.querySelectorAll(".sel:checked")].map(i => i.value);
+  const captain = document.querySelector("input[name=captain]:checked")?.value;
+  const keeper = document.querySelector("input[name=keeper]:checked")?.value;
+  const subs = [...document.querySelectorAll(".sub:checked")].map(i => i.value);
+
+  if (selected.length !== 11) {
+    alert("You must select exactly 11 players");
+    return;
+  }
+  if (!captain || !keeper) {
+    alert("Captain and Wicket Keeper required");
+    return;
+  }
+  if (subs.length > 3) {
+    alert("Max 3 substitutes allowed");
+    return;
+  }
+
+  let payload = selected.map(pid => ({
+    playerId: pid,
+    isCaptain: pid === captain,
+    isKeeper: pid === keeper,
+    isSubstitute: subs.includes(pid)
+  }));
+
+  fetch(BASE_URL + "?action=savePlaying11", {
+    method: "POST",
+    body: JSON.stringify({
+      matchId: matchId,
+      teamId: TEAM_ID,
+      players: JSON.stringify(payload)
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    alert("Playing 11 saved");
+    window.location.href = "toss.html?matchId=" + matchId;
+  });
+}
+</script>
+
+</body>
+</html>
