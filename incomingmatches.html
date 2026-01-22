@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Incoming Matches</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      margin: 0;
+    }
+
+    .header {
+      background: #020617;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .match-card {
+      background: linear-gradient(135deg,#1e293b,#020617);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .row {
+      font-size: 14px;
+      margin: 3px 0;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #334155;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      margin-left: 6px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .accept {
+      flex: 1;
+      background: #22c55e;
+      color: #000;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    .reject {
+      flex: 1;
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    .back {
+      text-align: center;
+      color: #60a5fa;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="header">Incoming Matches</div>
+<div class="container" id="list"></div>
+
+<div class="back" onclick="goBack()">← Back to Dashboard</div>
+
+<script>
+const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
+const token = localStorage.getItem("token");
+
+let TEAM_ID = null;
+
+if (!token) {
+  window.location.href = "auth.html";
+}
+
+// Get my team first
+fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+  .then(r => r.json())
+  .then(d => {
+    TEAM_ID = d.team[0];
+    loadIncoming();
+  });
+
+function loadIncoming() {
+  fetch(BASE_URL + "?action=getIncomingRequests&teamId=" + TEAM_ID)
+    .then(r => r.json())
+    .then(d => {
+      list.innerHTML = "";
+
+      if (d.requests.length === 0) {
+        list.innerHTML = "<p>No incoming matches</p>";
+        return;
+      }
+
+      d.requests.forEach(r => {
+        list.innerHTML += `
+          <div class="match-card">
+            <div class="row"><b>From:</b> ${r[1]}</div>
+            <div class="row"><b>Type:</b> ${r[8]} <span class="badge">${r[9]}</span></div>
+            <div class="row"><b>City:</b> ${r[3]}</div>
+            <div class="row"><b>Ground:</b> ${r[4]}</div>
+            <div class="row"><b>Overs:</b> ${r[5]}</div>
+            <div class="row"><b>Ball:</b> ${r[6]}</div>
+            <div class="row"><b>Date:</b> ${new Date(r[7]).toLocaleString()}</div>
+
+            <div class="actions">
+              <button class="accept" onclick="acceptMatch('${r[0]}')">Accept</button>
+              <button class="reject" onclick="rejectMatch('${r[0]}')">Reject</button>
+            </div>
+          </div>
+        `;
+      });
+    });
+}
+
+function acceptMatch(id) {
+  fetch(BASE_URL + "?action=acceptMatch&token=" + token + "&requestId=" + id + "&teamId=" + TEAM_ID)
+    .then(r => r.json())
+    .then(d => {
+      alert(d.message);
+      loadIncoming();
+    });
+}
+
+function rejectMatch(id) {
+  fetch(BASE_URL + "?action=rejectMatch&token=" + token + "&requestId=" + id)
+    .then(r => r.json())
+    .then(d => {
+      alert(d.message);
+      loadIncoming();
+    });
+}
+
+function goBack() {
+  window.location.href = "dashboard.html";
+}
+</script>
+
+</body>
+</html>
