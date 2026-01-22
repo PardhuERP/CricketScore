@@ -75,7 +75,10 @@ function addPlayer() {
 }
 
 function loadPlayers() {
-  fetch(BASE_URL + "?action=getPlayers&teamId=" + teamId.value)
+  var teamIdVal = document.getElementById("teamId").value;
+  alert("Loading players for teamId = " + teamIdVal);
+
+  fetch(BASE_URL + "?action=getPlayers&teamId=" + teamIdVal)
     .then(r => r.json())
     .then(d => {
       result.innerText = JSON.stringify(d, null, 2);
