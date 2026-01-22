@@ -44,7 +44,7 @@
       font-weight: bold;
       font-size: 16px;
     }
-    .note { font-size: 12px; color: #94a3b8; }
+    .note { font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
   </style>
 </head>
 
@@ -53,7 +53,7 @@
 <div class="header">Select Playing 11</div>
 <div class="container">
   <div id="teamName"></div>
-  <p class="note">Select exactly 11 players. Max 3 substitutes.</p>
+  <div id="countInfo" class="note">Main: 0 / 11 | Subs: 0 / 3</div>
   <div id="players"></div>
   <button onclick="saveXI()">Save Playing 11</button>
 </div>
@@ -88,6 +88,7 @@ function loadPlayers() {
     .then(d => {
       PLAYER_DATA = d.players;
       renderPlayers();
+      updateCount();
     });
 }
 
@@ -98,17 +99,30 @@ function renderPlayers() {
     players.innerHTML += `
       <div class="player-row">
         <div>
-          <input type="checkbox" class="sel" value="${p[0]}">
+          <input type="checkbox" class="sel" value="${p[0]}" onchange="updateCount()">
           ${p[2]}
         </div>
         <div class="actions">
           C <input type="radio" name="captain" value="${p[0]}">
           WK <input type="radio" name="keeper" value="${p[0]}">
-          SUB <input type="checkbox" class="sub" value="${p[0]}">
+          SUB <input type="checkbox" class="sub" value="${p[0]}" onchange="updateCount()">
         </div>
       </div>
     `;
   });
+}
+
+function updateCount() {
+  const mainCount = document.querySelectorAll(".sel:checked").length;
+  const subCount = document.querySelectorAll(".sub:checked").length;
+
+  countInfo.innerText = `Main: ${mainCount} / 11 | Subs: ${subCount} / 3`;
+
+  if (mainCount > 11 || subCount > 3) {
+    countInfo.style.color = "red";
+  } else {
+    countInfo.style.color = "#94a3b8";
+  }
 }
 
 function saveXI() {
