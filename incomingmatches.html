@@ -141,13 +141,37 @@ function loadIncoming() {
 
 function acceptMatch(id) {
   var msg = document.getElementById("reply_" + id).value;
-  fetch(BASE_URL + "?action=acceptMatch&token=" + token + "&requestId=" + id + "&teamId=" + TEAM_ID + "&message=" + encodeURIComponent(msg))
 
-function rejecttMatch(id) {
+  fetch(BASE_URL 
+    + "?action=acceptMatch"
+    + "&token=" + token
+    + "&requestId=" + id
+    + "&teamId=" + TEAM_ID
+    + "&message=" + encodeURIComponent(msg))
+    .then(r => r.json())
+    .then(d => {
+      alert(d.message);
+      loadIncoming();
+    });
+}
+
+function rejectMatch(id) {
   var msg = document.getElementById("reply_" + id).value;
-  fetch(BASE_URL + "?action=rejectMatch&token=" + token + "&requestId=" + id + "&teamId=" + TEAM_ID + "&message=" + encodeURIComponent(msg))
 
-function goBack() {
+  fetch(BASE_URL 
+    + "?action=rejectMatch"
+    + "&token=" + token
+    + "&requestId=" + id
+    + "&teamId=" + TEAM_ID
+    + "&message=" + encodeURIComponent(msg))
+    .then(r => r.json())
+    .then(d => {
+      alert(d.message);
+      loadIncoming();
+    });
+}
+  
+  function goBack() {
   window.location.href = "dashboard.html";
 }
 </script>
