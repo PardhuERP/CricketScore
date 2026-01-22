@@ -129,6 +129,7 @@ function loadIncoming() {
             <div class="row"><b>Message:</b> ${r[14] || "-"}</div>
 
             <div class="actions">
+            <textarea id="reply_${r[0]}" placeholder="Reply message (optional)" rows="2"></textarea>
               <button class="accept" onclick="acceptMatch('${r[0]}')">Accept</button>
               <button class="reject" onclick="rejectMatch('${r[0]}')">Reject</button>
             </div>
@@ -139,22 +140,12 @@ function loadIncoming() {
 }
 
 function acceptMatch(id) {
-  fetch(BASE_URL + "?action=acceptMatch&token=" + token + "&requestId=" + id + "&teamId=" + TEAM_ID)
-    .then(r => r.json())
-    .then(d => {
-      alert(d.message);
-      loadIncoming();
-    });
-}
+  var msg = document.getElementById("reply_" + id).value;
+  fetch(BASE_URL + "?action=acceptMatch&token=" + token + "&requestId=" + id + "&teamId=" + TEAM_ID + "&message=" + encodeURIComponent(msg))
 
-function rejectMatch(id) {
-  fetch(BASE_URL + "?action=rejectMatch&token=" + token + "&requestId=" + id)
-    .then(r => r.json())
-    .then(d => {
-      alert(d.message);
-      loadIncoming();
-    });
-}
+function rejecttMatch(id) {
+  var msg = document.getElementById("reply_" + id).value;
+  fetch(BASE_URL + "?action=rejectMatch&token=" + token + "&requestId=" + id + "&teamId=" + TEAM_ID + "&message=" + encodeURIComponent(msg))
 
 function goBack() {
   window.location.href = "dashboard.html";
