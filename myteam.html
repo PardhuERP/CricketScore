@@ -50,6 +50,45 @@
       margin-bottom: 15px;
     }
 
+    .team-card {
+  background: linear-gradient(135deg,#1e293b,#020617);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.team-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0 auto 10px;
+}
+
+.team-name {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.team-meta {
+  color: #94a3b8;
+  margin-bottom: 15px;
+}
+
+.team-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0;
+  font-size: 14px;
+}
+
     .back {
       margin-top: 20px;
       text-align: center;
@@ -132,13 +171,23 @@ function loadMyTeam() {
       const t = d.team;
 
       result.innerHTML = `
-        <div style="line-height:1.8">
-          <b>Team ID:</b> ${t[0]}<br>
-          <b>Team Name:</b> ${t[2]}<br>
-          <b>Short Name:</b> ${t[3]}<br>
-          <b>City:</b> ${t[4]}<br>
-          <b>Approved:</b> ${t[6] ? "Yes" : "Pending"}<br>
-          <b>Created At:</b> ${new Date(t[7]).toLocaleString()}
+        <div class="team-card">
+          <div class="team-logo">${t[3]}</div>
+          <div class="team-name">${t[2]}</div>
+          <div class="team-meta">${t[3]} | ${t[4]}</div>
+
+          <div class="team-row">
+            <span>Team ID</span>
+            <span>${t[0]}</span>
+          </div>
+          <div class="team-row">
+            <span>Status</span>
+            <span>${t[6] ? "Approved" : "Pending"}</span>
+          </div>
+          <div class="team-row">
+            <span>Created</span>
+            <span>${new Date(t[7]).toLocaleDateString()}</span>
+          </div>
         </div>
       `;
     });
