@@ -102,29 +102,31 @@ function loadOpenMatches() {
 
       d.matches.forEach(r => {
 
-  let isMine = (r[1] === TEAM_ID);
+        let isMine = (String(r[1]) == String(TEAM_ID));
 
-  list.innerHTML += `
-    <div class="match-card">
-      <div class="row"><b>From Team:</b> ${r[1]}</div>
-      <div class="row"><b>City:</b> ${r[3]}</div>
-      <div class="row"><b>Ground:</b> ${r[4]}</div>
-      <div class="row"><b>Overs:</b> ${r[5]}</div>
-      <div class="row"><b>Ball:</b> ${r[6]}</div>
-      <div class="row"><b>Date:</b> ${new Date(r[7]).toLocaleString()}</div>
-      <div class="row"><b>Message:</b> ${r[14] || "-"}</div>
+        list.innerHTML += `
+          <div class="match-card">
+            <div class="row"><b>From Team:</b> ${r[1]}</div>
+            <div class="row"><b>City:</b> ${r[3]}</div>
+            <div class="row"><b>Ground:</b> ${r[4]}</div>
+            <div class="row"><b>Overs:</b> ${r[5]}</div>
+            <div class="row"><b>Ball:</b> ${r[6]}</div>
+            <div class="row"><b>Date:</b> ${new Date(r[7]).toLocaleString()}</div>
+            <div class="row"><b>Message:</b> ${r[14] || "-"}</div>
 
-      ${
-        isMine 
-        ? `<div class="row"><i>This is your match post</i></div>`
-        : `
-          <textarea id="reply_${r[0]}" placeholder="Reply message (optional)"></textarea>
-          <button class="accept" onclick="acceptMatch('${r[0]}')">Accept Match</button>
-        `
-      }
-    </div>
-  `;
-});
+            ${
+              isMine 
+              ? `<div class="row"><i>This is your match post</i></div>`
+              : `
+                <textarea id="reply_${r[0]}" placeholder="Reply message (optional)"></textarea>
+                <button class="accept" onclick="acceptMatch('${r[0]}')">Accept Match</button>
+              `
+            }
+          </div>
+        `;
+      });
+    });
+}
 
 function acceptMatch(id) {
   var msg = document.getElementById("reply_" + id).value;
