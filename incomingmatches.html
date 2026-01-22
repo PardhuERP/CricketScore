@@ -126,6 +126,7 @@ function loadIncoming() {
             <div class="row"><b>Overs:</b> ${r[5]}</div>
             <div class="row"><b>Ball:</b> ${r[6]}</div>
             <div class="row"><b>Date:</b> ${new Date(r[7]).toLocaleString()}</div>
+            <div class="row"><b>Message:</b> ${r[14] || "-"}</div>
 
             <div class="actions">
               <button class="accept" onclick="acceptMatch('${r[0]}')">Accept</button>
