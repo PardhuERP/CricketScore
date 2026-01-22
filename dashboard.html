@@ -87,16 +87,9 @@
 </div>
 
 <script>
-const token = localStorage.getItem("token");
-const userId = localStorage.getItem("userId");
-
-if (!token) {
-  window.location.href = "auth.html";
-}
-
 const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
-
 const token = localStorage.getItem("token");
+
 if (!token) {
   window.location.href = "auth.html";
 }
@@ -123,6 +116,5 @@ function logout() {
   window.location.href = "auth.html";
 }
 </script>
-
 </body>
 </html>
