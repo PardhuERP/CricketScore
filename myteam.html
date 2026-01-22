@@ -115,7 +115,6 @@ function createTeam() {
   fetch(url)
     .then(r => r.json())
     .then(d => {
-      result.innerText = JSON.stringify(d, null, 2);
       alert(d.message || "Team created");
       loadMyTeam();
     });
@@ -125,11 +124,27 @@ function loadMyTeam() {
   fetch(BASE_URL + "?action=getMyTeam&token=" + token)
     .then(r => r.json())
     .then(d => {
-      result.innerText = JSON.stringify(d, null, 2);
+      if (!d.team) {
+        result.innerHTML = "<p>No team created yet.</p>";
+        return;
+      }
+
+      const t = d.team;
+
+      result.innerHTML = `
+        <div style="line-height:1.8">
+          <b>Team ID:</b> ${t[0]}<br>
+          <b>Team Name:</b> ${t[2]}<br>
+          <b>Short Name:</b> ${t[3]}<br>
+          <b>City:</b> ${t[4]}<br>
+          <b>Approved:</b> ${t[6] ? "Yes" : "Pending"}<br>
+          <b>Created At:</b> ${new Date(t[7]).toLocaleString()}
+        </div>
+      `;
     });
 }
 
-// Auto load on page open
+// Auto load on open
 loadMyTeam();
 
 function goBack() {
