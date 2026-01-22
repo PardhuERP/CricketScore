@@ -117,25 +117,58 @@ function saveXI() {
   const keeper = document.querySelector("input[name=keeper]:checked")?.value;
   const subs = [...document.querySelectorAll(".sub:checked")].map(i => i.value);
 
+  // 1. Exactly 11 main players
   if (selected.length !== 11) {
-    alert("You must select exactly 11 players");
+    alert("You must select exactly 11 main players");
     return;
   }
+
+  // 2. Captain & Keeper must be from main 11
   if (!captain || !keeper) {
     alert("Captain and Wicket Keeper required");
     return;
   }
-  if (subs.length > 3) {
-    alert("Max 3 substitutes allowed");
+  if (!selected.includes(captain) || !selected.includes(keeper)) {
+    alert("Captain and Keeper must be from Playing 11");
     return;
   }
 
-  let payload = selected.map(pid => ({
-    playerId: pid,
-    isCaptain: pid === captain,
-    isKeeper: pid === keeper,
-    isSubstitute: subs.includes(pid)
-  }));
+  // 3. Subs max 3
+  if (subs.length > 3) {
+    alert("Maximum 3 substitutes allowed");
+    return;
+  }
+
+  // 4. Subs cannot be part of main 11
+  for (let s of subs) {
+    if (selected.includes(s)) {
+      alert("Substitutes cannot be part of Playing 11");
+      return;
+    }
+  }
+
+  // Build payload
+  let payload = [];
+
+  // Main XI
+  selected.forEach(pid => {
+    payload.push({
+      playerId: pid,
+      isCaptain: pid === captain,
+      isKeeper: pid === keeper,
+      isSubstitute: false
+    });
+  });
+
+  // Subs
+  subs.forEach(pid => {
+    payload.push({
+      playerId: pid,
+      isCaptain: false,
+      isKeeper: false,
+      isSubstitute: true
+    });
+  });
 
   fetch(BASE_URL + "?action=savePlaying11", {
     method: "POST",
