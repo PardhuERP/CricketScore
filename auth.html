@@ -3,73 +3,172 @@
 <head>
   <title>LocalCricketApp - Auth</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: #111827;
+      padding: 20px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #22c55e;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .link {
+      text-align: center;
+      margin-top: 10px;
+      color: #60a5fa;
+      cursor: pointer;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .active {
+      display: block;
+    }
+
+    pre {
+      font-size: 11px;
+      white-space: pre-wrap;
+      margin-top: 10px;
+      color: #94a3b8;
+    }
+  </style>
 </head>
+
 <body>
 
-<h2>Signup</h2>
-<input id="su_name" placeholder="Name"><br>
-<input id="su_email" placeholder="Email"><br>
-<input id="su_password" type="password" placeholder="Password"><br>
-<button onclick="signup()">Signup</button>
+<div class="card">
 
-<hr>
+  <!-- LOGIN -->
+  <div id="loginSection" class="section active">
+    <h2>Login</h2>
+    <input id="li_email" placeholder="Email">
+    <input id="li_password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
 
-<h2>Verify OTP</h2>
-<input id="vo_email" placeholder="Email"><br>
-<input id="vo_otp" placeholder="OTP"><br>
-<button onclick="verifyOtp()">Verify</button>
+    <div class="link" onclick="showRegister()">Create Account</div>
+    <div class="link" onclick="showForgot()">Forgot Password?</div>
+  </div>
 
-<hr>
+  <!-- REGISTER -->
+  <div id="registerSection" class="section">
+    <h2>Register</h2>
+    <input id="su_name" placeholder="Name">
+    <input id="su_email" placeholder="Email">
+    <input id="su_password" type="password" placeholder="Password">
+    <button onclick="signup()">Signup</button>
 
-<h2>Login</h2>
-<input id="li_email" placeholder="Email"><br>
-<input id="li_password" type="password" placeholder="Password"><br>
-<button onclick="login()">Login</button>
+    <input id="vo_email" placeholder="Email for OTP">
+    <input id="vo_otp" placeholder="OTP">
+    <button onclick="verifyOtp()">Verify OTP</button>
 
-<hr>
+    <div class="link" onclick="showLogin()">Back to Login</div>
+  </div>
 
-<pre id="result"></pre>
+  <!-- FORGOT -->
+  <div id="forgotSection" class="section">
+    <h2>Forgot Password</h2>
+    <input id="fp_email" placeholder="Email">
+    <button onclick="forgotPassword()">Send Reset Link</button>
+
+    <div class="link" onclick="showLogin()">Back to Login</div>
+  </div>
+
+  <pre id="result"></pre>
+</div>
 
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
 
-function signup() {
-  const name = su_name.value;
-  const email = su_email.value;
-  const password = su_password.value;
+function showLogin() {
+  hideAll();
+  loginSection.classList.add("active");
+}
 
-  fetch(BASE_URL + "?action=signup&name=" + name + "&email=" + email + "&password=" + password)
+function showRegister() {
+  hideAll();
+  registerSection.classList.add("active");
+}
+
+function showForgot() {
+  hideAll();
+  forgotSection.classList.add("active");
+}
+
+function hideAll() {
+  loginSection.classList.remove("active");
+  registerSection.classList.remove("active");
+  forgotSection.classList.remove("active");
+}
+
+/* API CALLS */
+
+function signup() {
+  fetch(BASE_URL + "?action=signup&name=" + su_name.value + "&email=" + su_email.value + "&password=" + su_password.value)
     .then(r => r.json())
     .then(d => show(d));
 }
 
 function verifyOtp() {
-  const email = vo_email.value;
-  const otp = vo_otp.value;
-
-  fetch(BASE_URL + "?action=verifyOtp&email=" + email + "&otp=" + otp)
+  fetch(BASE_URL + "?action=verifyOtp&email=" + vo_email.value + "&otp=" + vo_otp.value)
     .then(r => r.json())
     .then(d => show(d));
 }
 
 function login() {
-  const email = li_email.value;
-  const password = li_password.value;
-
-  fetch(BASE_URL + "?action=login&email=" + email + "&password=" + password)
+  fetch(BASE_URL + "?action=login&email=" + li_email.value + "&password=" + li_password.value)
     .then(r => r.json())
     .then(d => {
       show(d);
-
       if (d.token) {
-        // Save session
         localStorage.setItem("token", d.token);
         localStorage.setItem("userId", d.userId);
-
-        // Redirect to dashboard
         window.location.href = "dashboard.html";
       }
     });
+}
+
+function forgotPassword() {
+  fetch(BASE_URL + "?action=forgotPassword&email=" + fp_email.value)
+    .then(r => r.json())
+    .then(d => show(d));
 }
 
 function show(data) {
