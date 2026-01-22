@@ -141,7 +141,18 @@ if (!token) {
   window.location.href = "auth.html";
 }
 
-info.innerText = "Logged in as: " + userId;
+// Load user + team info for header
+fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+  .then(r => r.json())
+  .then(teamRes => {
+    const teamName = teamRes.team ? teamRes.team[2] : "No Team";
+
+    fetch(BASE_URL + "?action=getUserByToken&token=" + token)
+      .then(r => r.json())
+      .then(userRes => {
+        info.innerText = `Logged in as: ${userRes.name} (${teamName})`;
+      });
+  });
 
 function createTeam() {
   const url = BASE_URL 
