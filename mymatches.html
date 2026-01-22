@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Matches</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      margin: 0;
+    }
+
+    .header {
+      background: #020617;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .match-card {
+      background: linear-gradient(135deg,#1e293b,#020617);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .row {
+      font-size: 14px;
+      margin: 3px 0;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      margin-left: 6px;
+    }
+
+    .scheduled { background:#38bdf8; color:#000; }
+    .live { background:#22c55e; color:#000; }
+    .completed { background:#a855f7; }
+
+    .action {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .setup { background:#facc15; color:#000; }
+    .open { background:#22c55e; color:#000; }
+    .summary { background:#a855f7; color:#fff; }
+
+    .back {
+      text-align: center;
+      color: #60a5fa;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="header">My Matches</div>
+<div class="container" id="list"></div>
+
+<div class="back" onclick="goBack()">← Back to Dashboard</div>
+
+<script>
+const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
+const token = localStorage.getItem("token");
+
+let TEAM_ID = null;
+
+if (!token) {
+  window.location.href = "auth.html";
+}
+
+// Get my team
+fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+  .then(r => r.json())
+  .then(d => {
+    TEAM_ID = d.team[0];
+    loadMyMatches();
+  });
+
+function loadMyMatches() {
+  fetch(BASE_URL + "?action=getMyMatches&teamId=" + TEAM_ID)
+    .then(r => r.json())
+    .then(d => {
+      list.innerHTML = "";
+
+      if (d.matches.length === 0) {
+        list.innerHTML = "<p>No matches yet</p>";
+        return;
+      }
+
+      d.matches.forEach(m => {
+
+        let status = m[9];
+        let badgeClass = status === "SCHEDULED" ? "scheduled" : status === "LIVE" ? "live" : "completed";
+        let actionBtn = "";
+
+        if (status === "SCHEDULED") {
+          actionBtn = `<button class="action setup" onclick="setupMatch('${m[0]}')">Setup Match</button>`;
+        } else if (status === "LIVE") {
+          actionBtn = `<button class="action open" onclick="openScoreboard('${m[0]}')">Open Scoreboard</button>`;
+        } else {
+          actionBtn = `<button class="action summary" onclick="viewSummary('${m[0]}')">View Summary</button>`;
+        }
+
+        let opponent = (m[2] === TEAM_ID) ? m[3] : m[2];
+
+        list.innerHTML += `
+          <div class="match-card">
+            <div class="row"><b>Match:</b> ${m[0]} <span class="badge ${badgeClass}">${status}</span></div>
+            <div class="row"><b>Opponent:</b> ${opponent}</div>
+            <div class="row"><b>City:</b> ${m[4]}</div>
+            <div class="row"><b>Ground:</b> ${m[5]}</div>
+            <div class="row"><b>Overs:</b> ${m[6]}</div>
+            <div class="row"><b>Ball:</b> ${m[7]}</div>
+            <div class="row"><b>Date:</b> ${new Date(m[8]).toLocaleString()}</div>
+            ${actionBtn}
+          </div>
+        `;
+      });
+    });
+}
+
+function setupMatch(matchId) {
+  window.location.href = "playing11.html?matchId=" + matchId;
+}
+
+function openScoreboard(matchId) {
+  window.location.href = "scoreboard.html?matchId=" + matchId;
+}
+
+function viewSummary(matchId) {
+  window.location.href = "matchsummary.html?matchId=" + matchId;
+}
+
+function goBack() {
+  window.location.href = "dashboard.html";
+}
+</script>
+
+</body>
+</html>
