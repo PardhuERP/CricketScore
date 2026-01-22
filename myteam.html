@@ -1,21 +1,96 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Dashboard</title>
+  <title>LocalCricketApp - My Team</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      margin: 0;
+    }
+
+    .header {
+      background: #020617;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #22c55e;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .card {
+      background: #111827;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .back {
+      margin-top: 20px;
+      text-align: center;
+      color: #60a5fa;
+      cursor: pointer;
+    }
+
+    pre {
+      font-size: 12px;
+      color: #94a3b8;
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
+
 <body>
 
-<h2>Dashboard</h2>
-<p id="info"></p>
+<div class="header">My Team</div>
 
-<h3>Create Team</h3>
-<input id="teamName" placeholder="Team Name"><br>
-<input id="shortName" placeholder="Short Name"><br>
-<input id="city" placeholder="City"><br>
-<button onclick="createTeam()">Create Team</button>
+<div class="container">
 
-<hr>
-<pre id="result"></pre>
+  <div class="card">
+    <div id="info"></div>
+  </div>
+
+  <div class="card">
+    <h3>Create Team</h3>
+    <input id="teamName" placeholder="Team Name">
+    <input id="shortName" placeholder="Short Name">
+    <input id="city" placeholder="City">
+    <button onclick="createTeam()">Create Team</button>
+  </div>
+
+  <div class="card">
+    <h3>My Team Details</h3>
+    <button onclick="loadMyTeam()">Load My Team</button>
+    <pre id="result"></pre>
+  </div>
+
+  <div class="back" onclick="goBack()">← Back to Dashboard</div>
+</div>
 
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
@@ -24,11 +99,10 @@ const token = localStorage.getItem("token");
 const userId = localStorage.getItem("userId");
 
 if (!token) {
-  alert("No token. Please login again.");
   window.location.href = "auth.html";
 }
 
-info.innerText = "Logged in as: " + userId + "\nToken: " + token;
+info.innerText = "Logged in as: " + userId;
 
 function createTeam() {
   const url = BASE_URL 
@@ -42,10 +116,24 @@ function createTeam() {
     .then(r => r.json())
     .then(d => {
       result.innerText = JSON.stringify(d, null, 2);
-    })
-    .catch(err => {
-      result.innerText = "JS Error: " + err;
+      alert(d.message || "Team created");
+      loadMyTeam();
     });
+}
+
+function loadMyTeam() {
+  fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+    .then(r => r.json())
+    .then(d => {
+      result.innerText = JSON.stringify(d, null, 2);
+    });
+}
+
+// Auto load on page open
+loadMyTeam();
+
+function goBack() {
+  window.location.href = "dashboard.html";
 }
 </script>
 
