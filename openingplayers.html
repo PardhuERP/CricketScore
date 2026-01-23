@@ -59,19 +59,22 @@ fetch(BASE_URL + "?action=getMatch&matchId=" + matchId)
         const tossWinner = m[10];
         const tossDecision = m[11];
 
-    if (tossDecision == "BAT") {
-      battingTeamId = tossWinner;
-      bowlingTeamId = (tossWinner == m[2]) ? m[3] : m[2];
-    } else {
-      bowlingTeamId = tossWinner;
-      battingTeamId = (tossWinner == m[2]) ? m[3] : m[2];
-    }
+        if (tossDecision == "BAT") {
+          battingTeamId = tossWinner;
+          bowlingTeamId = (tossWinner == m[2]) ? m[3] : m[2];
+        } else {
+          bowlingTeamId = tossWinner;
+          battingTeamId = (tossWinner == m[2]) ? m[3] : m[2];
+        }
 
-    matchInfo.innerHTML = `
-  <b>Batting:</b> ${battingTeamId == m[2] ? d.teamAName : d.teamBName}<br>
-  <b>Bowling:</b> ${bowlingTeamId == m[2] ? d.teamAName : d.teamBName}`;
+        matchInfo.innerHTML = `
+          <b>Batting:</b> ${battingTeamId == m[2] ? d.teamAName : d.teamBName}<br>
+          <b>Bowling:</b> ${bowlingTeamId == m[2] ? d.teamAName : d.teamBName}
+        `;
 
-    loadPlaying11();
+        loadPlaying11();
+      });
+
   });
 
 function getTeamNameLocal(id){
