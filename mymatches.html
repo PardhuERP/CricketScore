@@ -144,7 +144,17 @@ function setupMatch(matchId) {
 }
 
 function openScoreboard(matchId) {
-  window.location.href = "scoreboard.html?matchId=" + matchId;
+  fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
+    .then(r => r.json())
+    .then(d => {
+      if (!d.data) {
+        // Opening players not set
+        window.location.href = "openingplayers.html?matchId=" + matchId;
+      } else {
+        // Opening players already set
+        window.location.href = "scoreboard.html?matchId=" + matchId;
+      }
+    });
 }
 
 function viewSummary(matchId) {
