@@ -7,11 +7,65 @@
   <style>
     body { font-family: Arial; background:#0f172a; color:#fff; margin:0; }
     .header { background:#020617; padding:15px; text-align:center; font-weight:bold; }
+
     .container { padding:15px; }
-    .score { font-size:32px; text-align:center; margin:10px 0; }
-    .row { margin:6px 0; }
-    .btns { display:grid; grid-template-columns: repeat(4,1fr); gap:8px; }
-    button { padding:12px; font-size:16px; border:none; border-radius:6px; background:#22c55e; color:#000; font-weight:bold; }
+
+    .team-pill {
+      background:#1e293b;
+      padding:8px 16px;
+      border-radius:20px;
+      display:inline-block;
+      margin:10px auto;
+      font-weight:bold;
+    }
+
+    .score {
+      font-size:36px;
+      text-align:center;
+      margin:8px 0;
+      font-weight:bold;
+    }
+
+    .meta {
+      display:flex;
+      justify-content:space-between;
+      font-size:14px;
+      margin-bottom:10px;
+      color:#cbd5f5;
+    }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+      font-size:14px;
+    }
+
+    th, td {
+      padding:6px;
+      text-align:center;
+      border-bottom:1px solid #334155;
+    }
+
+    th { color:#93c5fd; }
+
+    .btns {
+      display:grid;
+      grid-template-columns: repeat(4,1fr);
+      gap:8px;
+      margin-top:15px;
+    }
+
+    button {
+      padding:14px;
+      font-size:16px;
+      border:none;
+      border-radius:8px;
+      background:#22c55e;
+      color:#000;
+      font-weight:bold;
+    }
+
     .extra { background:#38bdf8; }
     .wicket { background:#ef4444; color:#fff; }
     .undo { background:#facc15; }
@@ -23,18 +77,20 @@
 <div class="header">Live Score</div>
 
 <div class="container">
-  <div id="teamName"></div>
-<div id="mainScore"></div>
 
-<div class="meta">
-  <div id="crr"></div>
-  <div id="partnership"></div>
-</div>
+  <div style="text-align:center">
+    <div id="teamName" class="team-pill">Batting Team</div>
+  </div>
 
-<table id="batsmenTable"></table>
-<table id="bowlerTable"></table>
+  <div id="mainScore" class="score">0/0 (0.0)</div>
 
-  <hr>
+  <div class="meta">
+    <div id="crr">CRR 0.00</div>
+    <div id="partnership">P'SHIP 0 (0)</div>
+  </div>
+
+  <table id="batsmenTable"></table>
+  <table id="bowlerTable"></table>
 
   <div class="btns">
     <button onclick="addRun(0)">0</button>
@@ -54,6 +110,7 @@
 
     <button class="undo" onclick="undo()">Undo</button>
   </div>
+
 </div>
 
 <script>
@@ -61,30 +118,48 @@ const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C1
 const matchId = new URLSearchParams(window.location.search).get("matchId");
 
 let innings = 1;
+let strikerId = null;
+let nonStrikerId = null;
+let bowlerId = null;
 
-// TEMP (we will replace with real from opening players)
-let strikerId = "P1";
-let nonStrikerId = "P2";
-let bowlerId = "P3";
+/* 1. Load opening players first */
+fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
+  .then(r => r.json())
+  .then(op => {
 
+    if (!op.data) {
+      alert("Opening players not set");
+      window.location.href = "openingplayers.html?matchId=" + matchId;
+      return;
+    }
+
+    strikerId = op.data.strikerId;
+    nonStrikerId = op.data.nonStrikerId;
+    bowlerId = op.data.bowlerId;
+
+    loadScore();
+  });
+
+/* 2. Load live score */
 function loadScore() {
   fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=" + innings)
     .then(r => r.json())
     .then(d => {
-      scoreText.innerText = `${d.totalRuns}/${d.wickets} (${d.overs})`;
+      renderScore(d);
     });
 }
 
 function renderScore(d) {
   teamName.innerText = d.battingTeamName;
   mainScore.innerText = `${d.totalRuns}/${d.wickets} (${d.overs})`;
-  crr.innerText = "CRR: " + d.crr;
-  partnership.innerText = `P'SHIP: ${d.partnership.runs} (${d.partnership.balls})`;
+  crr.innerText = "CRR " + d.crr;
+  partnership.innerText = `P'SHIP ${d.partnership.runs} (${d.partnership.balls})`;
 
   // Batsmen
   batsmenTable.innerHTML = `
     <tr><th>Batter</th><th>R</th><th>B</th><th>4</th><th>6</th><th>SR</th></tr>
   `;
+
   d.batsmen.forEach(b => {
     batsmenTable.innerHTML += `
       <tr>
@@ -111,7 +186,9 @@ function renderScore(d) {
     </tr>
   `;
 }
-  
+
+/* Actions */
+
 function addRun(run) {
   addBall(run, "", "");
 }
@@ -128,14 +205,14 @@ function addBall(runs, extraType, wicketType) {
   fetch(BASE_URL + "?action=addBall", {
     method:"POST",
     body: JSON.stringify({
-      matchId: matchId,
-      innings: innings,
-      strikerId: strikerId,
-      nonStrikerId: nonStrikerId,
-      bowlerId: bowlerId,
-      runs: runs,
-      extraType: extraType,
-      wicketType: wicketType
+      matchId,
+      innings,
+      strikerId,
+      nonStrikerId,
+      bowlerId,
+      runs,
+      extraType,
+      wicketType
     })
   })
   .then(r => r.json())
@@ -147,18 +224,13 @@ function addBall(runs, extraType, wicketType) {
 function undo() {
   fetch(BASE_URL + "?action=undoLastBall", {
     method:"POST",
-    body: JSON.stringify({
-      matchId: matchId,
-      innings: innings
-    })
+    body: JSON.stringify({ matchId, innings })
   })
   .then(r => r.json())
   .then(d => {
     loadScore();
   });
 }
-
-loadScore();
 </script>
 
 </body>
