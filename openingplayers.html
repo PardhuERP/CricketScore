@@ -55,8 +55,9 @@ fetch(BASE_URL + "?action=getMatch&matchId=" + matchId)
       battingTeamId = (tossWinner == m[2]) ? m[3] : m[2];
     }
 
-    matchInfo.innerHTML = `<b>Batting:</b> ${d.teamAName == getTeamNameLocal(battingTeamId) ? d.teamAName : d.teamBName}<br>
-                           <b>Bowling:</b> ${d.teamAName == getTeamNameLocal(bowlingTeamId) ? d.teamAName : d.teamBName}`;
+    matchInfo.innerHTML = `
+  <b>Batting:</b> ${battingTeamId == m[2] ? d.teamAName : d.teamBName}<br>
+  <b>Bowling:</b> ${bowlingTeamId == m[2] ? d.teamAName : d.teamBName}`;
 
     loadPlaying11();
   });
