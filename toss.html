@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Match Toss</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: #fff;
+      margin: 0;
+    }
+    .header {
+      background: #020617;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .container { padding: 20px; }
+    .card {
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 10px;
+    }
+    select, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: none;
+    }
+    button {
+      background: #22c55e;
+      color: #000;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="header">Match Toss</div>
+
+<div class="container">
+  <div class="card">
+    <div id="matchInfo"></div>
+
+    <select id="tossWinner">
+      <option value="">Select Toss Winner</option>
+    </select>
+
+    <select id="tossDecision">
+      <option value="">Select Decision</option>
+      <option value="BAT">Bat</option>
+      <option value="BOWL">Bowl</option>
+    </select>
+
+    <button onclick="saveToss()">Save Toss</button>
+  </div>
+</div>
+
+<script>
+const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
+const token = localStorage.getItem("token");
+
+const urlParams = new URLSearchParams(window.location.search);
+const matchId = urlParams.get("matchId");
+
+let TEAM_A = null;
+let TEAM_B = null;
+
+if (!token || !matchId) {
+  alert("Invalid session");
+  window.location.href = "dashboard.html";
+}
+
+fetch(BASE_URL + "?action=getMatch&matchId=" + matchId)
+  .then(r => r.json())
+  .then(d => {
+    const m = d.match;
+    TEAM_A = m[2];
+    TEAM_B = m[3];
+
+    matchInfo.innerHTML = `<b>Match:</b> ${m[0]}<br><b>Teams:</b> ${TEAM_A} vs ${TEAM_B}`;
+
+    tossWinner.innerHTML += `<option value="${TEAM_A}">${TEAM_A}</option>`;
+    tossWinner.innerHTML += `<option value="${TEAM_B}">${TEAM_B}</option>`;
+  });
+
+function saveToss() {
+  if (!tossWinner.value || !tossDecision.value) {
+    alert("Select toss winner and decision");
+    return;
+  }
+
+  fetch(BASE_URL + "?action=saveToss"
+    + "&matchId=" + matchId
+    + "&tossWinner=" + tossWinner.value
+    + "&tossDecision=" + tossDecision.value
+  )
+  .then(r => r.json())
+  .then(d => {
+    alert(d.message);
+    window.location.href = "openingplayers.html?matchId=" + matchId;
+  });
+}
+</script>
+
+</body>
+</html>
