@@ -23,11 +23,16 @@
 <div class="header">Live Score</div>
 
 <div class="container">
-  <div class="score" id="scoreText">0/0 (0.0)</div>
+  <div id="teamName"></div>
+<div id="mainScore"></div>
 
-  <div class="row"><b>Striker:</b> <span id="strikerName">-</span></div>
-  <div class="row"><b>Non-Striker:</b> <span id="nonStrikerName">-</span></div>
-  <div class="row"><b>Bowler:</b> <span id="bowlerName">-</span></div>
+<div class="meta">
+  <div id="crr"></div>
+  <div id="partnership"></div>
+</div>
+
+<table id="batsmenTable"></table>
+<table id="bowlerTable"></table>
 
   <hr>
 
@@ -70,6 +75,43 @@ function loadScore() {
     });
 }
 
+function renderScore(d) {
+  teamName.innerText = d.battingTeamName;
+  mainScore.innerText = `${d.totalRuns}/${d.wickets} (${d.overs})`;
+  crr.innerText = "CRR: " + d.crr;
+  partnership.innerText = `P'SHIP: ${d.partnership.runs} (${d.partnership.balls})`;
+
+  // Batsmen
+  batsmenTable.innerHTML = `
+    <tr><th>Batter</th><th>R</th><th>B</th><th>4</th><th>6</th><th>SR</th></tr>
+  `;
+  d.batsmen.forEach(b => {
+    batsmenTable.innerHTML += `
+      <tr>
+        <td>${b.isStriker ? "*" : ""} ${b.name}</td>
+        <td>${b.runs}</td>
+        <td>${b.balls}</td>
+        <td>${b.fours}</td>
+        <td>${b.sixes}</td>
+        <td>${b.sr}</td>
+      </tr>
+    `;
+  });
+
+  // Bowler
+  bowlerTable.innerHTML = `
+    <tr><th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>ECO</th></tr>
+    <tr>
+      <td>* ${d.bowler.name}</td>
+      <td>${d.bowler.overs}</td>
+      <td>${d.bowler.maidens}</td>
+      <td>${d.bowler.runs}</td>
+      <td>${d.bowler.wickets}</td>
+      <td>${d.bowler.eco}</td>
+    </tr>
+  `;
+}
+  
 function addRun(run) {
   addBall(run, "", "");
 }
