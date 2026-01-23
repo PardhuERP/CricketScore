@@ -43,9 +43,21 @@ let battingPlayers = [], bowlingPlayers = [];
 fetch(BASE_URL + "?action=getMatch&matchId=" + matchId)
   .then(r => r.json())
   .then(d => {
-    const m = d.match;
-    const tossWinner = m[10];
-    const tossDecision = m[11];
+
+    // FIRST: check opening players
+    fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
+      .then(r2 => r2.json())
+      .then(op => {
+        if (op.data) {
+          // Already set by someone
+          window.location.href = "scoreboard.html?matchId=" + matchId;
+          return;
+        }
+
+        // ONLY if not set, continue with normal logic
+        const m = d.match;
+        const tossWinner = m[10];
+        const tossDecision = m[11];
 
     if (tossDecision == "BAT") {
       battingTeamId = tossWinner;
