@@ -83,10 +83,10 @@ fetch(BASE_URL + "?action=getMatch&matchId=" + matchId)
     TEAM_A = m[2];
     TEAM_B = m[3];
 
-    matchInfo.innerHTML = `<b>Match:</b> ${m[0]}<br><b>Teams:</b> ${TEAM_A} vs ${TEAM_B}`;
+matchInfo.innerHTML = `<b>Match:</b> ${m[0]}<br><b>Teams:</b> ${d.teamAName} vs ${d.teamBName}`;
 
-    tossWinner.innerHTML += `<option value="${TEAM_A}">${TEAM_A}</option>`;
-    tossWinner.innerHTML += `<option value="${TEAM_B}">${TEAM_B}</option>`;
+tossWinner.innerHTML += `<option value="${TEAM_A}">${d.teamAName}</option>`;
+tossWinner.innerHTML += `<option value="${TEAM_B}">${d.teamBName}</option>`;
   });
 
 function saveToss() {
