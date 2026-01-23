@@ -71,20 +71,20 @@ function loadPlaying11() {
     .then(r => r.json())
     .then(d => {
       battingPlayers = d.players;
-      fillDropdown(striker, battingPlayers);
-      fillDropdown(nonStriker, battingPlayers);
+      fillDropdown(striker, battingPlayers, "Select Striker");
+      fillDropdown(nonStriker, battingPlayers, "Select Non-Striker");
     });
 
   fetch(BASE_URL + "?action=getPlaying11&matchId=" + matchId + "&teamId=" + bowlingTeamId)
     .then(r => r.json())
     .then(d => {
       bowlingPlayers = d.players;
-      fillDropdown(bowler, bowlingPlayers);
+      fillDropdown(bowler, bowlingPlayers, "Select Bowler");
     });
 }
 
-function fillDropdown(el, list) {
-  el.innerHTML = `<option value="">Select</option>`;
+function fillDropdown(el, list, label) {
+  el.innerHTML = `<option value="">${label}</option>`;
   list.forEach(p => {
     el.innerHTML += `<option value="${p[2]}">${p[2]}</option>`;
   });
