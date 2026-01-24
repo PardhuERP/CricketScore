@@ -137,6 +137,8 @@ fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
     nonStrikerId = op.data.nonStrikerId;
     bowlerId = op.data.bowlerId;
 
+    console.log("STEP1 OPENING:", strikerId, nonStrikerId, bowlerId);
+
     loadScore();
   });
 
