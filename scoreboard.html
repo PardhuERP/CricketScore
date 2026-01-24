@@ -219,17 +219,18 @@ function addBall(runs, extraType, wicketType) {
   })
   .then(r => r.json())
   .then(d => {
-  strikerId = d.strikerId;
-  nonStrikerId = d.nonStrikerId;
-  bowlerId = d.bowlerId;
+    strikerId = d.strikerId;
+    nonStrikerId = d.nonStrikerId;
+    bowlerId = d.bowlerId;
 
-  if (d.overCompleted) {
-    alert("Over completed. Select new bowler.");
-    // later we will redirect to bowler selection page
-  }
+    if (d.overCompleted) {
+      alert("Over completed. Select new bowler.");
+      // later redirect to bowler selection page
+    }
 
-  loadScore();
-});
+    loadScore();
+  });
+}
 
 function undo() {
   fetch(BASE_URL + "?action=undoLastBall", {
