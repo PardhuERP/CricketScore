@@ -148,6 +148,12 @@ function loadScore() {
     .then(r => r.json())
     .then(d => {
       renderScore(d);
+      // Sync frontend state with backend
+if (d.batsmen && d.batsmen.length == 2) {
+  strikerId = d.batsmen.find(b => b.isStriker).id;
+  nonStrikerId = d.batsmen.find(b => !b.isStriker).id;
+}
+if (d.bowler) bowlerId = d.bowler.id;
     });
 }
 
@@ -225,7 +231,6 @@ function addBall(runs, extraType, wicketType) {
 
     if (d.overCompleted) {
       alert("Over completed. Select new bowler.");
-      // later redirect to bowler selection page
     }
 
     loadScore();
