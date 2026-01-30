@@ -9,7 +9,6 @@
     .header { background:#020617; padding:15px; text-align:center; font-weight:bold; }
     .container { padding:15px; }
     .score { font-size:32px; text-align:center; margin:10px 0; }
-    .row { margin:6px 0; }
     .btns { display:grid; grid-template-columns: repeat(4,1fr); gap:8px; }
     button { padding:12px; font-size:16px; border:none; border-radius:6px; background:#22c55e; color:#000; font-weight:bold; }
     .extra { background:#38bdf8; }
@@ -70,7 +69,7 @@ let strikerId = "";
 let nonStrikerId = "";
 let bowlerId = "";
 
-/* 1. Load opening players */
+/* Load opening players */
 fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
   .then(r => r.json())
   .then(op => {
@@ -79,15 +78,12 @@ fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
       window.location.href = "openingplayers.html?matchId=" + matchId;
       return;
     }
-
     strikerId = op.data[3];
     nonStrikerId = op.data[4];
     bowlerId = op.data[5];
-
     loadScore();
   });
 
-/* 2. Load Live Score */
 function loadScore() {
   fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=" + innings)
     .then(r => r.json())
@@ -129,7 +125,6 @@ function renderScore(d) {
   `;
 }
 
-/* 3. Send Ball */
 function sendBall(runs, extraType = "", wicketType = "") {
   fetch(BASE_URL + "?action=addBall", {
     method: "POST",
@@ -140,7 +135,6 @@ function sendBall(runs, extraType = "", wicketType = "") {
       nonStrikerId,
       bowlerId,
       runs,
-      runsOfBat: runs,
       extraType,
       wicketType
     })
@@ -163,13 +157,11 @@ function sendBall(runs, extraType = "", wicketType = "") {
   });
 }
 
-/* 4. Undo */
 function undo() {
   fetch(BASE_URL + "?action=undoLastBall", {
     method:"POST",
     body: JSON.stringify({ matchId, innings })
   })
-  .then(r => r.json())
   .then(() => loadScore());
 }
 </script>
