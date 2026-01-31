@@ -180,9 +180,13 @@ function renderScore(d) {
 }
 
 function addRun(run) {
-  fetch(BASE_URL + "?action=addBall", {
+  fetch(BASE_URL, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
+      action: "addBall",
       matchId: matchId,
       innings: 1,
       strikerId: strikerId,
@@ -193,6 +197,7 @@ function addRun(run) {
   })
   .then(r => r.json())
   .then(d => {
+    alert(JSON.stringify(d)); // debug
     loadScore();
   });
 }
