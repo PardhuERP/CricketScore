@@ -200,11 +200,19 @@ function addRun(run) {
     + "&wicketType=";
 
   const img = new Image();
-  img.src = url + "&_t=" + Date.now();
+img.onload = () => {};
+img.src = url + "&_t=" + Date.now();
 
-  // Wait and refresh
-  setTimeout(loadScore, 1500);
-}
+// AFTER delay, ask backend who is striker now
+setTimeout(() => {
+  fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=1")
+    .then(r => r.json())
+    .then(d => {
+      strikerId = d.batsmen.find(b => b.isStriker).id;
+      nonStrikerId = d.batsmen.find(b => !b.isStriker).id;
+      loadScore();
+    });
+}, 1000);
 
 // init
 loadOpening();
