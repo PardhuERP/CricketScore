@@ -186,6 +186,7 @@ function renderScore(d) {
 }
 
 function addRun(run) {
+
   const url =
     BASE_URL
     + "?action=addBall"
@@ -198,13 +199,12 @@ function addRun(run) {
     + "&extraType="
     + "&wicketType=";
 
-  fetch(url)
-    .then(r => r.json())
-    .then(d => {
-      console.log("BALL:", d);
-      loadScore();
-    })
-    .catch(err => alert("GET failed: " + err));
+  // fire-and-forget (no CORS)
+  const img = new Image();
+  img.src = url + "&_t=" + Date.now();
+
+  // wait a moment then refresh score
+  setTimeout(loadScore, 300);
 }
 
 // init
