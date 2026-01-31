@@ -146,7 +146,8 @@ function renderScore(d) {
   `;
 }
 
-function addRun(run) {
+  function addRun(run) {
+
   const url =
     BASE_URL
     + "?action=addBall"
@@ -159,22 +160,19 @@ function addRun(run) {
     + "&extraType="
     + "&wicketType=";
 
-  const img = new Image();
-  img.src = url + "&_t=" + Date.now();
+  fetch(url)  // 🔴 use fetch instead of Image
+    .then(r => r.json())
+    .then(res => {
 
-  setTimeout(() => {
-    fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=1")
-      .then(r => r.json())
-      .then(d => {
-        strikerId = d.batsmen.find(b => b.isStriker).id;
-        nonStrikerId = d.batsmen.find(b => !b.isStriker).id;
-        loadScore();
-      });
-  }, 700);
+      // 👇 IMPORTANT
+      strikerId = res.nextStriker;
+      nonStrikerId = res.nextNonStriker;
+
+      // now refresh score
+      loadScore();
+    });
 }
 
-// INIT
-loadOpening();
 </script>
 
 </body>
