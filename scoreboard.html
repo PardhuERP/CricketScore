@@ -134,6 +134,10 @@ function loadScore() {
 
 function sendBall(runs, extraType = "", wicketType = "") {
   fetch(BASE_URL + "?action=addBall", {
+    // SAFETY CHECK
+console.log("DEBUG striker:", strikerId);
+console.log("DEBUG nonStriker:", nonStrikerId);
+console.log("DEBUG bowler:", bowlerId);
 if (!strikerId || !nonStrikerId || !bowlerId) {
   alert("Players not ready yet");
   return;
