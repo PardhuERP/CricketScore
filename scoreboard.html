@@ -1,183 +1,80 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>LocalCricketApp - Scoreboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <style>
-    body { font-family: Arial; background:#0f172a; color:#fff; margin:0; }
-    .header { background:#020617; padding:15px; text-align:center; font-weight:bold; font-size:18px; }
-    .container { padding:15px; }
-
-    .score { font-size:32px; text-align:center; margin:10px 0; font-weight:bold; }
-
-    .meta {
-      display:flex;
-      justify-content:space-between;
-      font-size:13px;
-      margin-bottom:10px;
-      opacity:0.9;
-    }
-
-    table { width:100%; border-collapse:collapse; margin-top:10px; font-size:13px; }
-    th, td { padding:6px; text-align:center; border-bottom:1px solid #334155; }
-    th { color:#38bdf8; }
-
-    .btns {
-      display:grid;
-      grid-template-columns: repeat(4,1fr);
-      gap:8px;
-      margin-top:15px;
-    }
-
-    button {
-      padding:12px;
-      font-size:16px;
-      border:none;
-      border-radius:6px;
-      background:#22c55e;
-      color:#000;
-      font-weight:bold;
-    }
-
-    .extra { background:#38bdf8; }
-    .wicket { background:#ef4444; color:#fff; }
-    .undo { background:#facc15; }
-  </style>
+<meta charset="UTF-8">
+<title>Live Cricket Scorer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;background:#0b1220;color:#fff;font-family:Arial}
+.header{text-align:center;padding:12px;font-size:22px;font-weight:bold}
+.card{padding:10px}
+.score{font-size:42px;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px}
+.btn{padding:18px;border-radius:10px;text-align:center;font-size:18px;font-weight:bold;cursor:pointer}
+.run{background:#2ecc71}
+.extra{background:#3498db}
+.wkt{background:#e74c3c}
+.undo{background:#f1c40f;color:#000}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border-bottom:1px solid #333;padding:6px;text-align:center}
+</style>
 </head>
-
 <body>
 
 <div class="header">Live Score</div>
 
-<div class="container">
+<div class="card">
+  <div id="team">Warriors</div>
+  <div class="score" id="score">0/0 (0.0)</div>
+  <div>CRR: <span id="crr">0.00</span> | P'SHIP: <span id="pship">0 (0)</span></div>
 
-  <div id="teamName"></div>
+  <table>
+    <tr><th>Batter</th><th>R</th><th>B</th><th>4</th><th>6</th><th>SR</th></tr>
+    <tr><td>*A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0.00</td></tr>
+    <tr><td>B</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0.00</td></tr>
+  </table>
 
-  <div class="score" id="mainScore">0/0 (0.0)</div>
+  <table>
+    <tr><th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>ECO</th></tr>
+    <tr><td>*1</td><td>0.0</td><td>0</td><td>0</td><td>0</td><td>0.00</td></tr>
+  </table>
+</div>
 
-  <div class="meta">
-    <div id="crr">CRR: 0.00</div>
-    <div id="partnership">P'SHIP: 0 (0)</div>
-  </div>
-
-  <table id="batsmenTable"></table>
-  <table id="bowlerTable"></table>
-
-  <hr>
-
-  <div class="btns">
-    <button onclick="sendBall(0)">0</button>
-    <button onclick="sendBall(1)">1</button>
-    <button onclick="sendBall(2)">2</button>
-    <button onclick="sendBall(3)">3</button>
-    <button onclick="sendBall(4)">4</button>
-    <button onclick="sendBall(6)">6</button>
-
-    <button class="extra" onclick="sendExtra('WD')">Wide</button>
-    <button class="extra" onclick="sendExtra('NB')">No Ball</button>
-
-    <button class="wicket" onclick="sendWicket('OUT')">Wicket</button>
-    <button class="undo" onclick="undo()">Undo</button>
-  </div>
-
+<div class="grid">
+  <div class="btn run" onclick="send(0)">0</div>
+  <div class="btn run" onclick="send(1)">1</div>
+  <div class="btn run" onclick="send(2)">2</div>
+  <div class="btn run" onclick="send(3)">3</div>
+  <div class="btn run" onclick="send(4)">4</div>
+  <div class="btn run" onclick="send(5)">5</div>
+  <div class="btn run" onclick="send(6)">6</div>
+  <div class="btn extra" onclick="sendExtra('Wide')">Wide</div>
+  <div class="btn extra" onclick="sendExtra('NoBall')">No Ball</div>
+  <div class="btn extra" onclick="sendExtra('LegBye')">Leg Bye</div>
+  <div class="btn wkt" onclick="sendWicket('Bowled')">Wicket</div>
+  <div class="btn wkt" onclick="sendWicket('Run out')">Run Out</div>
+  <div class="btn undo" onclick="undo()">Undo</div>
 </div>
 
 <script>
-const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
-const matchId = new URLSearchParams(window.location.search).get("matchId");
-const innings = 1;
+const API = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec?action=score&matchId=M1&innings=2&battingTeam=T2&runBat=6&isWide=false&isNoBall=false&isBye=false&isLegBye=false&extraRuns=0&wicket=false&wicketType=&strikerId=P12&nonStrikerId=P13&bowlerId=P2";
 
-let strikerId = "";
-let nonStrikerId = "";
-let bowlerId = "";
-
-/* Load opening players */
-function loadOpening() {
-  fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
-    .then(r => r.json())
-    .then(d => {
-      strikerId = d.strikerId;
-      nonStrikerId = d.nonStrikerId;
-      bowlerId = d.bowlerId;
-      refresh();
-    });
+function send(r){
+  callApi({runBat:r,isWide:false,isNoBall:false,wicket:false});
 }
-
-/* Refresh scoreboard */
-function refresh() {
-  fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=" + innings)
-    .then(r => r.json())
-    .then(d => render(d));
-}
-
-/* Render UI */
-function render(d) {
-  teamName.innerText = d.battingTeamName + " vs " + d.bowlingTeamName;
-  mainScore.innerText = `${d.totalRuns}/${d.wickets} (${d.overs})`;
-  crr.innerText = "CRR: " + d.crr;
-  partnership.innerText = `P'SHIP: ${d.partnership.runs} (${d.partnership.balls})`;
-
-  batsmenTable.innerHTML = `
-    <tr><th>Batter</th><th>R</th><th>B</th><th>4</th><th>6</th><th>SR</th></tr>
-  `;
-  d.batsmen.forEach(b => {
-    batsmenTable.innerHTML += `
-      <tr>
-        <td>${b.isStriker ? "*" : ""} ${b.name}</td>
-        <td>${b.runs}</td>
-        <td>${b.balls}</td>
-        <td>${b.fours}</td>
-        <td>${b.sixes}</td>
-        <td>${b.sr}</td>
-      </tr>
-    `;
-  });
-
-  bowlerTable.innerHTML = `
-    <tr><th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>ECO</th></tr>
-    <tr>
-      <td>* ${d.bowler.name}</td>
-      <td>${d.bowler.overs}</td>
-      <td>${d.bowler.maidens}</td>
-      <td>${d.bowler.runs}</td>
-      <td>${d.bowler.wickets}</td>
-      <td>${d.bowler.eco}</td>
-    </tr>
-  `;
-}
-
-/* FIRE & FORGET (CORS safe) */
-function fire(url){
-  const img = new Image();
-  img.src = url + "&_t=" + Date.now();
-}
-
-/* BALL */
-function sendBall(runs){
-  fire(`${BASE_URL}?action=addBall&matchId=${matchId}&innings=${innings}&strikerId=${strikerId}&nonStrikerId=${nonStrikerId}&bowlerId=${bowlerId}&runsTotal=${runs}&runsOfBat=${runs}`);
-  setTimeout(refresh, 400);
-}
-
-/* EXTRA */
 function sendExtra(type){
-  fire(`${BASE_URL}?action=addBall&matchId=${matchId}&innings=${innings}&strikerId=${strikerId}&nonStrikerId=${nonStrikerId}&bowlerId=${bowlerId}&runsTotal=1&runsOfBat=0&extraType=${type}`);
-  setTimeout(refresh, 400);
+  if(type==="Wide") callApi({runBat:0,isWide:true,isNoBall:false,wicket:false,extraRuns:1});
+  if(type==="NoBall") callApi({runBat:0,isWide:false,isNoBall:true,wicket:false,extraRuns:1});
+  if(type==="LegBye") callApi({runBat:0,isWide:false,isNoBall:false,isLegBye:true,extraRuns:1});
 }
-
-/* WICKET */
 function sendWicket(type){
-  fire(`${BASE_URL}?action=addBall&matchId=${matchId}&innings=${innings}&strikerId=${strikerId}&nonStrikerId=${nonStrikerId}&bowlerId=${bowlerId}&runsTotal=0&runsOfBat=0&wicketType=${type}`);
-  setTimeout(refresh, 400);
+  callApi({runBat:0,isWide:false,isNoBall:false,wicket:true,wicketType:type});
 }
-
-/* UNDO */
-function undo(){
-  fire(`${BASE_URL}?action=undoLastBall&matchId=${matchId}&innings=${innings}`);
-  setTimeout(refresh, 400);
+function callApi(data){
+  fetch(API,{method:"POST",body:JSON.stringify(data)})
+    .then(r=>r.json()).then(d=>console.log(d));
 }
-
-loadOpening();
+function undo(){alert("Undo coming next");}
 </script>
 
 </body>
