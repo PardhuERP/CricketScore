@@ -147,30 +147,34 @@ function renderScore(d) {
 }
 
   function addRun(run) {
+function addRun(run) {
 
-  const url =
-    BASE_URL
-    + "?action=addBall"
-    + "&matchId=" + matchId
-    + "&innings=1"
-    + "&strikerId=" + strikerId
-    + "&nonStrikerId=" + nonStrikerId
-    + "&bowlerId=" + bowlerId
-    + "&runs=" + run
-    + "&extraType="
-    + "&wicketType=";
+  fetch(BASE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "addBall",
+      matchId: matchId,
+      innings: 1,
+      strikerId: strikerId,
+      nonStrikerId: nonStrikerId,
+      bowlerId: bowlerId,
+      runsTotal: run,
+      runsOfBat: run,
+      extraType: "",
+      wicketType: ""
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
 
-  fetch(url)  // 🔴 use fetch instead of Image
-    .then(r => r.json())
-    .then(res => {
+    // update next striker from backend
+    strikerId = d.nextStriker;
+    nonStrikerId = d.nextNonStriker;
 
-      // 👇 IMPORTANT
-      strikerId = res.nextStriker;
-      nonStrikerId = res.nextNonStriker;
-
-      // now refresh score
-      loadScore();
-    });
+    loadScore();
+  })
+  .catch(err => alert("POST failed: " + err));
 }
 
 </script>
