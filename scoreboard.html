@@ -186,26 +186,41 @@ function renderScore(d) {
 }
 
 function addRun(run) {
+  console.log("SEND →", {
+    matchId,
+    innings: 1,
+    strikerId,
+    nonStrikerId,
+    bowlerId,
+    runs: run
+  });
+
+  const params = new URLSearchParams();
+  params.append("action", "addBall");
+  params.append("matchId", matchId);
+  params.append("innings", 1);
+  params.append("strikerId", strikerId);
+  params.append("nonStrikerId", nonStrikerId);
+  params.append("bowlerId", bowlerId);
+  params.append("runs", run);
+  params.append("extraType", "");
+  params.append("wicketType", "");
+
   fetch(BASE_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      action: "addBall",
-      matchId: matchId,
-      innings: 1,
-      strikerId: strikerId,
-      nonStrikerId: nonStrikerId,
-      bowlerId: bowlerId,
-      runs: run
-    })
+    body: params
   })
-  .then(r => r.json())
-  .then(d => {
-    alert(JSON.stringify(d)); // debug
-    loadScore();
-  });
+  .then(r => r.text()) // TEMP: see raw
+  .then(t => {
+    console.log("RAW RESPONSE:", t);
+    try {
+      const d = JSON.parse(t);
+      loadScore();
+    } catch(e) {
+      alert("Not JSON: " + t);
+    }
+  })
+  .catch(err => alert("POST failed: " + err));
 }
 
 // init
