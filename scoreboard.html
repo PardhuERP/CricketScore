@@ -156,25 +156,40 @@ function addRun(run) {
     + "&strikerId=" + strikerId
     + "&nonStrikerId=" + nonStrikerId
     + "&bowlerId=" + bowlerId
-    + "&runs=" + run
+    + "&runsTotal=" + run
+    + "&runsOfBat=" + run
     + "&extraType="
     + "&wicketType=";
 
-  // FIRE & FORGET (no CORS)
+  // Fire & forget (no CORS)
   const img = new Image();
   img.src = url + "&_t=" + Date.now();
 
-  // after backend updates, pull next striker
   setTimeout(() => {
-    fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=1")
+    fetch(BASE_URL + "?action=getLastBall&matchId=" + matchId + "&innings=1")
       .then(r => r.json())
-      .then(d => {
-        console.log("LIVE:", d);
-        strikerId = d.batsmen.find(b => b.isStriker).id;
-        nonStrikerId = d.batsmen.find(b => !b.isStriker).id;
+      .then(b => {
+        strikerId = b.nextStriker;
+        nonStrikerId = b.nextNonStriker;
         loadScore();
       });
-  }, 500);
+  }, 600);
+}
+
+  function getLastBall(data) {
+  var sh = getSheet("SCORE_LOG_V2");
+  var rows = sh.getDataRange().getValues();
+
+  for (var i = rows.length - 1; i >= 1; i--) {
+    if (rows[i][0] == data.matchId && rows[i][1] == data.innings) {
+      return output({
+        status: "OK",
+        nextStriker: rows[i][13],
+        nextNonStriker: rows[i][14]
+      });
+    }
+  }
+  return output({ status: "ERROR", message: "No ball yet" });
 }
 </script>
 
