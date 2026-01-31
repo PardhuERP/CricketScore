@@ -1,22 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Scoreboard</title>
+  <title>LocalCricketApp - Scoreboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    body { font-family: Arial; background:#0f172a; color:#fff; margin:0; }
-    .header { background:#020617; padding:15px; text-align:center; font-weight:bold; }
+    body {
+      font-family: Arial, sans-serif;
+      background:#0f172a;
+      color:#fff;
+      margin:0;
+    }
+
+    .header {
+      background:#020617;
+      padding:15px;
+      text-align:center;
+      font-weight:bold;
+      font-size:18px;
+    }
+
     .container { padding:15px; }
-    .score { font-size:32px; text-align:center; margin:10px 0; }
-    .btns { display:grid; grid-template-columns: repeat(4,1fr); gap:8px; }
-    button { padding:12px; font-size:16px; border:none; border-radius:6px; background:#22c55e; color:#000; font-weight:bold; }
+
+    .score {
+      font-size:32px;
+      text-align:center;
+      margin:10px 0;
+      font-weight:bold;
+    }
+
+    .meta {
+      display:flex;
+      justify-content:space-between;
+      font-size:13px;
+      margin-bottom:10px;
+      opacity:0.9;
+    }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+      font-size:13px;
+    }
+
+    th, td {
+      padding:6px;
+      text-align:center;
+      border-bottom:1px solid #334155;
+    }
+
+    th { color:#38bdf8; }
+
+    .btns {
+      display:grid;
+      grid-template-columns: repeat(4,1fr);
+      gap:8px;
+      margin-top:15px;
+    }
+
+    button {
+      padding:12px;
+      font-size:16px;
+      border:none;
+      border-radius:6px;
+      background:#22c55e;
+      color:#000;
+      font-weight:bold;
+    }
+
     .extra { background:#38bdf8; }
     .wicket { background:#ef4444; color:#fff; }
     .undo { background:#facc15; }
-    table { width:100%; margin-top:10px; border-collapse: collapse; }
-    th,td { padding:6px; border-bottom:1px solid #334155; text-align:center; }
-    .meta { display:flex; justify-content:space-between; margin:10px 0; }
   </style>
 </head>
 
@@ -27,68 +82,60 @@
 <div class="container">
 
   <div id="teamName"></div>
-  <div id="mainScore" class="score"></div>
+
+  <div class="score" id="mainScore">0/0 (0.0)</div>
 
   <div class="meta">
-    <div id="crr"></div>
-    <div id="partnership"></div>
+    <div id="crr">CRR: 0.00</div>
+    <div id="partnership">P'SHIP: 0 (0)</div>
   </div>
 
+  <!-- BATSMEN -->
   <table id="batsmenTable"></table>
+
+  <!-- BOWLER -->
   <table id="bowlerTable"></table>
 
   <hr>
 
-  <div class="btns" id="btns" style="pointer-events:none; opacity:0.4;">
-    <button onclick="sendBall(0)">0</button>
-    <button onclick="sendBall(1)">1</button>
-    <button onclick="sendBall(2)">2</button>
-    <button onclick="sendBall(3)">3</button>
-    <button onclick="sendBall(4)">4</button>
-    <button onclick="sendBall(5)">5</button>
-    <button onclick="sendBall(6)">6</button>
+  <div class="btns">
+    <button onclick="addRun(0)">0</button>
+    <button onclick="addRun(1)">1</button>
+    <button onclick="addRun(2)">2</button>
+    <button onclick="addRun(3)">3</button>
+    <button onclick="addRun(4)">4</button>
+    <button onclick="addRun(6)">6</button>
 
-    <button class="extra" onclick="sendBall(1,'WD')">Wide</button>
-    <button class="extra" onclick="sendBall(1,'NB')">No Ball</button>
-    <button class="extra" onclick="sendBall(0,'LB')">Leg Bye</button>
+    <button class="extra" disabled>Wide</button>
+    <button class="extra" disabled>No Ball</button>
 
-    <button class="wicket" onclick="sendBall(0,'','OUT')">Wicket</button>
-    <button class="wicket" onclick="sendBall(0,'','RUNOUT')">Run Out</button>
-
-    <button class="undo" onclick="undo()">Undo</button>
+    <button class="wicket" disabled>Wicket</button>
+    <button class="undo" disabled>Undo</button>
   </div>
 
 </div>
+
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
+
 const matchId = new URLSearchParams(window.location.search).get("matchId");
 const innings = 1;
 
+// from opening players API later
 let strikerId = "";
 let nonStrikerId = "";
 let bowlerId = "";
 
-/* 1. Load opening players */
-fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
-  .then(r => r.json())
-  .then(op => {
-    if (!op.data) {
-      alert("Opening players not set");
-      window.location.href = "openingplayers.html?matchId=" + matchId;
-      return;
-    }
-
-    strikerId = op.data[3];
-    nonStrikerId = op.data[4];
-    bowlerId = op.data[5];
-
-    console.log("READY:", strikerId, nonStrikerId, bowlerId);
-
-    document.getElementById("btns").style.pointerEvents = "auto";
-    document.getElementById("btns").style.opacity = "1";
-
-    loadScore();
-  });
+function loadOpening() {
+  fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
+    .then(r => r.json())
+    .then(d => {
+      strikerId = d.strikerId;
+      nonStrikerId = d.nonStrikerId;
+      bowlerId = d.bowlerId;
+      loadScore();
+    });
+}
 
 function loadScore() {
   fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=" + innings)
@@ -96,11 +143,11 @@ function loadScore() {
     .then(d => renderScore(d));
 }
 
-  function renderScore(d) {
+function renderScore(d) {
   teamName.innerText = d.battingTeamName;
   mainScore.innerText = `${d.totalRuns}/${d.wickets} (${d.overs})`;
   crr.innerText = "CRR: " + d.crr;
-  partnership.innerText = `P'SHIP: ${d.partnership.runs} (${d.partnership.balls}`;
+  partnership.innerText = `P'SHIP: ${d.partnership.runs} (${d.partnership.balls})`;
 
   batsmenTable.innerHTML = `
     <tr><th>Batter</th><th>R</th><th>B</th><th>4</th><th>6</th><th>SR</th></tr>
@@ -130,49 +177,29 @@ function loadScore() {
       <td>${d.bowler.eco}</td>
     </tr>
   `;
-  }
-
-function sendBall(runs, extraType = "", wicketType = "") {
-  fetch(BASE_URL + "?action=addBall", {
-    // SAFETY CHECK
-console.log("DEBUG striker:", strikerId);
-console.log("DEBUG nonStriker:", nonStrikerId);
-console.log("DEBUG bowler:", bowlerId);
-if (!strikerId || !nonStrikerId || !bowlerId) {
-  alert("Players not ready yet");
-  return;
 }
+
+function addRun(run) {
+  fetch(BASE_URL + "?action=addBall", {
     method: "POST",
     body: JSON.stringify({
-      matchId,
-      innings,
-      strikerId,
-      nonStrikerId,
-      bowlerId,
-      runs,
-      extraType,
-      wicketType
+      matchId: matchId,
+      innings: 1,
+      strikerId: strikerId,
+      nonStrikerId: nonStrikerId,
+      bowlerId: bowlerId,
+      runs: run
     })
   })
   .then(r => r.json())
   .then(d => {
-    if (d.status !== "OK") {
-      alert(d.message);
-      return;
-    }
-
-    strikerId = d.nextStrikerId;
-    nonStrikerId = d.nextNonStrikerId;
-
-    if (d.overCompleted) {
-      alert("Over completed. Select new bowler.");
-    }
-
     loadScore();
   });
 }
+
+// init
+loadOpening();
 </script>
-   
 
 </body>
 </html>
