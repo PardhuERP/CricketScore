@@ -67,25 +67,24 @@
   <hr>
 
   <div class="btns">
-    <button onclick="addRun(0)">0</button>
-    <button onclick="addRun(1)">1</button>
-    <button onclick="addRun(2)">2</button>
-    <button onclick="addRun(3)">3</button>
-    <button onclick="addRun(4)">4</button>
-    <button onclick="addRun(6)">6</button>
+    <button onclick="sendBall(0)">0</button>
+    <button onclick="sendBall(1)">1</button>
+    <button onclick="sendBall(2)">2</button>
+    <button onclick="sendBall(3)">3</button>
+    <button onclick="sendBall(4)">4</button>
+    <button onclick="sendBall(6)">6</button>
 
-    <button class="extra" disabled>Wide</button>
-    <button class="extra" disabled>No Ball</button>
+    <button class="extra" onclick="sendExtra('WD')">Wide</button>
+    <button class="extra" onclick="sendExtra('NB')">No Ball</button>
 
-    <button class="wicket" disabled>Wicket</button>
-    <button class="undo" disabled>Undo</button>
+    <button class="wicket" onclick="sendWicket('OUT')">Wicket</button>
+    <button class="undo" onclick="undo()">Undo</button>
   </div>
 
 </div>
 
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
-
 const matchId = new URLSearchParams(window.location.search).get("matchId");
 const innings = 1;
 
@@ -93,6 +92,7 @@ let strikerId = "";
 let nonStrikerId = "";
 let bowlerId = "";
 
+/* Load opening players */
 function loadOpening() {
   fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
     .then(r => r.json())
@@ -100,18 +100,20 @@ function loadOpening() {
       strikerId = d.strikerId;
       nonStrikerId = d.nonStrikerId;
       bowlerId = d.bowlerId;
-      loadScore();
+      refresh();
     });
 }
 
-function loadScore() {
-  fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=1")
+/* Refresh scoreboard */
+function refresh() {
+  fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=" + innings)
     .then(r => r.json())
-    .then(d => renderScore(d));
+    .then(d => render(d));
 }
 
-function renderScore(d) {
-  teamName.innerText = d.battingTeamName;
+/* Render UI */
+function render(d) {
+  teamName.innerText = d.battingTeamName + " vs " + d.bowlingTeamName;
   mainScore.innerText = `${d.totalRuns}/${d.wickets} (${d.overs})`;
   crr.innerText = "CRR: " + d.crr;
   partnership.innerText = `P'SHIP: ${d.partnership.runs} (${d.partnership.balls})`;
@@ -119,7 +121,6 @@ function renderScore(d) {
   batsmenTable.innerHTML = `
     <tr><th>Batter</th><th>R</th><th>B</th><th>4</th><th>6</th><th>SR</th></tr>
   `;
-
   d.batsmen.forEach(b => {
     batsmenTable.innerHTML += `
       <tr>
@@ -146,51 +147,37 @@ function renderScore(d) {
   `;
 }
 
-function addRun(run) {
-
-  const url =
-    BASE_URL
-    + "?action=addBall"
-    + "&matchId=" + matchId
-    + "&innings=1"
-    + "&strikerId=" + strikerId
-    + "&nonStrikerId=" + nonStrikerId
-    + "&bowlerId=" + bowlerId
-    + "&runsTotal=" + run
-    + "&runsOfBat=" + run
-    + "&extraType="
-    + "&wicketType=";
-
-  // Fire & forget (no CORS)
+/* FIRE & FORGET (CORS safe) */
+function fire(url){
   const img = new Image();
   img.src = url + "&_t=" + Date.now();
-
-  setTimeout(() => {
-    fetch(BASE_URL + "?action=getLastBall&matchId=" + matchId + "&innings=1")
-      .then(r => r.json())
-      .then(b => {
-        strikerId = b.nextStriker;
-        nonStrikerId = b.nextNonStriker;
-        loadScore();
-      });
-  }, 600);
 }
 
-  function getLastBall(data) {
-  var sh = getSheet("SCORE_LOG_V2");
-  var rows = sh.getDataRange().getValues();
-
-  for (var i = rows.length - 1; i >= 1; i--) {
-    if (rows[i][0] == data.matchId && rows[i][1] == data.innings) {
-      return output({
-        status: "OK",
-        nextStriker: rows[i][13],
-        nextNonStriker: rows[i][14]
-      });
-    }
-  }
-  return output({ status: "ERROR", message: "No ball yet" });
+/* BALL */
+function sendBall(runs){
+  fire(`${BASE_URL}?action=addBall&matchId=${matchId}&innings=${innings}&strikerId=${strikerId}&nonStrikerId=${nonStrikerId}&bowlerId=${bowlerId}&runsTotal=${runs}&runsOfBat=${runs}`);
+  setTimeout(refresh, 400);
 }
+
+/* EXTRA */
+function sendExtra(type){
+  fire(`${BASE_URL}?action=addBall&matchId=${matchId}&innings=${innings}&strikerId=${strikerId}&nonStrikerId=${nonStrikerId}&bowlerId=${bowlerId}&runsTotal=1&runsOfBat=0&extraType=${type}`);
+  setTimeout(refresh, 400);
+}
+
+/* WICKET */
+function sendWicket(type){
+  fire(`${BASE_URL}?action=addBall&matchId=${matchId}&innings=${innings}&strikerId=${strikerId}&nonStrikerId=${nonStrikerId}&bowlerId=${bowlerId}&runsTotal=0&runsOfBat=0&wicketType=${type}`);
+  setTimeout(refresh, 400);
+}
+
+/* UNDO */
+function undo(){
+  fire(`${BASE_URL}?action=undoLastBall&matchId=${matchId}&innings=${innings}`);
+  setTimeout(refresh, 400);
+}
+
+loadOpening();
 </script>
 
 </body>
