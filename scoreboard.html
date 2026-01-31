@@ -39,7 +39,7 @@
 
   <hr>
 
-  <div class="btns">
+  <div class="btns" id="btns" style="pointer-events:none; opacity:0.4;">
     <button onclick="sendBall(0)">0</button>
     <button onclick="sendBall(1)">1</button>
     <button onclick="sendBall(2)">2</button>
@@ -77,9 +77,16 @@ fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
       window.location.href = "openingplayers.html?matchId=" + matchId;
       return;
     }
+
     strikerId = op.data[3];
     nonStrikerId = op.data[4];
     bowlerId = op.data[5];
+
+    console.log("READY:", strikerId, nonStrikerId, bowlerId);
+
+    document.getElementById("btns").style.pointerEvents = "auto";
+    document.getElementById("btns").style.opacity = "1";
+
     loadScore();
   });
 
@@ -127,6 +134,10 @@ function loadScore() {
 
 function sendBall(runs, extraType = "", wicketType = "") {
   fetch(BASE_URL + "?action=addBall", {
+if (!strikerId || !nonStrikerId || !bowlerId) {
+  alert("Players not ready yet");
+  return;
+}
     method: "POST",
     body: JSON.stringify({
       matchId,
