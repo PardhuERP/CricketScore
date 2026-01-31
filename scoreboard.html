@@ -59,7 +59,6 @@
   </div>
 
 </div>
-
 <script>
 const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
 const matchId = new URLSearchParams(window.location.search).get("matchId");
@@ -69,7 +68,7 @@ let strikerId = "";
 let nonStrikerId = "";
 let bowlerId = "";
 
-/* Load opening players */
+/* 1. Load opening players */
 fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
   .then(r => r.json())
   .then(op => {
@@ -88,41 +87,6 @@ function loadScore() {
   fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=" + innings)
     .then(r => r.json())
     .then(d => renderScore(d));
-}
-
-function renderScore(d) {
-  teamName.innerText = d.battingTeamName;
-  mainScore.innerText = `${d.totalRuns}/${d.wickets} (${d.overs})`;
-  crr.innerText = "CRR: " + d.crr;
-  partnership.innerText = `P'SHIP: ${d.partnership.runs} (${d.partnership.balls})`;
-
-  batsmenTable.innerHTML = `
-    <tr><th>Batter</th><th>R</th><th>B</th><th>4</th><th>6</th><th>SR</th></tr>
-  `;
-  d.batsmen.forEach(b => {
-    batsmenTable.innerHTML += `
-      <tr>
-        <td>${b.isStriker ? "*" : ""} ${b.name}</td>
-        <td>${b.runs}</td>
-        <td>${b.balls}</td>
-        <td>${b.fours}</td>
-        <td>${b.sixes}</td>
-        <td>${b.sr}</td>
-      </tr>
-    `;
-  });
-
-  bowlerTable.innerHTML = `
-    <tr><th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>ECO</th></tr>
-    <tr>
-      <td>* ${d.bowler.name}</td>
-      <td>${d.bowler.overs}</td>
-      <td>${d.bowler.maidens}</td>
-      <td>${d.bowler.runs}</td>
-      <td>${d.bowler.wickets}</td>
-      <td>${d.bowler.eco}</td>
-    </tr>
-  `;
 }
 
 function sendBall(runs, extraType = "", wicketType = "") {
@@ -156,15 +120,8 @@ function sendBall(runs, extraType = "", wicketType = "") {
     loadScore();
   });
 }
-
-function undo() {
-  fetch(BASE_URL + "?action=undoLastBall", {
-    method:"POST",
-    body: JSON.stringify({ matchId, innings })
-  })
-  .then(() => loadScore());
-}
 </script>
+   
 
 </body>
 </html>
