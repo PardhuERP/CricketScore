@@ -5,29 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background:#0f172a;
-      color:#fff;
-      margin:0;
-    }
-
-    .header {
-      background:#020617;
-      padding:15px;
-      text-align:center;
-      font-weight:bold;
-      font-size:18px;
-    }
-
+    body { font-family: Arial; background:#0f172a; color:#fff; margin:0; }
+    .header { background:#020617; padding:15px; text-align:center; font-weight:bold; font-size:18px; }
     .container { padding:15px; }
 
-    .score {
-      font-size:32px;
-      text-align:center;
-      margin:10px 0;
-      font-weight:bold;
-    }
+    .score { font-size:32px; text-align:center; margin:10px 0; font-weight:bold; }
 
     .meta {
       display:flex;
@@ -37,19 +19,8 @@
       opacity:0.9;
     }
 
-    table {
-      width:100%;
-      border-collapse:collapse;
-      margin-top:10px;
-      font-size:13px;
-    }
-
-    th, td {
-      padding:6px;
-      text-align:center;
-      border-bottom:1px solid #334155;
-    }
-
+    table { width:100%; border-collapse:collapse; margin-top:10px; font-size:13px; }
+    th, td { padding:6px; text-align:center; border-bottom:1px solid #334155; }
     th { color:#38bdf8; }
 
     .btns {
@@ -90,10 +61,7 @@
     <div id="partnership">P'SHIP: 0 (0)</div>
   </div>
 
-  <!-- BATSMEN -->
   <table id="batsmenTable"></table>
-
-  <!-- BOWLER -->
   <table id="bowlerTable"></table>
 
   <hr>
@@ -121,7 +89,6 @@ const BASE_URL = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C1
 const matchId = new URLSearchParams(window.location.search).get("matchId");
 const innings = 1;
 
-// from opening players API later
 let strikerId = "";
 let nonStrikerId = "";
 let bowlerId = "";
@@ -130,15 +97,9 @@ function loadOpening() {
   fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
     .then(r => r.json())
     .then(d => {
-      if (d.status !== "OK") {
-        alert("Opening players not set yet");
-        return;
-      }
-
       strikerId = d.strikerId;
       nonStrikerId = d.nonStrikerId;
       bowlerId = d.bowlerId;
-
       loadScore();
     });
 }
@@ -186,7 +147,6 @@ function renderScore(d) {
 }
 
 function addRun(run) {
-
   const url =
     BASE_URL
     + "?action=addBall"
@@ -200,21 +160,20 @@ function addRun(run) {
     + "&wicketType=";
 
   const img = new Image();
-img.onload = () => {};
-img.src = url + "&_t=" + Date.now();
+  img.src = url + "&_t=" + Date.now();
 
-// AFTER delay, ask backend who is striker now
-setTimeout(() => {
-  fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=1")
-    .then(r => r.json())
-    .then(d => {
-      strikerId = d.batsmen.find(b => b.isStriker).id;
-      nonStrikerId = d.batsmen.find(b => !b.isStriker).id;
-      loadScore();
-    });
-}, 1000);
+  setTimeout(() => {
+    fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=1")
+      .then(r => r.json())
+      .then(d => {
+        strikerId = d.batsmen.find(b => b.isStriker).id;
+        nonStrikerId = d.batsmen.find(b => !b.isStriker).id;
+        loadScore();
+      });
+  }, 700);
+}
 
-// init
+// INIT
 loadOpening();
 </script>
 
