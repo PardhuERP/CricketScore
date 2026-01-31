@@ -130,9 +130,15 @@ function loadOpening() {
   fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
     .then(r => r.json())
     .then(d => {
+      if (d.status !== "OK") {
+        alert("Opening players not set yet");
+        return;
+      }
+
       strikerId = d.strikerId;
       nonStrikerId = d.nonStrikerId;
       bowlerId = d.bowlerId;
+
       loadScore();
     });
 }
