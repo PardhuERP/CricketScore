@@ -146,37 +146,39 @@ function renderScore(d) {
   `;
 }
 
-  function addRun(run) {
+ <script>
 function addRun(run) {
 
-  fetch(BASE_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "addBall",
-      matchId: matchId,
-      innings: 1,
-      strikerId: strikerId,
-      nonStrikerId: nonStrikerId,
-      bowlerId: bowlerId,
-      runsTotal: run,
-      runsOfBat: run,
-      extraType: "",
-      wicketType: ""
-    })
-  })
-  .then(r => r.json())
-  .then(d => {
+  const url =
+    BASE_URL
+    + "?action=addBall"
+    + "&matchId=" + matchId
+    + "&innings=1"
+    + "&strikerId=" + strikerId
+    + "&nonStrikerId=" + nonStrikerId
+    + "&bowlerId=" + bowlerId
+    + "&runs=" + run
+    + "&extraType="
+    + "&wicketType=";
 
-    // update next striker from backend
-    strikerId = d.nextStriker;
-    nonStrikerId = d.nextNonStriker;
+  // FIRE & FORGET (no CORS)
+  const img = new Image();
+  img.src = url + "&_t=" + Date.now();
 
-    loadScore();
-  })
-  .catch(err => alert("POST failed: " + err));
+  // after backend updates, pull next striker
+  setTimeout(() => {
+    fetch(BASE_URL + "?action=getLiveScore&matchId=" + matchId + "&innings=1")
+      .then(r => r.json())
+      .then(d => {
+        console.log("LIVE:", d);
+        strikerId = d.batsmen.find(b => b.isStriker).id;
+        nonStrikerId = d.batsmen.find(b => !b.isStriker).id;
+        loadScore();
+      });
+  }, 500);
 }
-
+</script> 
+  
 </script>
 
 </body>
