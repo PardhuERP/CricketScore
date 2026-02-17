@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Reset Password - LocalCricketApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body{
+      font-family: Arial, sans-serif;
+      background:#0f172a;
+      color:#fff;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+    }
+
+    .card{
+      background:#111827;
+      padding:20px;
+      border-radius:12px;
+      width:100%;
+      max-width:360px;
+      box-shadow:0 0 20px rgba(0,0,0,0.4);
+    }
+
+    h2{text-align:center;}
+
+    input{
+      width:100%;
+      padding:10px;
+      margin:8px 0;
+      border-radius:6px;
+      border:none;
+    }
+
+    button{
+      width:100%;
+      padding:10px;
+      border:none;
+      border-radius:6px;
+      background:#22c55e;
+      color:#000;
+      font-weight:bold;
+      margin-top:10px;
+    }
+
+    #msg{
+      margin-top:10px;
+      font-size:13px;
+      color:#94a3b8;
+      text-align:center;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>Reset Password</h2>
+
+  <input id="newPassword" type="password" placeholder="New Password">
+  <button onclick="resetPassword()">Reset Password</button>
+
+  <div id="msg"></div>
+</div>
+
+<script>
+const API_URL =
+"https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
+
+/* GET TOKEN FROM URL */
+const params = new URLSearchParams(window.location.search);
+const token = params.get("token");
+
+if(!token){
+  msg.innerText = "Invalid reset link";
+}
+
+/* RESET PASSWORD */
+function resetPassword(){
+
+  const pass = newPassword.value;
+
+  if(!pass){
+    msg.innerText = "Enter new password";
+    return;
+  }
+
+  fetch(API_URL +
+    "?action=resetPassword" +
+    "&token=" + encodeURIComponent(token) +
+    "&newPassword=" + encodeURIComponent(pass)
+  )
+  .then(r=>r.json())
+  .then(d=>{
+    msg.innerText = d.message;
+
+    if(d.status==="OK"){
+      setTimeout(()=>{
+        window.location.href="index.html";
+      },2000);
+    }
+  })
+  .catch(()=>{
+    msg.innerText="Server error";
+  });
+}
+</script>
+
+</body>
+</html>
