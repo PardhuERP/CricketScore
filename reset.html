@@ -66,44 +66,29 @@
 </div>
 
 <script>
-const API_URL =
+
+const BASE_URL =
 "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec";
 
-/* GET TOKEN FROM URL */
-const params = new URLSearchParams(window.location.search);
-const token = params.get("token");
+const token =
+new URLSearchParams(window.location.search).get("token");
 
-if(!token){
-  msg.innerText = "Invalid reset link";
-}
-
-/* RESET PASSWORD */
 function resetPassword(){
-
-  const token = new URLSearchParams(window.location.search).get("token");
 
   const newPass = document.getElementById("newPassword").value;
 
-  fetch(
-    BASE_URL +
+  fetch(BASE_URL +
     "?action=resetPassword" +
-    "&token=" + encodeURIComponent(token) +
-    "&newPassword=" + encodeURIComponent(newPass)
+    "&token=" + token +
+    "&newPassword=" + newPass
   )
-  .then(r => r.json())
-  .then(d => {
-
-    console.log("RESET RESPONSE:", d); // 🔥 debug
-
-    /* SAFE DISPLAY */
-    result.innerText =
-      d.message || d.status || JSON.stringify(d);
-
-  })
-  .catch(err=>{
-    result.innerText = err;
+  .then(r=>r.json())
+  .then(d=>{
+    document.getElementById("result").innerText =
+      JSON.stringify(d,null,2);
   });
 }
+
 </script>
 
 </body>
