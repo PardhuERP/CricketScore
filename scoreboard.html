@@ -71,9 +71,16 @@ function sendExtra(type){
 function sendWicket(type){
   callApi({runBat:0,isWide:false,isNoBall:false,wicket:true,wicketType:type});
 }
-function callApi(data){
-  fetch(API,{method:"POST",body:JSON.stringify(data)})
-    .then(r=>r.json()).then(d=>console.log(d));
+function callApi(data, cb){
+
+  const params =
+    Object.keys(data)
+      .map(k => k + "=" + encodeURIComponent(data[k]))
+      .join("&");
+
+  fetch(API + "?" + params)
+    .then(r => r.json())
+    .then(cb);
 }
 function undo(){alert("Undo coming next");}
 </script>
