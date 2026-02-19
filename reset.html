@@ -80,30 +80,28 @@ if(!token){
 /* RESET PASSWORD */
 function resetPassword(){
 
-  const pass = newPassword.value;
+  const token = new URLSearchParams(window.location.search).get("token");
 
-  if(!pass){
-    msg.innerText = "Enter new password";
-    return;
-  }
+  const newPass = document.getElementById("newPassword").value;
 
-  fetch(API_URL +
+  fetch(
+    BASE_URL +
     "?action=resetPassword" +
     "&token=" + encodeURIComponent(token) +
-    "&newPassword=" + encodeURIComponent(pass)
+    "&newPassword=" + encodeURIComponent(newPass)
   )
-  .then(r=>r.json())
-  .then(d=>{
-    msg.innerText = d.message;
+  .then(r => r.json())
+  .then(d => {
 
-    if(d.status==="OK"){
-      setTimeout(()=>{
-        window.location.href="index.html";
-      },2000);
-    }
+    console.log("RESET RESPONSE:", d); // 🔥 debug
+
+    /* SAFE DISPLAY */
+    result.innerText =
+      d.message || d.status || JSON.stringify(d);
+
   })
-  .catch(()=>{
-    msg.innerText="Server error";
+  .catch(err=>{
+    result.innerText = err;
   });
 }
 </script>
