@@ -56,8 +56,9 @@ th,td{border-bottom:1px solid #333;padding:6px;text-align:center}
   <div class="btn undo" onclick="undo()">Undo</div>
 </div>
 
+<script src="config.js"></script>  
+
 <script>
-const API = "https://script.google.com/macros/s/AKfycbze43b5gQyZ5s0q7pln3C18nW5nkQuBhjX-vHq8DC6r8-hLc2dScQn2ifHWvZTx3I8I/exec?action=score&matchId=M1&innings=2&battingTeam=T2&runBat=6&isWide=false&isNoBall=false&isBye=false&isLegBye=false&extraRuns=0&wicket=false&wicketType=&strikerId=P12&nonStrikerId=P13&bowlerId=P2";
 
 function send(r){
   callApi({runBat:r,isWide:false,isNoBall:false,wicket:false});
