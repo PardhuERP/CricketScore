@@ -84,7 +84,7 @@ function resetPassword(){
   )
   .then(r=>r.json())
   .then(d=>{
-    document.getElementById("result").innerText =
+    document.getElementById("msg").innerText =
       JSON.stringify(d,null,2);
   });
 }
