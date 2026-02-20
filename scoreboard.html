@@ -27,29 +27,30 @@ th,td{border-bottom:1px solid #333;padding:6px;text-align:center}
 <div class="header">Live Score</div>
 
 <div class="card">
-
-  <div id="teamName"></div>
+  <div id="team">Team</div>
   <div class="score" id="score">0/0 (0.0)</div>
-  <div class="sub">
-    Striker: <span id="striker">-</span> |
-    Non-Striker: <span id="nonStriker">-</span> |
-    Bowler: <span id="bowler">-</span>
+  <div>
+    CRR: <span id="crr">0.00</span> |
+    P'SHIP: <span id="pship">0 (0)</span>
   </div>
 
   <table>
     <thead>
-      <tr><th>Batter</th><th>R</th><th>B</th></tr>
+      <tr>
+        <th>Batter</th><th>R</th><th>B</th><th>4</th><th>6</th><th>SR</th>
+      </tr>
     </thead>
     <tbody id="batBody"></tbody>
   </table>
 
   <table>
     <thead>
-      <tr><th>Bowler</th><th>R</th><th>W</th></tr>
+      <tr>
+        <th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>ECO</th>
+      </tr>
     </thead>
     <tbody id="bowlBody"></tbody>
   </table>
-
 </div>
 
 <div class="grid">
