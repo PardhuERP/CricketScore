@@ -143,7 +143,7 @@ if (!token) {
 }
 
 // Load my team
-fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+fetch(API + "?action=getMyTeam&token=" + token)
   .then(r => r.json())
   .then(d => {
     if (!d.team) {
@@ -159,7 +159,7 @@ fetch(BASE_URL + "?action=getMyTeam&token=" + token)
 
 // Load all teams for dropdown
 function loadAllTeams() {
-  fetch(BASE_URL + "?action=getAllTeams")
+  fetch(API + "?action=getAllTeams")
     .then(r => r.json())
     .then(d => {
       d.teams.forEach(t => {
@@ -208,7 +208,7 @@ function createMatch() {
     finalBallType = customBallType.value;
   }
 
-  let url = BASE_URL 
+  let url = API 
     + "?action=createMatchRequest"
     + "&token=" + token
     + "&fromTeamId=" + FROM_TEAM_ID
