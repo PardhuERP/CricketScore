@@ -142,12 +142,12 @@ if (!token) {
 }
 
 // Load user + team info for header
-fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+fetch(API + "?action=getMyTeam&token=" + token)
   .then(r => r.json())
   .then(teamRes => {
     const teamName = teamRes.team ? teamRes.team[2] : "No Team";
 
-    fetch(BASE_URL + "?action=getUserByToken&token=" + token)
+    fetch(API + "?action=getUserByToken&token=" + token)
       .then(r => r.json())
       .then(userRes => {
         info.innerText = `Logged in as: ${userRes.name} (${teamName})`;
@@ -155,7 +155,7 @@ fetch(BASE_URL + "?action=getMyTeam&token=" + token)
   });
 
 function createTeam() {
-  const url = BASE_URL 
+  const url = API 
     + "?action=createTeam"
     + "&token=" + token
     + "&teamName=" + teamName.value
@@ -171,7 +171,7 @@ function createTeam() {
 }
 
 function loadMyTeam() {
-  fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+  fetch(API + "?action=getMyTeam&token=" + token)
     .then(r => r.json())
     .then(d => {
       if (!d.team) {
