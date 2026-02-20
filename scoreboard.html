@@ -6,248 +6,239 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <style>
+
+/* ===== BODY ===== */
 body{
   margin:0;
-  font-family:Arial,sans-serif;
   background:#02112b;
-  color:#fff;
+  color:white;
+  font-family:Arial,sans-serif;
 }
-.container{padding:16px}
-.title{text-align:center;font-size:34px;font-weight:bold}
-.team{font-size:28px;margin-top:10px}
-.score{
+
+/* ===== HEADER ===== */
+.header{
   text-align:center;
-  font-size:64px;
-  margin:10px 0;
+  padding:14px;
+  font-size:26px;
+  font-weight:bold;
 }
-.info{font-size:22px;margin-bottom:10px}
+
+/* ===== MAIN CARD ===== */
+.card{
+  padding:14px;
+}
+
+/* ===== TEAM NAME ===== */
+.team{
+  font-size:30px;
+  margin-bottom:6px;
+}
+
+/* ===== SCORE ===== */
+.score{
+  font-size:56px;
+  text-align:center;
+  margin:8px 0;
+}
+
+/* ===== INFO LINE ===== */
+.info{
+  font-size:18px;
+  margin-bottom:10px;
+}
+
+/* ===== TABLE ===== */
 table{
   width:100%;
   border-collapse:collapse;
   margin-top:8px;
 }
+
 th,td{
-  padding:10px;
+  border-bottom:1px solid rgba(255,255,255,0.2);
+  padding:6px;
   text-align:center;
-  font-size:22px;
-  border-bottom:1px solid rgba(255,255,255,.2);
+  font-size:16px;
 }
 
-.button-grid{
-  margin-top:16px;
+/* ===== BUTTON GRID ===== */
+.grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:10px;
+  gap:8px;
+  padding:12px;
 }
 
+/* ===== BUTTON ===== */
 .btn{
-  height:75px;
-  border:none;
+  padding:16px;
   border-radius:12px;
-  font-size:30px;
+  text-align:center;
+  font-size:18px;
   font-weight:bold;
-  color:#fff;
+  cursor:pointer;
 }
-.run{background:#2ecc71;}
-.extra{background:#3498db;}
-.wicket{background:#e74c3c;}
-.undo{background:#f1c40f;color:#000;}
+
+.run{ background:#2ecc71; }
+.extra{ background:#3498db; }
+.wkt{ background:#e74c3c; }
+.undo{ background:#f1c40f; color:black; }
 
 </style>
 </head>
-
 <body>
 
-<div class="container">
+<div class="header">Live Score</div>
 
-<div class="title">Live Score</div>
+<div class="card">
+  <div id="team" class="team">Loading...</div>
+  <div id="score" class="score">0/0 (0.0)</div>
+  <div class="info">
+    CRR: <span id="crr">0.00</span>
+  </div>
 
-<div class="team" id="teamName">Team</div>
+  <!-- BATTERS -->
+  <table>
+    <thead>
+      <tr>
+        <th>Batter</th>
+        <th>R</th>
+        <th>B</th>
+      </tr>
+    </thead>
+    <tbody id="batters"></tbody>
+  </table>
 
-<div class="score" id="score">0/0 (0.0)</div>
-
-<div class="info" id="info">
-CRR: 0.00 | P'SHIP: 0 (0)
+  <!-- BOWLER -->
+  <table>
+    <thead>
+      <tr>
+        <th>Bowler</th>
+        <th>R</th>
+        <th>W</th>
+      </tr>
+    </thead>
+    <tbody id="bowler"></tbody>
+  </table>
 </div>
-
-<!-- BATSMAN TABLE -->
-<table>
-<tr>
-<th>Batter</th><th>R</th><th>B</th><th>4</th><th>6</th><th>SR</th>
-</tr>
-<tr>
-<td id="bat1">*</td><td id="bat1r">0</td><td id="bat1b">0</td>
-<td>0</td><td>0</td><td id="bat1sr">0.00</td>
-</tr>
-<tr>
-<td id="bat2"></td><td id="bat2r">0</td><td id="bat2b">0</td>
-<td>0</td><td>0</td><td id="bat2sr">0.00</td>
-</tr>
-</table>
-
-<!-- BOWLER TABLE -->
-<table>
-<tr>
-<th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>ECO</th>
-</tr>
-<tr>
-<td id="bowler">*</td>
-<td id="bo">0.0</td>
-<td>0</td>
-<td id="br">0</td>
-<td id="bw">0</td>
-<td id="be">0.00</td>
-</tr>
-</table>
 
 <!-- BUTTONS -->
-<div class="button-grid">
-
-<button class="btn run" onclick="send(0)">0</button>
-<button class="btn run" onclick="send(1)">1</button>
-<button class="btn run" onclick="send(2)">2</button>
-<button class="btn run" onclick="send(3)">3</button>
-
-<button class="btn run" onclick="send(4)">4</button>
-<button class="btn run" onclick="send(5)">5</button>
-<button class="btn run" onclick="send(6)">6</button>
-<button class="btn extra" onclick="extra('wide')">Wide</button>
-
-<button class="btn extra" onclick="extra('noball')">No Ball</button>
-<button class="btn extra" onclick="extra('legbye')">Leg Bye</button>
-<button class="btn wicket" onclick="wicket()">Wicket</button>
-<button class="btn wicket" onclick="runout()">Run Out</button>
-
-<button class="btn undo" onclick="undo()">Undo</button>
-
+<div class="grid">
+  <div class="btn run" onclick="sendRun(0)">0</div>
+  <div class="btn run" onclick="sendRun(1)">1</div>
+  <div class="btn run" onclick="sendRun(2)">2</div>
+  <div class="btn run" onclick="sendRun(3)">3</div>
+  <div class="btn run" onclick="sendRun(4)">4</div>
+  <div class="btn run" onclick="sendRun(5)">5</div>
+  <div class="btn run" onclick="sendRun(6)">6</div>
+  <div class="btn extra" onclick="sendWide()">Wide</div>
+  <div class="btn extra" onclick="sendNoBall()">No Ball</div>
+  <div class="btn extra" onclick="sendLegBye()">Leg Bye</div>
+  <div class="btn wkt" onclick="sendWicket('Bowled')">Wicket</div>
+  <div class="btn wkt" onclick="sendWicket('Run out')">Run Out</div>
+  <div class="btn undo" onclick="undo()">Undo</div>
 </div>
 
-</div>
+<script src="config.js"></script>
 
 <script>
 
-/* ===== API ===== */
-const API =
-"https://script.google.com/macros/s/AKfycbyxqGY4gx6SPBqwqJAi4q3_RP1hzYie1DO-AeFJ_WREkPt3DPDWnoBUIFMSOs9kC2Ao/exec";
+/* ===== GET MATCH ID FROM URL ===== */
+const matchId = new URLSearchParams(window.location.search).get("matchId");
 
-/* ===== MATCH ===== */
-const matchId = new URLSearchParams(location.search).get("matchId") || "M1";
+/* ===== LOAD SCORE ON PAGE OPEN ===== */
+window.onload = loadScore;
 
-/* ===== API CALL ===== */
-function call(params,cb){
-  const url = API + "?" +
-    Object.keys(params)
-    .map(k=>k+"="+encodeURIComponent(params[k]))
-    .join("&");
-
-  fetch(url)
-  .then(r=>r.json())
-  .then(d=>cb&&cb(d));
-}
-
-/* ===== LOAD SCORE ===== */
+/* ===== FETCH LIVE SCORE ===== */
 function loadScore(){
-
-  call(
-    {action:"getLiveScore",matchId:matchId,innings:1},
-    r=>{
-
-      if(!r) return;
-
-      document.getElementById("score").innerText =
-        `${r.runs||0}/${r.wickets||0} (${r.overs||0}.${r.balls||0})`;
-
-      if(r.batsmen && r.batsmen.length){
-        let b1=r.batsmen[0]||{};
-        let b2=r.batsmen[1]||{};
-
-        bat1.innerText="*"+(b1.playerId||"");
-        bat1r.innerText=b1.runs||0;
-        bat1b.innerText=b1.balls||0;
-        bat1sr.innerText=((b1.runs||0)/(b1.balls||1)*100).toFixed(2);
-
-        bat2.innerText=b2.playerId||"";
-        bat2r.innerText=b2.runs||0;
-        bat2b.innerText=b2.balls||0;
-        bat2sr.innerText=((b2.runs||0)/(b2.balls||1)*100).toFixed(2);
-      }
-
-      if(r.bowlers && r.bowlers.length){
-        let b=r.bowlers[0];
-        bowler.innerText="*"+(b.playerId||"");
-        br.innerText=b.runs||0;
-        bw.innerText=b.wickets||0;
-      }
-
-    }
-  );
+  fetch(API + "?action=getLiveScore&matchId=" + matchId + "&innings=1")
+    .then(r=>r.json())
+    .then(updateUI);
 }
 
-/* ===== SCORE ACTIONS ===== */
+/* ===== UPDATE UI ===== */
+function updateUI(data){
 
-function send(run){
-  call({
-    action:"addBall",
-    matchId:matchId,
-    innings:1,
-    runBat:run,
-    isWide:false,
-    isNoBall:false,
-    isBye:false,
-    isLegBye:false,
-    extraRuns:0,
-    wicket:false
-  },loadScore);
+  if(!data || !data.score) return;
+
+  const s = data.score;
+
+  document.getElementById("score").innerText =
+    s.runs + "/" + s.wickets + " (" + s.overs + "." + s.balls + ")";
+
+  document.getElementById("crr").innerText =
+    s.overs > 0 ? (s.runs / s.overs).toFixed(2) : "0.00";
+
+  /* BATTERS */
+  let batHtml="";
+  s.batsmen.forEach(b=>{
+    batHtml +=
+      "<tr>" +
+      "<td>"+b.playerId+"</td>" +
+      "<td>"+b.runs+"</td>" +
+      "<td>"+b.balls+"</td>" +
+      "</tr>";
+  });
+  document.getElementById("batters").innerHTML = batHtml;
+
+  /* BOWLER */
+  let bowlHtml="";
+  s.bowlers.forEach(b=>{
+    bowlHtml +=
+      "<tr>" +
+      "<td>"+b.playerId+"</td>" +
+      "<td>"+b.runs+"</td>" +
+      "<td>"+b.wickets+"</td>" +
+      "</tr>";
+  });
+  document.getElementById("bowler").innerHTML = bowlHtml;
 }
 
-function extra(type){
-  call({
-    action:"addBall",
-    matchId:matchId,
-    innings:1,
-    runBat:0,
-    isWide:type==="wide",
-    isNoBall:type==="noball",
-    isBye:false,
-    isLegBye:false,
-    extraRuns:1,
-    wicket:false
-  },loadScore);
+/* ===== SEND BALL ===== */
+function sendRun(r){
+  sendBall({runBat:r});
 }
 
-function wicket(){
-  call({
-    action:"addBall",
-    matchId:matchId,
-    innings:1,
-    runBat:0,
-    extraRuns:0,
-    wicket:true,
-    wicketType:"Bowled"
-  },loadScore);
+function sendWide(){
+  sendBall({runBat:0,isWide:true,extraRuns:1});
 }
 
-function runout(){
-  call({
-    action:"addBall",
-    matchId:matchId,
-    innings:1,
-    runBat:0,
-    extraRuns:0,
-    wicket:true,
-    wicketType:"Run out"
-  },loadScore);
+function sendNoBall(){
+  sendBall({runBat:0,isNoBall:true,extraRuns:1});
 }
 
+function sendLegBye(){
+  sendBall({runBat:0,isLegBye:true,extraRuns:1});
+}
+
+function sendWicket(type){
+  sendBall({runBat:0,wicket:true,wicketType:type});
+}
+
+function sendBall(data){
+
+  data.action="addBall";
+  data.matchId=matchId;
+  data.innings=1;
+
+  const params =
+    Object.keys(data)
+      .map(k => k + "=" + encodeURIComponent(data[k]))
+      .join("&");
+
+  fetch(API + "?" + params)
+    .then(r=>r.json())
+    .then(()=>{
+      loadScore();   // ALWAYS REFRESH AFTER BALL
+    });
+}
+
+/* ===== UNDO ===== */
 function undo(){
-  call({action:"undoLastBall",matchId:matchId,innings:1},loadScore);
+  fetch(API + "?action=undoLastBall&matchId=" + matchId + "&innings=1")
+    .then(r=>r.json())
+    .then(loadScore);
 }
-
-/* ===== AUTO REFRESH ===== */
-setInterval(loadScore,3000);
-
-/* ===== INIT ===== */
-loadScore();
 
 </script>
 
