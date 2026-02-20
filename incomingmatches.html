@@ -99,7 +99,7 @@ if (!token) {
 }
 
 // Get my team first
-fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+fetch(API + "?action=getMyTeam&token=" + token)
   .then(r => r.json())
   .then(d => {
     TEAM_ID = d.team[0];
@@ -107,7 +107,7 @@ fetch(BASE_URL + "?action=getMyTeam&token=" + token)
   });
 
 function loadIncoming() {
-  fetch(BASE_URL + "?action=getIncomingRequests&teamId=" + TEAM_ID)
+  fetch(API + "?action=getIncomingRequests&teamId=" + TEAM_ID)
     .then(r => r.json())
     .then(d => {
       list.innerHTML = "";
@@ -143,7 +143,7 @@ function loadIncoming() {
 function acceptMatch(id) {
   var msg = document.getElementById("reply_" + id).value;
 
-  fetch(BASE_URL 
+  fetch(API 
     + "?action=acceptMatch"
     + "&token=" + token
     + "&requestId=" + id
@@ -159,7 +159,7 @@ function acceptMatch(id) {
 function rejectMatch(id) {
   var msg = document.getElementById("reply_" + id).value;
 
-  fetch(BASE_URL 
+  fetch(API 
     + "?action=rejectMatch"
     + "&token=" + token
     + "&requestId=" + id
