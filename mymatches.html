@@ -90,7 +90,7 @@ if (!token) {
 }
 
 // Get my team
-fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+fetch(API + "?action=getMyTeam&token=" + token)
   .then(r => r.json())
   .then(d => {
     TEAM_ID = d.team[0];
@@ -98,7 +98,7 @@ fetch(BASE_URL + "?action=getMyTeam&token=" + token)
   });
 
 function loadMyMatches() {
-  fetch(BASE_URL + "?action=getMyMatches&teamId=" + TEAM_ID)
+  fetch(API + "?action=getMyMatches&teamId=" + TEAM_ID)
     .then(r => r.json())
     .then(d => {
       list.innerHTML = "";
@@ -145,7 +145,7 @@ function setupMatch(matchId) {
 }
 
 function openScoreboard(matchId) {
-  fetch(BASE_URL + "?action=getOpeningPlayers&matchId=" + matchId)
+  fetch(API + "?action=getOpeningPlayers&matchId=" + matchId)
     .then(r => r.json())
     .then(d => {
       if (!d.data) {
