@@ -2,20 +2,22 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Live Cricket Scorer</title>
+<title>Live Scoreboard</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <style>
 body{margin:0;background:#0b1220;color:#fff;font-family:Arial}
-.header{text-align:center;padding:12px;font-size:22px;font-weight:bold}
-.card{padding:10px}
-.score{font-size:42px;text-align:center}
+.header{text-align:center;padding:12px;font-size:20px;font-weight:bold}
+.card{padding:12px}
+.score{font-size:38px;text-align:center;margin:10px 0}
+.sub{text-align:center;color:#aaa;margin-bottom:10px}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px}
-.btn{padding:18px;border-radius:10px;text-align:center;font-size:18px;font-weight:bold;cursor:pointer}
+.btn{padding:16px;border-radius:10px;text-align:center;font-size:16px;font-weight:bold;cursor:pointer}
 .run{background:#2ecc71}
 .extra{background:#3498db}
 .wkt{background:#e74c3c}
 .undo{background:#f1c40f;color:#000}
+.swap{background:#9b59b6}
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border-bottom:1px solid #333;padding:6px;text-align:center}
 </style>
@@ -25,33 +27,29 @@ th,td{border-bottom:1px solid #333;padding:6px;text-align:center}
 <div class="header">Live Score</div>
 
 <div class="card">
-  <div id="team">Team</div>
-  <div class="score" id="score">0/0 (0.0)</div>
-  <div>CRR: <span id="crr">0.00</span></div>
 
-  <!-- BATSMAN TABLE -->
+  <div id="teamName"></div>
+  <div class="score" id="score">0/0 (0.0)</div>
+  <div class="sub">
+    Striker: <span id="striker">-</span> |
+    Non-Striker: <span id="nonStriker">-</span> |
+    Bowler: <span id="bowler">-</span>
+  </div>
+
   <table>
     <thead>
-      <tr>
-        <th>Batter</th>
-        <th>R</th>
-        <th>B</th>
-      </tr>
+      <tr><th>Batter</th><th>R</th><th>B</th></tr>
     </thead>
     <tbody id="batBody"></tbody>
   </table>
 
-  <!-- BOWLER TABLE -->
   <table>
     <thead>
-      <tr>
-        <th>Bowler</th>
-        <th>R</th>
-        <th>W</th>
-      </tr>
+      <tr><th>Bowler</th><th>R</th><th>W</th></tr>
     </thead>
     <tbody id="bowlBody"></tbody>
   </table>
+
 </div>
 
 <div class="grid">
@@ -60,123 +58,104 @@ th,td{border-bottom:1px solid #333;padding:6px;text-align:center}
   <div class="btn run" onclick="sendRun(2)">2</div>
   <div class="btn run" onclick="sendRun(3)">3</div>
   <div class="btn run" onclick="sendRun(4)">4</div>
-  <div class="btn run" onclick="sendRun(5)">5</div>
   <div class="btn run" onclick="sendRun(6)">6</div>
 
   <div class="btn extra" onclick="sendWide()">Wide</div>
-  <div class="btn extra" onclick="sendNoBall()">No Ball</div>
-  <div class="btn extra" onclick="sendLegBye()">Leg Bye</div>
+  <div class="btn extra" onclick="sendNoBall()">NoBall</div>
+  <div class="btn extra" onclick="sendLegBye()">LegBye</div>
 
   <div class="btn wkt" onclick="sendWicket('Bowled')">Wicket</div>
-  <div class="btn wkt" onclick="sendWicket('Run out')">Run Out</div>
-
+  <div class="btn swap" onclick="manualSwap()">Swap</div>
   <div class="btn undo" onclick="undo()">Undo</div>
 </div>
 
 <script>
 
-/* =========================
-   API CONFIG
-========================= */
-const API = "https://script.google.com/macros/s/AKfycbyxqGY4gx6SPBqwqJAi4q3_RP1hzYie1DO-AeFJ_WREkPt3DPDWnoBUIFMSOs9kC2Ao/exec";
+const API = "YOUR_NEW_GAS_EXEC_URL";
+const matchId = new URLSearchParams(window.location.search).get("matchId");
+let innings = 1;
 
-/* =========================
-   GET MATCH ID
-========================= */
-const matchId = new URLSearchParams(window.location.search).get("matchId") || "M1";
+/* ================= LOAD INITIAL ================= */
 
-/* =========================
-   UNIVERSAL API CALL
-========================= */
-function callApi(data, callback){
+window.onload = function(){
+  loadOpening();
+  loadScore();
+};
 
-  if(!data.action){
-    console.error("No action provided");
-    return;
-  }
-
+function callApi(data, cb){
   const params = Object.keys(data)
     .map(k => k + "=" + encodeURIComponent(data[k]))
     .join("&");
 
   fetch(API + "?" + params)
     .then(r => r.json())
-    .then(d => {
-      console.log("API:", d);
-      if(callback) callback(d);
-    })
-    .catch(err => console.error(err));
+    .then(d=>{
+      if(cb) cb(d);
+    });
 }
 
-/* =========================
-   LOAD SCORE
-========================= */
-window.onload = loadScore;
+/* ================= OPENING PLAYERS ================= */
+
+function loadOpening(){
+  callApi({
+    action:"getOpeningPlayers",
+    matchId:matchId
+  }, function(res){
+    if(res.status==="OK"){
+      document.getElementById("striker").innerText = res.strikerId;
+      document.getElementById("nonStriker").innerText = res.nonStrikerId;
+      document.getElementById("bowler").innerText = res.bowlerId;
+    }
+  });
+}
+
+/* ================= LOAD SCORE ================= */
 
 function loadScore(){
   callApi({
     action:"getLiveScore",
     matchId:matchId,
-    innings:1
-  }, updateUI);
-}
+    innings:innings
+  }, function(res){
 
-/* =========================
-   UPDATE UI
-========================= */
-function updateUI(res){
+    if(!res.score) return;
 
-  if(!res.score) return;
+    const s = res.score;
 
-  const s = res.score;
+    document.getElementById("score").innerText =
+      s.runs + "/" + s.wickets +
+      " (" + s.overs + "." + s.balls + ")";
 
-  document.getElementById("score").innerText =
-    s.runs + "/" + s.wickets + " (" + s.overs + "." + s.balls + ")";
-
-  document.getElementById("crr").innerText =
-    s.overs > 0 ? (s.runs / s.overs).toFixed(2) : "0.00";
-
-  /* BATTERS */
-  let batHtml="";
-  s.batsmen.forEach(b=>{
-    batHtml += `
-      <tr>
+    let batHtml="";
+    s.batsmen.forEach(b=>{
+      batHtml += `<tr>
         <td>${b.playerId}</td>
         <td>${b.runs}</td>
         <td>${b.balls}</td>
-      </tr>
-    `;
-  });
-  document.getElementById("batBody").innerHTML = batHtml;
+      </tr>`;
+    });
+    document.getElementById("batBody").innerHTML = batHtml;
 
-  /* BOWLER */
-  let bowlHtml="";
-  s.bowlers.forEach(b=>{
-    bowlHtml += `
-      <tr>
+    let bowlHtml="";
+    s.bowlers.forEach(b=>{
+      bowlHtml += `<tr>
         <td>${b.playerId}</td>
         <td>${b.runs}</td>
         <td>${b.wickets}</td>
-      </tr>
-    `;
+      </tr>`;
+    });
+    document.getElementById("bowlBody").innerHTML = bowlHtml;
   });
-  document.getElementById("bowlBody").innerHTML = bowlHtml;
 }
 
-/* =========================
-   SEND BALL
-========================= */
+/* ================= SCORING ================= */
+
 function sendRun(r){
   callApi({
     action:"addBall",
     matchId:matchId,
-    innings:1,
-    runBat:r,
-    isWide:false,
-    isNoBall:false,
-    isLegBye:false,
-    extraRuns:0,
-    wicket:false
+    innings:innings,
+    runBat:r
   }, loadScore);
 }
 
@@ -184,8 +163,7 @@ function sendWide(){
   callApi({
     action:"addBall",
     matchId:matchId,
-    innings:1,
-    runBat:0,
+    innings:innings,
     isWide:true,
     extraRuns:1
   }, loadScore);
@@ -195,8 +173,7 @@ function sendNoBall(){
   callApi({
     action:"addBall",
     matchId:matchId,
-    innings:1,
-    runBat:0,
+    innings:innings,
     isNoBall:true,
     extraRuns:1
   }, loadScore);
@@ -206,8 +183,7 @@ function sendLegBye(){
   callApi({
     action:"addBall",
     matchId:matchId,
-    innings:1,
-    runBat:0,
+    innings:innings,
     isLegBye:true,
     extraRuns:1
   }, loadScore);
@@ -217,22 +193,25 @@ function sendWicket(type){
   callApi({
     action:"addBall",
     matchId:matchId,
-    innings:1,
-    runBat:0,
+    innings:innings,
     wicket:true,
     wicketType:type
   }, loadScore);
 }
 
-/* =========================
-   UNDO
-========================= */
 function undo(){
   callApi({
     action:"undoLastBall",
     matchId:matchId,
-    innings:1
+    innings:innings
   }, loadScore);
+}
+
+function manualSwap(){
+  let s = document.getElementById("striker").innerText;
+  let ns = document.getElementById("nonStriker").innerText;
+  document.getElementById("striker").innerText = ns;
+  document.getElementById("nonStriker").innerText = s;
 }
 
 </script>
