@@ -142,19 +142,19 @@ function hideAll() {
 /* API CALLS */
 
 function signup() {
-  fetch(BASE_URL + "?action=signup&name=" + su_name.value + "&email=" + su_email.value + "&password=" + su_password.value)
+  fetch(API + "?action=signup&name=" + su_name.value + "&email=" + su_email.value + "&password=" + su_password.value)
     .then(r => r.json())
     .then(d => show(d));
 }
 
 function verifyOtp() {
-  fetch(BASE_URL + "?action=verifyOtp&email=" + vo_email.value + "&otp=" + vo_otp.value)
+  fetch(API + "?action=verifyOtp&email=" + vo_email.value + "&otp=" + vo_otp.value)
     .then(r => r.json())
     .then(d => show(d));
 }
 
 function login() {
-  fetch(BASE_URL + "?action=login&email=" + li_email.value + "&password=" + li_password.value)
+  fetch(API + "?action=login&email=" + li_email.value + "&password=" + li_password.value)
     .then(r => r.json())
     .then(d => {
       if (d.token) {
@@ -169,7 +169,7 @@ function login() {
 }
 
 function forgotPassword() {
-  fetch(BASE_URL + "?action=forgotPassword&email=" + fp_email.value)
+  fetch(API + "?action=forgotPassword&email=" + fp_email.value)
     .then(r => r.json())
     .then(d => show(d));
 }
