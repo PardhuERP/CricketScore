@@ -2,88 +2,21 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Live Score</title>
+<title>Live Cricket Scorer</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-
 <style>
-
-/* ===== BODY ===== */
-body{
-  margin:0;
-  background:#02112b;
-  color:white;
-  font-family:Arial,sans-serif;
-}
-
-/* ===== HEADER ===== */
-.header{
-  text-align:center;
-  padding:14px;
-  font-size:26px;
-  font-weight:bold;
-}
-
-/* ===== MAIN CARD ===== */
-.card{
-  padding:14px;
-}
-
-/* ===== TEAM NAME ===== */
-.team{
-  font-size:30px;
-  margin-bottom:6px;
-}
-
-/* ===== SCORE ===== */
-.score{
-  font-size:56px;
-  text-align:center;
-  margin:8px 0;
-}
-
-/* ===== INFO LINE ===== */
-.info{
-  font-size:18px;
-  margin-bottom:10px;
-}
-
-/* ===== TABLE ===== */
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:8px;
-}
-
-th,td{
-  border-bottom:1px solid rgba(255,255,255,0.2);
-  padding:6px;
-  text-align:center;
-  font-size:16px;
-}
-
-/* ===== BUTTON GRID ===== */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-  padding:12px;
-}
-
-/* ===== BUTTON ===== */
-.btn{
-  padding:16px;
-  border-radius:12px;
-  text-align:center;
-  font-size:18px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.run{ background:#2ecc71; }
-.extra{ background:#3498db; }
-.wkt{ background:#e74c3c; }
-.undo{ background:#f1c40f; color:black; }
-
+body{margin:0;background:#0b1220;color:#fff;font-family:Arial}
+.header{text-align:center;padding:12px;font-size:22px;font-weight:bold}
+.card{padding:10px}
+.score{font-size:42px;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px}
+.btn{padding:18px;border-radius:10px;text-align:center;font-size:18px;font-weight:bold;cursor:pointer}
+.run{background:#2ecc71}
+.extra{background:#3498db}
+.wkt{background:#e74c3c}
+.undo{background:#f1c40f;color:#000}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border-bottom:1px solid #333;padding:6px;text-align:center}
 </style>
 </head>
 <body>
@@ -91,155 +24,57 @@ th,td{
 <div class="header">Live Score</div>
 
 <div class="card">
-  <div id="team" class="team">Loading...</div>
-  <div id="score" class="score">0/0 (0.0)</div>
-  <div class="info">
-    CRR: <span id="crr">0.00</span>
-  </div>
+  <div id="team">Warriors</div>
+  <div class="score" id="score">0/0 (0.0)</div>
+  <div>CRR: <span id="crr">0.00</span> | P'SHIP: <span id="pship">0 (0)</span></div>
 
-  <!-- BATTERS -->
   <table>
-    <thead>
-      <tr>
-        <th>Batter</th>
-        <th>R</th>
-        <th>B</th>
-      </tr>
-    </thead>
-    <tbody id="batters"></tbody>
+    <tr><th>Batter</th><th>R</th><th>B</th><th>4</th><th>6</th><th>SR</th></tr>
+    <tr><td>*A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0.00</td></tr>
+    <tr><td>B</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0.00</td></tr>
   </table>
 
-  <!-- BOWLER -->
   <table>
-    <thead>
-      <tr>
-        <th>Bowler</th>
-        <th>R</th>
-        <th>W</th>
-      </tr>
-    </thead>
-    <tbody id="bowler"></tbody>
+    <tr><th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>ECO</th></tr>
+    <tr><td>*1</td><td>0.0</td><td>0</td><td>0</td><td>0</td><td>0.00</td></tr>
   </table>
 </div>
 
-<!-- BUTTONS -->
 <div class="grid">
-  <div class="btn run" onclick="sendRun(0)">0</div>
-  <div class="btn run" onclick="sendRun(1)">1</div>
-  <div class="btn run" onclick="sendRun(2)">2</div>
-  <div class="btn run" onclick="sendRun(3)">3</div>
-  <div class="btn run" onclick="sendRun(4)">4</div>
-  <div class="btn run" onclick="sendRun(5)">5</div>
-  <div class="btn run" onclick="sendRun(6)">6</div>
-  <div class="btn extra" onclick="sendWide()">Wide</div>
-  <div class="btn extra" onclick="sendNoBall()">No Ball</div>
-  <div class="btn extra" onclick="sendLegBye()">Leg Bye</div>
+  <div class="btn run" onclick="send(0)">0</div>
+  <div class="btn run" onclick="send(1)">1</div>
+  <div class="btn run" onclick="send(2)">2</div>
+  <div class="btn run" onclick="send(3)">3</div>
+  <div class="btn run" onclick="send(4)">4</div>
+  <div class="btn run" onclick="send(5)">5</div>
+  <div class="btn run" onclick="send(6)">6</div>
+  <div class="btn extra" onclick="sendExtra('Wide')">Wide</div>
+  <div class="btn extra" onclick="sendExtra('NoBall')">No Ball</div>
+  <div class="btn extra" onclick="sendExtra('LegBye')">Leg Bye</div>
   <div class="btn wkt" onclick="sendWicket('Bowled')">Wicket</div>
   <div class="btn wkt" onclick="sendWicket('Run out')">Run Out</div>
   <div class="btn undo" onclick="undo()">Undo</div>
 </div>
 
-<script src="config.js"></script>
-
 <script>
+const API = "https://script.google.com/macros/s/AKfycbyxqGY4gx6SPBqwqJAi4q3_RP1hzYie1DO-AeFJ_WREkPt3DPDWnoBUIFMSOs9kC2Ao/exec";
 
-/* ===== GET MATCH ID FROM URL ===== */
-const matchId = new URLSearchParams(window.location.search).get("matchId");
-
-/* ===== LOAD SCORE ON PAGE OPEN ===== */
-window.onload = loadScore;
-
-/* ===== FETCH LIVE SCORE ===== */
-function loadScore(){
-  fetch(API + "?action=getLiveScore&matchId=" + matchId + "&innings=1")
-    .then(r=>r.json())
-    .then(updateUI);
+function send(r){
+  callApi({runBat:r,isWide:false,isNoBall:false,wicket:false});
 }
-
-/* ===== UPDATE UI ===== */
-function updateUI(data){
-
-  if(!data || !data.score) return;
-
-  const s = data.score;
-
-  document.getElementById("score").innerText =
-    s.runs + "/" + s.wickets + " (" + s.overs + "." + s.balls + ")";
-
-  document.getElementById("crr").innerText =
-    s.overs > 0 ? (s.runs / s.overs).toFixed(2) : "0.00";
-
-  /* BATTERS */
-  let batHtml="";
-  s.batsmen.forEach(b=>{
-    batHtml +=
-      "<tr>" +
-      "<td>"+b.playerId+"</td>" +
-      "<td>"+b.runs+"</td>" +
-      "<td>"+b.balls+"</td>" +
-      "</tr>";
-  });
-  document.getElementById("batters").innerHTML = batHtml;
-
-  /* BOWLER */
-  let bowlHtml="";
-  s.bowlers.forEach(b=>{
-    bowlHtml +=
-      "<tr>" +
-      "<td>"+b.playerId+"</td>" +
-      "<td>"+b.runs+"</td>" +
-      "<td>"+b.wickets+"</td>" +
-      "</tr>";
-  });
-  document.getElementById("bowler").innerHTML = bowlHtml;
+function sendExtra(type){
+  if(type==="Wide") callApi({runBat:0,isWide:true,isNoBall:false,wicket:false,extraRuns:1});
+  if(type==="NoBall") callApi({runBat:0,isWide:false,isNoBall:true,wicket:false,extraRuns:1});
+  if(type==="LegBye") callApi({runBat:0,isWide:false,isNoBall:false,isLegBye:true,extraRuns:1});
 }
-
-/* ===== SEND BALL ===== */
-function sendRun(r){
-  sendBall({runBat:r});
-}
-
-function sendWide(){
-  sendBall({runBat:0,isWide:true,extraRuns:1});
-}
-
-function sendNoBall(){
-  sendBall({runBat:0,isNoBall:true,extraRuns:1});
-}
-
-function sendLegBye(){
-  sendBall({runBat:0,isLegBye:true,extraRuns:1});
-}
-
 function sendWicket(type){
-  sendBall({runBat:0,wicket:true,wicketType:type});
+  callApi({runBat:0,isWide:false,isNoBall:false,wicket:true,wicketType:type});
 }
-
-function sendBall(data){
-
-  data.action="addBall";
-  data.matchId=matchId;
-  data.innings=1;
-
-  const params =
-    Object.keys(data)
-      .map(k => k + "=" + encodeURIComponent(data[k]))
-      .join("&");
-
-  fetch(API + "?" + params)
-    .then(r=>r.json())
-    .then(()=>{
-      loadScore();   // ALWAYS REFRESH AFTER BALL
-    });
+function callApi(data){
+  fetch(API,{method:"POST",body:JSON.stringify(data)})
+    .then(r=>r.json()).then(d=>console.log(d));
 }
-
-/* ===== UNDO ===== */
-function undo(){
-  fetch(API + "?action=undoLastBall&matchId=" + matchId + "&innings=1")
-    .then(r=>r.json())
-    .then(loadScore);
-}
-
+function undo(){alert("Undo coming next");}
 </script>
 
 </body>
