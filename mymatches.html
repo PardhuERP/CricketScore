@@ -93,8 +93,15 @@ if (!token) {
 fetch(API + "?action=getMyTeam&token=" + token)
   .then(r => r.json())
   .then(d => {
+
+    if (d.status !== "OK" || !d.team){
+      console.log("No Team", d);
+      return;
+    }
+
     TEAM_ID = d.team[0];
     loadMyMatches();
+
   });
 
 function loadMyMatches() {
