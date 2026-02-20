@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Live Cricket Scorer</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
 <style>
 body{margin:0;background:#0b1220;color:#fff;font-family:Arial}
 .header{text-align:center;padding:12px;font-size:22px;font-weight:bold}
@@ -24,57 +25,216 @@ th,td{border-bottom:1px solid #333;padding:6px;text-align:center}
 <div class="header">Live Score</div>
 
 <div class="card">
-  <div id="team">Warriors</div>
+  <div id="team">Team</div>
   <div class="score" id="score">0/0 (0.0)</div>
-  <div>CRR: <span id="crr">0.00</span> | P'SHIP: <span id="pship">0 (0)</span></div>
+  <div>CRR: <span id="crr">0.00</span></div>
 
+  <!-- BATSMAN TABLE -->
   <table>
-    <tr><th>Batter</th><th>R</th><th>B</th><th>4</th><th>6</th><th>SR</th></tr>
-    <tr><td>*A</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0.00</td></tr>
-    <tr><td>B</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0.00</td></tr>
+    <thead>
+      <tr>
+        <th>Batter</th>
+        <th>R</th>
+        <th>B</th>
+      </tr>
+    </thead>
+    <tbody id="batBody"></tbody>
   </table>
 
+  <!-- BOWLER TABLE -->
   <table>
-    <tr><th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>ECO</th></tr>
-    <tr><td>*1</td><td>0.0</td><td>0</td><td>0</td><td>0</td><td>0.00</td></tr>
+    <thead>
+      <tr>
+        <th>Bowler</th>
+        <th>R</th>
+        <th>W</th>
+      </tr>
+    </thead>
+    <tbody id="bowlBody"></tbody>
   </table>
 </div>
 
 <div class="grid">
-  <div class="btn run" onclick="send(0)">0</div>
-  <div class="btn run" onclick="send(1)">1</div>
-  <div class="btn run" onclick="send(2)">2</div>
-  <div class="btn run" onclick="send(3)">3</div>
-  <div class="btn run" onclick="send(4)">4</div>
-  <div class="btn run" onclick="send(5)">5</div>
-  <div class="btn run" onclick="send(6)">6</div>
-  <div class="btn extra" onclick="sendExtra('Wide')">Wide</div>
-  <div class="btn extra" onclick="sendExtra('NoBall')">No Ball</div>
-  <div class="btn extra" onclick="sendExtra('LegBye')">Leg Bye</div>
+  <div class="btn run" onclick="sendRun(0)">0</div>
+  <div class="btn run" onclick="sendRun(1)">1</div>
+  <div class="btn run" onclick="sendRun(2)">2</div>
+  <div class="btn run" onclick="sendRun(3)">3</div>
+  <div class="btn run" onclick="sendRun(4)">4</div>
+  <div class="btn run" onclick="sendRun(5)">5</div>
+  <div class="btn run" onclick="sendRun(6)">6</div>
+
+  <div class="btn extra" onclick="sendWide()">Wide</div>
+  <div class="btn extra" onclick="sendNoBall()">No Ball</div>
+  <div class="btn extra" onclick="sendLegBye()">Leg Bye</div>
+
   <div class="btn wkt" onclick="sendWicket('Bowled')">Wicket</div>
   <div class="btn wkt" onclick="sendWicket('Run out')">Run Out</div>
+
   <div class="btn undo" onclick="undo()">Undo</div>
 </div>
 
 <script>
+
+/* =========================
+   API CONFIG
+========================= */
 const API = "https://script.google.com/macros/s/AKfycbyxqGY4gx6SPBqwqJAi4q3_RP1hzYie1DO-AeFJ_WREkPt3DPDWnoBUIFMSOs9kC2Ao/exec";
 
-function send(r){
-  callApi({runBat:r,isWide:false,isNoBall:false,wicket:false});
+/* =========================
+   GET MATCH ID
+========================= */
+const matchId = new URLSearchParams(window.location.search).get("matchId") || "M1";
+
+/* =========================
+   UNIVERSAL API CALL
+========================= */
+function callApi(data, callback){
+
+  if(!data.action){
+    console.error("No action provided");
+    return;
+  }
+
+  const params = Object.keys(data)
+    .map(k => k + "=" + encodeURIComponent(data[k]))
+    .join("&");
+
+  fetch(API + "?" + params)
+    .then(r => r.json())
+    .then(d => {
+      console.log("API:", d);
+      if(callback) callback(d);
+    })
+    .catch(err => console.error(err));
 }
-function sendExtra(type){
-  if(type==="Wide") callApi({runBat:0,isWide:true,isNoBall:false,wicket:false,extraRuns:1});
-  if(type==="NoBall") callApi({runBat:0,isWide:false,isNoBall:true,wicket:false,extraRuns:1});
-  if(type==="LegBye") callApi({runBat:0,isWide:false,isNoBall:false,isLegBye:true,extraRuns:1});
+
+/* =========================
+   LOAD SCORE
+========================= */
+window.onload = loadScore;
+
+function loadScore(){
+  callApi({
+    action:"getLiveScore",
+    matchId:matchId,
+    innings:1
+  }, updateUI);
 }
+
+/* =========================
+   UPDATE UI
+========================= */
+function updateUI(res){
+
+  if(!res.score) return;
+
+  const s = res.score;
+
+  document.getElementById("score").innerText =
+    s.runs + "/" + s.wickets + " (" + s.overs + "." + s.balls + ")";
+
+  document.getElementById("crr").innerText =
+    s.overs > 0 ? (s.runs / s.overs).toFixed(2) : "0.00";
+
+  /* BATTERS */
+  let batHtml="";
+  s.batsmen.forEach(b=>{
+    batHtml += `
+      <tr>
+        <td>${b.playerId}</td>
+        <td>${b.runs}</td>
+        <td>${b.balls}</td>
+      </tr>
+    `;
+  });
+  document.getElementById("batBody").innerHTML = batHtml;
+
+  /* BOWLER */
+  let bowlHtml="";
+  s.bowlers.forEach(b=>{
+    bowlHtml += `
+      <tr>
+        <td>${b.playerId}</td>
+        <td>${b.runs}</td>
+        <td>${b.wickets}</td>
+      </tr>
+    `;
+  });
+  document.getElementById("bowlBody").innerHTML = bowlHtml;
+}
+
+/* =========================
+   SEND BALL
+========================= */
+function sendRun(r){
+  callApi({
+    action:"addBall",
+    matchId:matchId,
+    innings:1,
+    runBat:r,
+    isWide:false,
+    isNoBall:false,
+    isLegBye:false,
+    extraRuns:0,
+    wicket:false
+  }, loadScore);
+}
+
+function sendWide(){
+  callApi({
+    action:"addBall",
+    matchId:matchId,
+    innings:1,
+    runBat:0,
+    isWide:true,
+    extraRuns:1
+  }, loadScore);
+}
+
+function sendNoBall(){
+  callApi({
+    action:"addBall",
+    matchId:matchId,
+    innings:1,
+    runBat:0,
+    isNoBall:true,
+    extraRuns:1
+  }, loadScore);
+}
+
+function sendLegBye(){
+  callApi({
+    action:"addBall",
+    matchId:matchId,
+    innings:1,
+    runBat:0,
+    isLegBye:true,
+    extraRuns:1
+  }, loadScore);
+}
+
 function sendWicket(type){
-  callApi({runBat:0,isWide:false,isNoBall:false,wicket:true,wicketType:type});
+  callApi({
+    action:"addBall",
+    matchId:matchId,
+    innings:1,
+    runBat:0,
+    wicket:true,
+    wicketType:type
+  }, loadScore);
 }
-function callApi(data){
-  fetch(API,{method:"POST",body:JSON.stringify(data)})
-    .then(r=>r.json()).then(d=>console.log(d));
+
+/* =========================
+   UNDO
+========================= */
+function undo(){
+  callApi({
+    action:"undoLastBall",
+    matchId:matchId,
+    innings:1
+  }, loadScore);
 }
-function undo(){alert("Undo coming next");}
+
 </script>
 
 </body>
