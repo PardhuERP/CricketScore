@@ -75,7 +75,7 @@ function resetPassword(){
 
   const newPass = document.getElementById("newPassword").value;
 
-  fetch(BASE_URL +
+  fetch(API +
     "?action=resetPassword" +
     "&token=" + token +
     "&newPassword=" + newPass
