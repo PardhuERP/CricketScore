@@ -75,7 +75,7 @@ if (!token || !matchId) {
 }
 
 // Get my team
-fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+fetch(API + "?action=getMyTeam&token=" + token)
   .then(r => r.json())
   .then(d => {
     TEAM_ID = d.team[0];
@@ -84,7 +84,7 @@ fetch(BASE_URL + "?action=getMyTeam&token=" + token)
   });
 
 function loadPlayers() {
-  fetch(BASE_URL + "?action=getPlayers&teamId=" + TEAM_ID)
+  fetch(API + "?action=getPlayers&teamId=" + TEAM_ID)
     .then(r => r.json())
     .then(d => {
       PLAYER_DATA = d.players;
@@ -191,7 +191,7 @@ function saveXI() {
     });
   });
 
-  fetch(BASE_URL + "?action=savePlaying11", {
+  fetch(API + "?action=savePlaying11", {
     method: "POST",
     body: JSON.stringify({
       matchId: matchId,
