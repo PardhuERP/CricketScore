@@ -107,12 +107,12 @@ if (!token) {
 }
 
 // Get user + team info
-fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+fetch(API + "?action=getMyTeam&token=" + token)
   .then(r => r.json())
   .then(teamRes => {
     const teamName = teamRes.team ? teamRes.team[2] : "No Team";
 
-    fetch(BASE_URL + "?action=getUserByToken&token=" + token)
+    fetch(API + "?action=getUserByToken&token=" + token)
       .then(r => r.json())
       .then(userRes => {
         userInfo.innerText = `Logged in as: ${userRes.name} (${teamName})`;
