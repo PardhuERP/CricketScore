@@ -83,7 +83,7 @@ if (!token) {
 }
 
 // Get my team
-fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+fetch(API + "?action=getMyTeam&token=" + token)
   .then(r => r.json())
   .then(d => {
     TEAM_ID = d.team[0];
@@ -91,7 +91,7 @@ fetch(BASE_URL + "?action=getMyTeam&token=" + token)
   });
 
 function loadOpenMatches() {
-  fetch(BASE_URL + "?action=getOpenMatches")
+  fetch(API + "?action=getOpenMatches")
     .then(r => r.json())
     .then(d => {
       list.innerHTML = "";
@@ -131,7 +131,7 @@ function loadOpenMatches() {
 
 function acceptMatch(id) {
   var msg = document.getElementById("reply_" + id).value;
-  fetch(BASE_URL + "?action=acceptMatch&token=" + token + "&requestId=" + id + "&teamId=" + TEAM_ID + "&message=" + encodeURIComponent(msg))
+  fetch(API + "?action=acceptMatch&token=" + token + "&requestId=" + id + "&teamId=" + TEAM_ID + "&message=" + encodeURIComponent(msg))
     .then(r => r.json())
     .then(d => {
       alert(d.message);
