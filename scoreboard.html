@@ -27,9 +27,18 @@ th,td{border-bottom:1px solid #333;padding:6px;text-align:center}
 <div class="header">Live Score</div>
 
 <div class="card">
+
   <div id="team">Team</div>
+
   <div class="score" id="score">0/0 (0.0)</div>
-  <div>
+
+  <div class="sub">
+    Striker: <span id="striker">-</span> |
+    Non-Striker: <span id="nonStriker">-</span> |
+    Bowler: <span id="bowler">-</span>
+  </div>
+
+  <div class="sub">
     CRR: <span id="crr">0.00</span> |
     P'SHIP: <span id="pship">0 (0)</span>
   </div>
@@ -51,6 +60,7 @@ th,td{border-bottom:1px solid #333;padding:6px;text-align:center}
     </thead>
     <tbody id="bowlBody"></tbody>
   </table>
+
 </div>
 
 <div class="grid">
@@ -70,84 +80,143 @@ th,td{border-bottom:1px solid #333;padding:6px;text-align:center}
   <div class="btn undo" onclick="undo()">Undo</div>
 </div>
 
-  <script src="config.js"></script>
+<script src="config.js"></script>
 
 <script>
 
-const matchId = new URLSearchParams(window.location.search).get("matchId");
+const matchId =
+  new URLSearchParams(window.location.search).get("matchId") || "M1";
+
 let innings = 1;
 
-/* ================= LOAD INITIAL ================= */
-
 window.onload = function(){
-  loadOpening();
   loadScore();
 };
 
+/* ================= SAFE API CALL ================= */
+
 function callApi(data, cb){
+
+  if(!data.action){
+    console.error("Action missing");
+    return;
+  }
+
   const params = Object.keys(data)
     .map(k => k + "=" + encodeURIComponent(data[k]))
     .join("&");
 
-  fetch(API + "?" + params)
+  const url = API + "?" + params;
+
+  fetch(url)
     .then(r => r.json())
     .then(d=>{
       if(cb) cb(d);
+    })
+    .catch(err=>{
+      console.error("FETCH ERROR:", err);
     });
-}
-
-/* ================= OPENING PLAYERS ================= */
-
-function loadOpening(){
-  callApi({
-    action:"getOpeningPlayers",
-    matchId:matchId
-  }, function(res){
-    if(res.status==="OK"){
-      document.getElementById("striker").innerText = res.strikerId;
-      document.getElementById("nonStriker").innerText = res.nonStrikerId;
-      document.getElementById("bowler").innerText = res.bowlerId;
-    }
-  });
 }
 
 /* ================= LOAD SCORE ================= */
 
 function loadScore(){
+
   callApi({
     action:"getLiveScore",
     matchId:matchId,
     innings:innings
-  }, function(res){
+  }, updateUI);
+}
 
-    if(!res.score) return;
+/* ================= UPDATE UI ================= */
 
-    const s = res.score;
+function updateUI(res){
 
-    document.getElementById("score").innerText =
-      s.runs + "/" + s.wickets +
-      " (" + s.overs + "." + s.balls + ")";
+  if(!res || !res.score) return;
 
-    let batHtml="";
-    s.batsmen.forEach(b=>{
-      batHtml += `<tr>
-        <td>${b.playerId}</td>
+  const s = res.score;
+
+  document.getElementById("score").innerText =
+    s.runs + "/" + s.wickets +
+    " (" + s.overs + "." + s.balls + ")";
+
+  /* CRR */
+  const totalOvers = s.overs + (s.balls/6);
+  const crr = totalOvers > 0 ? (s.runs / totalOvers).toFixed(2) : "0.00";
+  document.getElementById("crr").innerText = crr;
+
+  /* STRIKER + BOWLER */
+  document.getElementById("striker").innerText =
+    res.strikerId || "-";
+
+  document.getElementById("nonStriker").innerText =
+    res.nonStrikerId || "-";
+
+  document.getElementById("bowler").innerText =
+    res.bowlerId || "-";
+
+  /* BATSMEN */
+  let batHtml="";
+  let pRuns=0;
+  let pBalls=0;
+
+  (s.batsmen || []).forEach(b=>{
+
+    const isStriker = (b.playerId === res.strikerId);
+    const name = isStriker ? "*"+b.playerId : b.playerId;
+
+    const sr = b.balls > 0
+      ? ((b.runs / b.balls)*100).toFixed(2)
+      : "0.00";
+
+    if(!b.out){
+      pRuns += b.runs;
+      pBalls += b.balls;
+    }
+
+    batHtml += `
+      <tr>
+        <td>${name}</td>
         <td>${b.runs}</td>
         <td>${b.balls}</td>
-      </tr>`;
-    });
-    document.getElementById("batBody").innerHTML = batHtml;
+        <td>${b.fours || 0}</td>
+        <td>${b.sixes || 0}</td>
+        <td>${sr}</td>
+      </tr>
+    `;
+  });
 
-    let bowlHtml="";
-    s.bowlers.forEach(b=>{
-      bowlHtml += `<tr>
-        <td>${b.playerId}</td>
+  document.getElementById("batBody").innerHTML = batHtml;
+  document.getElementById("pship").innerText =
+    pRuns + " (" + pBalls + ")";
+
+  /* BOWLERS */
+  let bowlHtml="";
+
+  (s.bowlers || []).forEach(b=>{
+
+    const isCurrent = (b.playerId === res.bowlerId);
+    const name = isCurrent ? "*"+b.playerId : b.playerId;
+
+    const overs = (b.balls/6).toFixed(1);
+    const eco = b.balls > 0
+      ? ((b.runs/(b.balls/6))).toFixed(2)
+      : "0.00";
+
+    bowlHtml += `
+      <tr>
+        <td>${name}</td>
+        <td>${overs}</td>
+        <td>0</td>
         <td>${b.runs}</td>
         <td>${b.wickets}</td>
-      </tr>`;
-    });
-    document.getElementById("bowlBody").innerHTML = bowlHtml;
+        <td>${eco}</td>
+      </tr>
+    `;
   });
+
+  document.getElementById("bowlBody").innerHTML = bowlHtml;
 }
 
 /* ================= SCORING ================= */
