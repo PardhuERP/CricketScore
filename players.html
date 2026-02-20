@@ -154,7 +154,7 @@ if (!token) {
 }
 
 /* Load My Team First */
-fetch(BASE_URL + "?action=getMyTeam&token=" + token)
+fetch(API + "?action=getMyTeam&token=" + token)
   .then(r => r.json())
   .then(d => {
     if (!d.team) {
@@ -178,7 +178,7 @@ function addPlayer() {
     return;
   }
 
-  const url = BASE_URL 
+  const url = API 
     + "?action=addPlayer"
     + "&token=" + token
     + "&teamId=" + TEAM_ID
@@ -203,7 +203,7 @@ function addPlayer() {
 }
 
 function loadPlayers() {
-  fetch(BASE_URL + "?action=getPlayers&teamId=" + TEAM_ID)
+  fetch(API + "?action=getPlayers&teamId=" + TEAM_ID)
     .then(r => r.json())
     .then(d => {
       playerList.innerHTML = "";
